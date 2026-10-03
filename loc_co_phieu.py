@@ -18,11 +18,14 @@ import hashlib
 import json
 import math
 import sys
+import shutil
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pathlib import Path
+from urllib.parse import urlparse
 
 import numpy as np
 import pandas as pd
@@ -61,38 +64,57 @@ _session.headers.update(VCI_HEADERS)
 # ----------------------------------------------------------------------------
 # Tải dữ liệu + cache
 # ----------------------------------------------------------------------------
+LOI_NGUON: Counter = Counter()  # (máy chủ, mã lỗi) -> số lần, để in vào nhật ký
+
+
 def http(method: str, url: str, retries: int = 4, **kw):
+    host, err = urlparse(url).netloc, "?"
     for i in range(retries):
         try:
             r = _session.request(method, url, timeout=30, **kw)
             if r.status_code == 200:
                 return r.json()
+            err = f"HTTP {r.status_code}"
             if r.status_code not in (429, 500, 502, 503, 504):
-                return None
-        except (requests.RequestException, ValueError):
-            pass
+                break
+        except (requests.RequestException, ValueError) as e:
+            err = type(e).__name__
         time.sleep(1.5 * (i + 1))
+    LOI_NGUON[(host, err)] += 1
     return None
 
 
+def bao_loi_nguon(buoc: str):
+    if LOI_NGUON:
+        print(f"   ! Lỗi nguồn dữ liệu ({buoc}): " + ", ".join(f"{h} {e} ×{n}" for (h, e), n in LOI_NGUON.most_common()))
+        LOI_NGUON.clear()
+
+
 def cached(key: str, ttl_hours: float, fetch, refresh: bool = False):
+    """Đọc cache còn hạn; nếu hết hạn thì tải mới. Tải lỗi thì dùng lại bản cũ (nếu có) thay vì bỏ trống."""
     path = CACHE / f"{key}.json"
-    if not refresh and path.exists() and time.time() - path.stat().st_mtime < ttl_hours * 3600:
+    old = None
+    if path.exists():
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            old = json.loads(path.read_text(encoding="utf-8"))
         except ValueError:
             pass
+    if not refresh and old is not None and time.time() - path.stat().st_mtime < ttl_hours * 3600:
+        return old
     data = fetch()
     if data is not None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    return data
+        return data
+    return old
 
 
 def fetch_universe():
     d = http("GET", f"{VCI_IQ}/v2/company/search-bar?language=1")
     if not d:
-        return None
+        # Dự phòng: danh sách lưu sẵn trong kho (ít thay đổi; cập nhật khi chạy trên máy cá nhân)
+        snap = ROOT / "danh_sach_ma.json"
+        return json.loads(snap.read_text(encoding="utf-8")) if snap.exists() else None
     return [
         {
             "ma": x["code"],
@@ -150,8 +172,9 @@ def fetch_vnd_ratios(symbols: list[str]):
             for x in r.json().get("data", []):
                 out.setdefault(x["code"], {})[x["ratioCode"]] = x["value"]
         except (requests.RequestException, ValueError):
+            LOI_NGUON[("api-finfo.vndirect.com.vn", "lỗi kết nối")] += 1
             continue
-    return out
+    return out or None
 
 
 def parallel(fn, items, workers, label):
@@ -394,10 +417,19 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
     workers = cfg.get("so_luong_tai_song_song", 8)
     today = now_vn().strftime("%Y-%m-%d")
 
+    # Xoá giá của các ngày trước (giá được cache theo ngày)
+    for d in (CACHE / "gia").glob("*"):
+        if d.is_dir() and d.name != today:
+            shutil.rmtree(d, ignore_errors=True)
+
     print("1) Tải danh sách công ty...")
     uni = cached("danh_sach", ttl["danh_sach"], fetch_universe, refresh)
+    bao_loi_nguon("danh sách")
     if not uni:
-        sys.exit("Không tải được danh sách công ty (Vietcap).")
+        sys.exit("Không tải được danh sách công ty (Vietcap) và không có bản dự phòng danh_sach_ma.json.")
+    snap = ROOT / "danh_sach_ma.json"
+    if len(uni) > 1000 and (not snap.exists() or time.time() - snap.stat().st_mtime > 7 * 86400):
+        snap.write_text(json.dumps(uni, ensure_ascii=False, indent=0), encoding="utf-8")
     info = pd.DataFrame(uni).drop_duplicates("ma").set_index("ma")
     m = info["san"].isin(cfg["san"]) & info["loai"].isin(cfg["loai_doanh_nghiep"]) & (info.index.str.len() == 3)
     tickers = sorted(info.index[m])
@@ -413,6 +445,8 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
     px = parallel(lambda s: cached(f"gia/{today}/{s}", ttl["gia"], lambda: fetch_ohlc(s), refresh),
                   tickers, workers, "giá")
     vnindex = cached(f"gia/{today}/VNINDEX", ttl["gia"], lambda: fetch_ohlc("VNINDEX"), refresh)
+    print(f"   {sum(1 for v in px.values() if v)}/{len(tickers)} mã có giá")
+    bao_loi_nguon("giá")
 
     lk = cfg["loc_thanh_khoan"]
     tech, frames = {}, {}
@@ -452,9 +486,18 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
                         targets, workers, "BCTC")
     key = hashlib.md5(",".join(names).encode()).hexdigest()[:10]
     vnd = cached(f"vnd/{today}_{key}", ttl["gia"], lambda: fetch_vnd_ratios(names), refresh) or {}
+    print(f"   {sum(1 for v in fund_raw.values() if v)}/{len(targets)} mã có BCTC, {len(vnd)} mã có định giá VNDirect")
+    bao_loi_nguon("tài chính")
 
-    # P/E trung vị theo ngành tính trên toàn bộ mã đạt thanh khoản (cần ≥ 3 mã, nếu không dùng trung vị thị trường)
-    pe_all = pd.DataFrame([{"nganh": info.at[s, "nganh"], "pe": vnd.get(s, {}).get("PRICE_TO_EARNINGS")} for s in names])
+    # P/E trung vị theo ngành tính trên toàn bộ mã đạt thanh khoản (cần ≥ 3 mã, nếu không dùng trung vị thị trường).
+    # Nếu VNDirect lỗi thì dùng P/E cuối quý từ Vietcap của các mã đã có BCTC.
+    def pe_of(s):
+        v = vnd.get(s, {}).get("PRICE_TO_EARNINGS")
+        if v is None and fund_raw.get(s):
+            v = (fund_raw[s].get("ratio") or {}).get("pe")
+        return v
+    pe_all = pd.DataFrame([{"nganh": info.at[s, "nganh"], "pe": pe_of(s)} for s in names])
+    pe_all["pe"] = pd.to_numeric(pe_all["pe"], errors="coerce")
     pe_all = pe_all[(pe_all["pe"] > 0) & (pe_all["pe"] < 100)]
     med_all = pe_all["pe"].median()
     med = pe_all.groupby("nganh")["pe"].agg(["median", "count"])

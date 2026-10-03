@@ -32,15 +32,22 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      # Giữ BCTC đã tải giữa các lần chạy (công cụ tự làm mới sau 72 giờ)
+      # Giữ dữ liệu đã tải giữa các lần chạy: dùng lại khi nguồn lỗi, BCTC tự làm mới sau 72 giờ
       - uses: actions/cache@v4
         with:
-          path: cache/co_ban
-          key: co-ban-${{ github.run_id }}
-          restore-keys: co-ban-
+          path: cache
+          key: du-lieu-${{ github.run_id }}
+          restore-keys: du-lieu-
 
+      # Nguồn dữ liệu đôi khi từ chối máy chủ GitHub: thử lại tối đa 3 lần, cách nhau 90 giây
       - name: Chạy bộ lọc
-        run: python loc_co_phieu.py --web site
+        run: |
+          for i in 1 2 3; do
+            python loc_co_phieu.py --web site && exit 0
+            echo "Lần $i thất bại, thử lại sau 90 giây..."
+            sleep 90
+          done
+          exit 1
 
       - uses: actions/upload-pages-artifact@v3
         with:
