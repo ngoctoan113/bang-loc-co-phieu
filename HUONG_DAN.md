@@ -23,6 +23,22 @@ Kết quả nằm trong thư mục `ket_qua/`:
 
 Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
 
+## Các tab trên trang web
+
+- **Cơ hội hôm nay**: tối đa 5 mã qua **toàn bộ** tiêu chí chất lượng (ROE cao và ổn định, lợi nhuận tăng đều,
+  dòng tiền dương, nợ thấp, thanh khoản tốt) **và** đang có điểm mua kỹ thuật (vượt đỉnh 20 phiên kèm khối lượng /
+  điều chỉnh về MA20 / nền giá chặt), chưa tăng quá xa. Kèm vùng mua, cắt lỗ, mục tiêu tham chiếu tính theo quy tắc.
+  Số mã tối đa phụ thuộc bối cảnh thị trường (Thuận lợi 5 · Trung tính 3 · Rủi ro cao 1).
+  Bên dưới là danh sách theo dõi các mã chỉ thiếu 1–2 tiêu chí.
+- **Bảng xếp hạng**: toàn bộ mã đủ thanh khoản, chấm điểm PTCB + PTKT.
+- **Danh mục của tôi**: nhập mã, giá vốn, khối lượng, ngày mua. Trang áp quy tắc để báo Cắt lỗ / Bán (chạm điểm dừng lãi)
+  / Giảm tỷ trọng / Chốt lời một phần / Thận trọng / Giữ, kèm ngưỡng dừng và lý do. Danh mục chỉ lưu trên trình duyệt;
+  dùng nút "Tạo link" để mở cùng danh mục trên máy khác (dữ liệu nằm trong link, không gửi lên máy chủ).
+- **Thị trường**: điểm bối cảnh 0–100 từ xu hướng VN-Index (MA20/50/200), độ rộng thị trường, ngày phân phối,
+  và thế giới (S&P 500, Nasdaq, Shanghai, EEM, DXY, USD/VND, lợi suất TPCP Mỹ 10 năm, dầu Brent, vàng – nguồn Yahoo Finance).
+
+Các ngưỡng nằm trong `cau_hinh.json` (mục `co_hoi`, `danh_muc`).
+
 ## Bản trực tuyến tự cập nhật (GitHub Pages)
 
 Kho này có sẵn workflow `.github/workflows/cap_nhat_web.yml`. Máy chủ GitHub tự chạy bộ lọc

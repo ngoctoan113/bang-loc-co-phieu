@@ -18,6 +18,29 @@
     "so_ma_hien_thi": 30
   },
 
-  "cache_gio": { "gia": 1, "co_ban": 72, "danh_sach": 24 },
+  "co_hoi": {
+    "diem_cb": 65,
+    "diem_kt": 65,
+    "roe": 0.15,
+    "roe_min_4q": 0.12,
+    "tt_ln_ttm": 0.10,
+    "peg": 1.5,
+    "no_vay_vcsh": 1.0,
+    "gtgd_ty": 10,
+    "von_hoa_ty": 1000,
+    "rsi_min": 50,
+    "rsi_max": 72,
+    "cach_ma20_toi_da": 0.06,
+    "so_ma_toi_da": { "thuan_loi": 5, "trung_tinh": 3, "rui_ro": 1 }
+  },
+
+  "danh_muc": {
+    "cat_lo_pct": 0.07,
+    "atr_dung_lai": 2.5,
+    "chot_loi_pct": 0.20,
+    "ty_trong_toi_da": 0.30
+  },
+
+  "cache_gio":{ "gia": 1, "co_ban": 72, "danh_sach": 24 },
   "so_luong_tai_song_song": 8
 }

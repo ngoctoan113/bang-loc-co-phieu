@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;600&display=swap">
 <style>
-/* Bố cục: dải thị trường + phễu lọc ở trên; bên dưới là bảng xếp hạng (trái) và hồ sơ mã đang chọn (phải, dính khi cuộn).
+/* Bố cục: đầu trang (VN-Index + bối cảnh thị trường) → thanh 4 tab → nội dung tab.
    Màu ngữ nghĩa theo quy ước bảng điện: xanh tăng, đỏ giảm, vàng tham chiếu, tím trần, xanh lơ sàn. */
 :root {
   --bg: #edf1f4;
@@ -22,6 +22,7 @@
   --up-soft: #e3f3ea;
   --down-soft: #fbe7e6;
   --ref-soft: #f8f0da;
+  --ceil-soft: #f1e8fb;
   --f-ui: "Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
   --f-num: "Roboto Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   --r: 10px;
@@ -30,23 +31,33 @@
   :root:not([data-theme="light"]) {
     --bg: #0c131a; --surface: #131d27; --surface-2: #182430; --ink: #e2e9ef; --muted: #8d9eae; --line: #243240;
     --accent: #5aaee6; --accent-soft: #15304a; --up: #35c573; --down: #ff6a5d; --ref: #e6b730; --ceil: #b88bff; --floor: #3ccae5;
-    --up-soft: #133525; --down-soft: #3a1b1a; --ref-soft: #362c10; color-scheme: dark;
+    --up-soft: #133525; --down-soft: #3a1b1a; --ref-soft: #362c10; --ceil-soft: #2a1c44; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0c131a; --surface: #131d27; --surface-2: #182430; --ink: #e2e9ef; --muted: #8d9eae; --line: #243240;
   --accent: #5aaee6; --accent-soft: #15304a; --up: #35c573; --down: #ff6a5d; --ref: #e6b730; --ceil: #b88bff; --floor: #3ccae5;
-  --up-soft: #133525; --down-soft: #3a1b1a; --ref-soft: #362c10; color-scheme: dark;
+  --up-soft: #133525; --down-soft: #3a1b1a; --ref-soft: #362c10; --ceil-soft: #2a1c44; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-ui); }
-.wrap { max-width: 1440px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; display: grid; gap: 16px; }
+.wrap { max-width: 1440px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.wrap > *, .view > * { min-width: 0; }
 .num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
 .up { color: var(--up); } .down { color: var(--down); } .ref { color: var(--ref); }
 .ceil { color: var(--ceil); } .floor { color: var(--floor); } .muted { color: var(--muted); }
 button, input, select { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+h2.sec { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.hint { margin: 0; color: var(--muted); font-size: 13px; max-width: 80ch; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-weight: 600; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.small { padding: 3px 9px; font-size: 12px; font-weight: 500; }
+.btn.danger { color: var(--down); }
 
 /* Đầu trang */
 .mast { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: end; justify-content: space-between; }
@@ -57,15 +68,33 @@ h1 { margin: 2px 0 0; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; font-
 .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--up); }
 @media (prefers-reduced-motion: no-preference) { .live::before { animation: pulse 2s ease-in-out infinite; } }
 @keyframes pulse { 50% { opacity: .35; } }
-.market { display: flex; align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; min-width: 0; }
+.market { display: flex; align-items: center; gap: 16px; padding: 10px 14px; min-width: 0; flex-wrap: wrap; }
 .market .lbl { display: block; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .market strong { font: 600 20px var(--f-num); }
 .market .chg { display: block; font: 500 12px var(--f-num); }
-#vni-spark { width: 220px; max-width: 40vw; height: 52px; display: block; }
+#vni-spark { width: 200px; max-width: 36vw; height: 52px; display: block; }
+.regime-pill { display: inline-flex; flex-direction: column; gap: 2px; padding: 6px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; border: 0; text-align: left; }
+.regime-pill small { font: 500 11px var(--f-ui); opacity: .85; }
+.rg-thuan_loi { background: var(--up-soft); color: var(--up); }
+.rg-trung_tinh { background: var(--ref-soft); color: var(--ref); }
+.rg-rui_ro { background: var(--down-soft); color: var(--down); }
+
+/* Thanh tab chính */
+.nav { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.nav button { border: 0; background: none; padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.nav button[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.nav .cnt { font: 500 12px var(--f-num); margin-left: 6px; padding: 1px 6px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.nav button[aria-current="page"] .cnt { background: var(--accent-soft); color: var(--accent); }
+
+/* Banner bối cảnh thị trường */
+.regime { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; flex-wrap: wrap; }
+.regime .score { font: 600 30px var(--f-num); line-height: 1; padding: 8px 12px; border-radius: 8px; }
+.regime .txt { flex: 1; min-width: 220px; display: grid; gap: 4px; }
+.regime .txt b { font-size: 15px; }
 
 /* Phễu lọc */
-.funnel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
-.funnel .step { padding: 12px 16px; display: flex; gap: 10px; align-items: baseline; min-width: 0; position: relative; }
+.funnel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; }
+.funnel .step { padding: 12px 16px; display: flex; gap: 10px; align-items: baseline; min-width: 0; }
 .funnel .step + .step { border-left: 1px solid var(--line); }
 .funnel b { font: 600 24px var(--f-num); }
 .funnel span { color: var(--muted); font-size: 13px; }
@@ -78,7 +107,7 @@ h1 { margin: 2px 0 0; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; font-
 .tabs button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--muted); }
 .tabs button[aria-selected="true"] { background: var(--accent); color: var(--surface); }
 .tabs .cnt { font: 500 12px var(--f-num); opacity: .8; margin-left: 4px; }
-.controls input, .controls select { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0; }
+input, select { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0; }
 .controls input { width: 200px; max-width: 100%; }
 .grades { display: inline-flex; gap: 4px; }
 .grades button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700; color: var(--muted); }
@@ -91,23 +120,25 @@ h1 { margin: 2px 0 0; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; font-
 
 /* Bảng + hồ sơ */
 .board { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start; }
-.table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: auto; max-height: calc(100vh - 140px); min-width: 0; }
+.table-wrap { overflow: auto; max-height: calc(100vh - 140px); min-width: 0; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 thead th { position: sticky; top: 0; z-index: 1; background: var(--surface-2); border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; padding: 0; font-weight: 600; color: var(--muted); font-size: 12px; }
-thead th button { all: unset; display: block; padding: 9px 10px; cursor: pointer; width: 100%; box-sizing: border-box; }
+thead th button, thead th span { all: unset; display: block; padding: 9px 10px; cursor: pointer; width: 100%; box-sizing: border-box; }
+thead th span { cursor: default; }
 thead th button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 thead th[aria-sort] button { color: var(--ink); }
 thead th[aria-sort="descending"] button::after { content: " ↓"; }
 thead th[aria-sort="ascending"] button::after { content: " ↑"; }
 th.l, td.l { text-align: left; }
 tbody td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--f-num); font-variant-numeric: tabular-nums; }
-tbody tr { cursor: pointer; }
-tbody tr:hover { background: var(--surface-2); }
+tbody tr.click { cursor: pointer; }
+tbody tr.click:hover { background: var(--surface-2); }
 tbody tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
 td.tk { font-family: var(--f-ui); }
 td.tk b { font: 600 14px var(--f-num); letter-spacing: .02em; }
-td.tk small { display: block; color: var(--muted); font-size: 11px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+td.tk small { display: block; color: var(--muted); font-size: 11px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
 td.rank { color: var(--muted); }
+td.wrap { white-space: normal; font-family: var(--f-ui); min-width: 220px; font-size: 12.5px; }
 .score { display: inline-flex; align-items: center; gap: 8px; }
 .bar { width: 54px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; display: inline-block; }
 .bar i { display: block; height: 100%; border-radius: 3px; }
@@ -115,12 +146,12 @@ td.rank { color: var(--muted); }
 .g-A { color: var(--up); background: var(--up-soft); } .g-B { color: var(--accent); background: var(--accent-soft); }
 .g-C { color: var(--ref); background: var(--ref-soft); } .g-D { color: var(--down); background: var(--down-soft); }
 .fill-A { background: var(--up); } .fill-B { background: var(--accent); } .fill-C { background: var(--ref); } .fill-D { background: var(--down); }
-#empty { padding: 24px; color: var(--muted); text-align: center; margin: 0; }
+.empty { padding: 24px; color: var(--muted); text-align: center; margin: 0; }
 
-#detail { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; min-width: 0; }
+#detail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; min-width: 0; }
 .d-head { padding: 16px 16px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
 .d-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.d-top h2 { margin: 0; font: 700 26px var(--f-num); letter-spacing: .02em; }
+.d-top h3 { margin: 0; font: 700 26px var(--f-num); letter-spacing: .02em; }
 .tag { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
 .d-name { margin: 0; font-weight: 600; }
 .d-meta { margin: 0; color: var(--muted); font-size: 12px; }
@@ -129,8 +160,8 @@ td.rank { color: var(--muted); }
 .d-price span { font: 500 14px var(--f-num); }
 .d-sec { padding: 14px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
 .d-sec:last-child { border-bottom: 0; }
-.d-sec h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; }
-.d-sec h3 .num { font-size: 13px; color: var(--ink); text-transform: none; letter-spacing: 0; }
+.d-sec h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; }
+.d-sec h4 .num { font-size: 13px; color: var(--ink); text-transform: none; letter-spacing: 0; }
 .chart svg { width: 100%; height: auto; display: block; }
 .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
 .legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; border-radius: 1px; }
@@ -152,33 +183,90 @@ td.rank { color: var(--muted); }
 .chip { font-size: 12px; padding: 3px 9px; border-radius: 6px; line-height: 1.4; }
 .chip.good { background: var(--up-soft); color: var(--up); }
 .chip.warn { background: var(--ref-soft); color: var(--ref); }
+.chip.bad { background: var(--down-soft); color: var(--down); }
 .chips .none { color: var(--muted); font-size: 12px; }
 
+/* Cơ hội hôm nay */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.card { display: grid; align-content: start; }
+.card.dim { opacity: .72; }
+.card .c-head { padding: 14px 16px 10px; display: grid; gap: 4px; border-bottom: 1px solid var(--line); }
+.levels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-bottom: 1px solid var(--line); }
+.levels div { padding: 10px 12px; min-width: 0; }
+.levels div + div { border-left: 1px solid var(--line); }
+.levels dt { font-size: 11px; color: var(--muted); }
+.levels dd { margin: 0; font: 600 14px var(--f-num); }
+.levels dd small { display: block; font: 500 11px var(--f-num); color: var(--muted); }
+.checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; font-size: 12.5px; margin: 0; padding: 0; list-style: none; }
+.checks li { display: flex; gap: 8px; justify-content: space-between; min-width: 0; }
+.checks li span:first-child { min-width: 0; }
+.checks li .v { font: 500 12px var(--f-num); color: var(--muted); white-space: nowrap; }
+.checks li::before { content: "✓"; color: var(--up); font-weight: 700; flex: none; }
+.checks li.fail::before { content: "✕"; color: var(--down); }
+.checks li { justify-content: flex-start; }
+.checks li .v { margin-left: auto; }
+.setup { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px; background: var(--ceil-soft); color: var(--ceil); }
+
+/* Danh mục */
+.pf-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 14px 16px; }
+.pf-form label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.pf-form input { width: 140px; }
+.pf-form input#f-ma { width: 100px; text-transform: uppercase; }
+.pf-form .err { color: var(--down); font-size: 12.5px; flex-basis: 100%; margin: 0; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tiles div { padding: 12px 16px; min-width: 0; }
+.tiles div + div { border-left: 1px solid var(--line); }
+.tiles dt { font-size: 12px; color: var(--muted); }
+.tiles dd { margin: 2px 0 0; font: 600 20px var(--f-num); }
+.tiles dd small { font: 500 12px var(--f-num); margin-left: 6px; }
+.sig { display: inline-block; font: 700 12px var(--f-ui); padding: 3px 9px; border-radius: 6px; white-space: nowrap; }
+.sig-CAT_LO, .sig-BAN { background: var(--down-soft); color: var(--down); }
+.sig-GIAM, .sig-THAN_TRONG { background: var(--ref-soft); color: var(--ref); }
+.sig-CHOT { background: var(--ceil-soft); color: var(--ceil); }
+.sig-GIU { background: var(--up-soft); color: var(--up); }
+.sig-NA { background: var(--surface-2); color: var(--muted); }
+.share { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+.share input { flex: 1; min-width: 0; font: 12px var(--f-num); }
+.banner { padding: 12px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--accent-soft); border-color: var(--accent); }
+
+/* Thị trường */
+.mk-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; }
+.gauge { position: relative; height: 10px; border-radius: 5px; background: linear-gradient(to right, var(--down) 0 45%, var(--ref) 45% 65%, var(--up) 65% 100%); opacity: .9; }
+.gauge i { position: absolute; top: -4px; width: 4px; height: 18px; border-radius: 2px; background: var(--ink); transform: translateX(-2px); }
+.gauge-l { display: flex; justify-content: space-between; font: 11px var(--f-num); color: var(--muted); }
+.factors { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+.factors li { display: flex; justify-content: space-between; gap: 12px; }
+.factors li b { font: 600 13px var(--f-num); }
+.spark { width: 90px; height: 26px; display: block; }
+
 /* Phương pháp */
-.method { display: grid; gap: 12px; }
-details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
-summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
+details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
 .mt { overflow-x: auto; padding: 0 16px 14px; }
-.mt table { font-size: 13px; }
-.mt td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; white-space: pre-line; text-align: left; }
+.mt td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; white-space: pre-line; text-align: left; font-family: var(--f-ui); }
 .mt td:first-child { font-weight: 600; width: 40%; }
 .mt tr.h td { padding-top: 14px; color: var(--accent); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; border-bottom: 0; }
-.disclaimer { margin: 0; color: var(--muted); font-size: 12.5px; max-width: 80ch; }
+.disclaimer { margin: 0; color: var(--muted); font-size: 12.5px; max-width: 90ch; }
 
 @media (max-width: 1100px) {
-  .board { grid-template-columns: minmax(0, 1fr); }
+  .board, .mk-grid { grid-template-columns: minmax(0, 1fr); }
   #detail { position: static; max-height: none; }
   .table-wrap { max-height: 70vh; }
 }
 @media (max-width: 640px) {
   .wrap { padding-inline: 16px; }
-  .funnel { grid-template-columns: minmax(0, 1fr); }
-  .funnel .step + .step { border-left: 0; border-top: 1px solid var(--line); }
+  .funnel, .tiles { grid-template-columns: minmax(0, 1fr); }
+  .funnel .step + .step, .tiles div + div { border-left: 0; border-top: 1px solid var(--line); }
+  .levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .levels div:nth-child(3) { border-left: 0; }
+  .levels div:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .checks { grid-template-columns: minmax(0, 1fr); }
   .market { width: 100%; justify-content: space-between; }
   .controls input { width: 100%; }
   .controls .note { margin-left: 0; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .part { grid-template-columns: minmax(0, 1fr) 70px 40px; }
+  .pf-form input, .pf-form input#f-ma { width: 100%; }
+  .pf-form label { flex: 1 1 40%; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .bar i, .part .pbar i { transition: width .3s ease; }
@@ -190,77 +278,161 @@ summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
     <div>
       <p class="eyebrow" id="eyebrow">Phân tích cơ bản + kỹ thuật</p>
       <h1>Bảng lọc cổ phiếu</h1>
-      <p class="sub" id="sub"><span id="sub-text"></span><span class="live" id="live" hidden title="Trang tự kiểm tra dữ liệu mới mỗi 3 phút">Tự cập nhật</span></p>
+      <p class="sub"><span id="sub-text"></span><span class="live" id="live" hidden title="Trang tự kiểm tra dữ liệu mới mỗi 3 phút">Tự cập nhật</span></p>
     </div>
-    <div class="market" aria-label="VN-Index">
+    <div class="market panel" aria-label="VN-Index">
       <div>
         <span class="lbl">VN-Index</span>
         <strong id="vni-last">–</strong>
         <span class="chg" id="vni-3m"></span>
       </div>
-      <svg id="vni-spark" viewBox="0 0 220 52" preserveAspectRatio="none" role="img" aria-label="VN-Index 200 phiên"></svg>
+      <svg id="vni-spark" viewBox="0 0 200 52" preserveAspectRatio="none" role="img" aria-label="VN-Index 200 phiên"></svg>
+      <button class="regime-pill" id="regime-pill" title="Xem chi tiết bối cảnh thị trường"></button>
     </div>
   </header>
 
-  <section class="funnel" aria-label="Phễu lọc">
-    <div class="step"><b id="f1">–</b><span id="f1t">mã được quét</span></div>
-    <div class="step"><b id="f2">–</b><span id="f2t">đạt thanh khoản</span></div>
-    <div class="step hit"><b id="f3">–</b><span id="f3t">đạt cả PTCB và PTKT</span></div>
+  <nav class="nav" aria-label="Các mục">
+    <button data-v="co-hoi">Cơ hội hôm nay<span class="cnt" id="n-co-hoi"></span></button>
+    <button data-v="bang-xep-hang">Bảng xếp hạng<span class="cnt" id="n-bang"></span></button>
+    <button data-v="danh-muc">Danh mục của tôi<span class="cnt" id="n-dm"></span></button>
+    <button data-v="thi-truong">Thị trường</button>
+  </nav>
+
+  <!-- CƠ HỘI HÔM NAY -->
+  <section class="view" id="view-co-hoi" hidden>
+    <div class="regime panel" id="ch-regime"></div>
+    <div>
+      <h2 class="sec">Mã đạt toàn bộ tiêu chí chất lượng và điểm mua</h2>
+      <p class="hint">Một mã chỉ xuất hiện ở đây khi qua hết các tiêu chí: doanh nghiệp tốt, xu hướng tăng, đang có điểm mua và chưa tăng quá xa. Các mức giá là ngưỡng tham chiếu tính theo quy tắc, không phải khuyến nghị.</p>
+    </div>
+    <div class="cards" id="ch-cards"></div>
+    <div class="panel">
+      <div class="d-sec"><h4>Danh sách theo dõi: thiếu 1–2 tiêu chí</h4></div>
+      <div class="table-wrap" style="max-height:none"><table><thead><tr>
+        <th class="l"><span>Mã</span></th><th><span>Giá</span></th><th><span>Điểm tổng</span></th><th class="l"><span>Còn thiếu</span></th>
+      </tr></thead><tbody id="ch-watch"></tbody></table></div>
+    </div>
+    <details class="panel">
+      <summary>Tiêu chí lọc cơ hội và cách tính mức giá</summary>
+      <div class="mt"><table><tbody id="ch-rules"></tbody></table></div>
+    </details>
   </section>
 
-  <section class="controls" aria-label="Bộ lọc">
-    <div class="tabs" role="tablist">
-      <button id="tab-top" role="tab" aria-selected="true">Danh sách Top<span class="cnt" id="cnt-top"></span></button>
-      <button id="tab-all" role="tab" aria-selected="false">Tất cả<span class="cnt" id="cnt-all"></span></button>
-    </div>
-    <input id="q" type="search" placeholder="Tìm mã hoặc tên công ty" aria-label="Tìm mã hoặc tên công ty">
-    <select id="nganh" aria-label="Ngành"></select>
-    <select id="san" aria-label="Sàn"></select>
-    <div class="grades" id="grades" role="group" aria-label="Hạng">
-      <button data-g="A" aria-pressed="false" title="Hạng A: điểm tổng ≥ 75">A</button>
-      <button data-g="B" aria-pressed="false" title="Hạng B: 60–75">B</button>
-      <button data-g="C" aria-pressed="false" title="Hạng C: 45–60">C</button>
-      <button data-g="D" aria-pressed="false" title="Hạng D: dưới 45">D</button>
-    </div>
-    <span class="note" id="shown"></span>
-  </section>
-
-  <main class="board">
-    <div class="table-wrap">
-      <table id="tbl"><thead></thead><tbody></tbody></table>
-      <p id="empty" hidden>Không có mã nào khớp bộ lọc. Thử bỏ bớt điều kiện hoặc chuyển sang tab Tất cả.</p>
-    </div>
-    <aside id="detail" aria-live="polite"></aside>
-  </main>
-
-  <section class="method">
-    <details>
+  <!-- BẢNG XẾP HẠNG -->
+  <section class="view" id="view-bang-xep-hang" hidden>
+    <section class="funnel panel" aria-label="Phễu lọc">
+      <div class="step"><b id="f1">–</b><span id="f1t">mã được quét</span></div>
+      <div class="step"><b id="f2">–</b><span id="f2t">đạt thanh khoản</span></div>
+      <div class="step hit"><b id="f3">–</b><span id="f3t">đạt cả PTCB và PTKT</span></div>
+    </section>
+    <section class="controls" aria-label="Bộ lọc">
+      <div class="tabs" role="tablist">
+        <button id="tab-top" role="tab" aria-selected="true">Danh sách Top<span class="cnt" id="cnt-top"></span></button>
+        <button id="tab-all" role="tab" aria-selected="false">Tất cả<span class="cnt" id="cnt-all"></span></button>
+      </div>
+      <input id="q" type="search" placeholder="Tìm mã hoặc tên công ty" aria-label="Tìm mã hoặc tên công ty">
+      <select id="nganh" aria-label="Ngành"></select>
+      <select id="san" aria-label="Sàn"></select>
+      <div class="grades" id="grades" role="group" aria-label="Hạng">
+        <button data-g="A" aria-pressed="false" title="Hạng A: điểm tổng ≥ 75">A</button>
+        <button data-g="B" aria-pressed="false" title="Hạng B: 60–75">B</button>
+        <button data-g="C" aria-pressed="false" title="Hạng C: 45–60">C</button>
+        <button data-g="D" aria-pressed="false" title="Hạng D: dưới 45">D</button>
+      </div>
+      <span class="note" id="shown"></span>
+    </section>
+    <main class="board">
+      <div class="table-wrap panel">
+        <table id="tbl"><thead></thead><tbody></tbody></table>
+        <p class="empty" id="empty" hidden>Không có mã nào khớp bộ lọc. Thử bỏ bớt điều kiện hoặc chuyển sang tab Tất cả.</p>
+      </div>
+      <aside id="detail" class="panel" aria-live="polite"></aside>
+    </main>
+    <details class="panel">
       <summary>Cách chấm điểm</summary>
       <div class="mt"><table><tbody id="method"></tbody></table></div>
     </details>
-    <p class="disclaimer">Kết quả là bộ lọc định lượng dựa trên dữ liệu công khai (Vietcap, VNDirect), có thể chậm cập nhật hoặc sai lệch.
-      Tăng trưởng lợi nhuận chưa loại trừ khoản bất thường. Đây không phải khuyến nghị mua/bán; hãy tự kiểm tra báo cáo tài chính,
-      tin tức và có kế hoạch quản lý rủi ro trước khi đầu tư.</p>
   </section>
+
+  <!-- DANH MỤC -->
+  <section class="view" id="view-danh-muc" hidden>
+    <div class="banner panel" id="pf-import" hidden></div>
+    <div class="regime panel" id="dm-regime"></div>
+    <form class="pf-form panel" id="pf-form" autocomplete="off">
+      <label>Mã <input id="f-ma" list="dl-ma" required placeholder="FPT"></label>
+      <label>Giá vốn (đ) <input id="f-gia" inputmode="decimal" required placeholder="62.000"></label>
+      <label>Khối lượng <input id="f-kl" inputmode="numeric" required placeholder="1.000"></label>
+      <label>Ngày mua <input id="f-ngay" type="date"></label>
+      <button class="btn primary" id="f-submit" type="submit">Thêm vào danh mục</button>
+      <button class="btn" id="f-cancel" type="button" hidden>Huỷ sửa</button>
+      <p class="err" id="f-err" hidden></p>
+      <datalist id="dl-ma"></datalist>
+    </form>
+    <dl class="tiles panel" id="pf-tiles" style="margin:0"></dl>
+    <div class="panel">
+      <div class="table-wrap" style="max-height:none"><table><thead><tr>
+        <th class="l"><span>Mã</span></th><th><span>KL</span></th><th><span>Giá vốn</span></th><th><span>Giá</span></th>
+        <th><span>Lãi/lỗ</span></th><th><span>Tỷ trọng</span></th><th class="l"><span>Tín hiệu</span></th>
+        <th><span>Ngưỡng dừng</span></th><th class="l"><span>Lý do</span></th><th><span></span></th>
+      </tr></thead><tbody id="pf-body"></tbody></table></div>
+      <p class="empty" id="pf-empty">Danh mục đang trống. Nhập mã, giá vốn và khối lượng ở trên để bắt đầu theo dõi.</p>
+      <div class="share">
+        <button class="btn" id="pf-share" type="button">Tạo link mở danh mục trên máy khác</button>
+        <input id="pf-link" readonly hidden aria-label="Link danh mục">
+        <span class="muted" id="pf-share-msg" style="font-size:12.5px"></span>
+      </div>
+    </div>
+    <details class="panel">
+      <summary>Quy tắc đánh giá danh mục</summary>
+      <div class="mt"><table><tbody id="dm-rules"></tbody></table></div>
+    </details>
+    <p class="hint">Danh mục chỉ lưu trên trình duyệt của máy này, không gửi lên máy chủ. Để xem trên máy khác, bấm "Tạo link" rồi mở link đó ở máy kia. Ai có link cũng xem được danh mục, nên chỉ gửi link cho chính bạn.</p>
+  </section>
+
+  <!-- THỊ TRƯỜNG -->
+  <section class="view" id="view-thi-truong" hidden>
+    <div class="mk-grid">
+      <div class="panel" id="mk-regime"></div>
+      <div class="panel">
+        <div class="d-sec chart" id="mk-chart"></div>
+        <dl class="tiles" id="mk-breadth" style="margin:0; border-top:1px solid var(--line)"></dl>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="d-sec"><h4>Thị trường thế giới và vĩ mô</h4></div>
+      <div class="table-wrap" style="max-height:none"><table><thead><tr>
+        <th class="l"><span>Chỉ số</span></th><th><span>Giá</span></th><th><span>1 phiên</span></th><th><span>1 tháng</span></th>
+        <th><span>60 phiên</span></th><th class="l"><span>Xu hướng</span></th><th class="l"><span>Tác động tới TTCK VN</span></th>
+      </tr></thead><tbody id="mk-world"></tbody></table></div>
+    </div>
+  </section>
+
+  <p class="disclaimer">Kết quả là bộ lọc định lượng dựa trên dữ liệu công khai (Vietcap, VNDirect, Yahoo Finance), có thể chậm cập nhật hoặc sai lệch.
+    Các tín hiệu mua/giữ/bán là kết quả áp quy tắc cố định, không phải khuyến nghị đầu tư và không thay thế tư vấn của người hành nghề có giấy phép.
+    Hãy tự kiểm tra báo cáo tài chính, tin tức và tự quyết định khối lượng, điểm cắt lỗ phù hợp với mình.</p>
 </div>
 
 <script>
 let D = /*__DU_LIEU__*/null;
 
+// ---------- Định dạng ----------
 const nf = {};
 const fmt = (v, d = 0) => {
   if (v == null || Number.isNaN(v)) return "–";
-  const k = d;
-  nf[k] = nf[k] || new Intl.NumberFormat("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
-  return nf[k].format(v);
+  nf[d] = nf[d] || new Intl.NumberFormat("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
+  return nf[d].format(v);
 };
 const pct = (v, d = 0, sign = false) => v == null ? "–" : (sign && v > 0 ? "+" : "") + fmt(v * 100, d) + "%";
 const cls = v => v == null ? "" : v > 0 ? "up" : v < 0 ? "down" : "ref";
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const dmy = s => s ? s.slice(8, 10) + "/" + s.slice(5, 7) + "/" + s.slice(0, 4) : "";
+const $ = id => document.getElementById(id);
 const LIMIT = { HOSE: 0.07, HNX: 0.10, UPCOM: 0.15 };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
 
-// Màu biến động giá theo quy ước bảng điện (trần tím, sàn xanh lơ)
 function chgClass(r) {
   const v = r.thay_doi, lim = LIMIT[r.san] || 0.07;
   if (v == null) return "";
@@ -269,28 +441,178 @@ function chgClass(r) {
   return cls(Math.abs(v) < 1e-9 ? 0 : v);
 }
 
-let rows = [];
-function load(data) { D = data; rows = D.rows.map((r, i) => ({ ...r, rank: i + 1 })); }
-const state = { tab: "top", q: "", nganh: "", san: "", grades: new Set(), sort: "diem_tong", dir: -1, sel: null };
-try { const t = localStorage.getItem("blcp.tab"); if (t === "all" || t === "top") state.tab = t; } catch (e) {}
+let rows = [], byMa = {};
+function load(data) {
+  D = data;
+  rows = D.rows.map((r, i) => ({ ...r, rank: i + 1 }));
+  byMa = Object.fromEntries(rows.map(r => [r.ma, r]));
+}
+const state = { view: "co-hoi", tab: "top", q: "", nganh: "", san: "", grades: new Set(), sort: "diem_tong", dir: -1, sel: null };
+state.tab = store.get("blcp.tab", "top") === "all" ? "all" : "top";
 
+// ---------- Biểu đồ ----------
+function sma(a, n) {
+  return a.map((_, i) => {
+    if (i < n - 1) return null;
+    let s = 0;
+    for (let j = i - n + 1; j <= i; j++) { if (a[j] == null) return null; s += a[j]; }
+    return s / n;
+  });
+}
+const MA_COLORS = ["var(--ref)", "var(--ceil)"];
+function chartSVG(full, dates, o = {}) {
+  const show = Math.min(o.show || full.length, full.length), div = o.div ?? 1000, dec = o.dec ?? 1;
+  const mas = (o.ma || [20, 50]).map(n => sma(full, n).slice(-show));
+  const closes = full.slice(-show), ds = dates.slice(-show);
+  const levels = o.levels || [], band = o.band;
+  const W = 380, H = o.h || 180, L = 4, R = 56, T = 10, B = 22;
+  const vals = closes.concat(...mas, levels.map(l => l.v), band || []).filter(v => v != null);
+  if (!vals.length) return "";
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.06 || hi * 0.05; lo -= pad; hi += pad;
+  const n = closes.length;
+  const x = i => L + (W - L - R) * i / (n - 1);
+  const y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  const path = a => { let d = "", pen = false; a.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1); pen = true; }); return d; };
+  const first = closes.findIndex(v => v != null);
+  const area = path(closes) + `L${x(n - 1).toFixed(1)} ${H - B}L${x(first).toFixed(1)} ${H - B}Z`;
+  const ticks = [0, 1, 2, 3].map(i => lo + (hi - lo) * (0.1 + 0.8 * i / 3));
+  const last = closes[n - 1];
+  const xl = [0, Math.floor((n - 1) / 2), n - 1];
+  const lbl = v => fmt(v / div, dec);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label || "Biểu đồ giá")}">
+    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/>
+      <text x="${W - R + 6}" y="${y(t) + 4}" font-size="10" fill="var(--muted)" font-family="var(--f-num)">${lbl(t)}</text>`).join("")}
+    ${xl.map((i, j) => `<text x="${x(i)}" y="${H - 6}" font-size="10" fill="var(--muted)" font-family="var(--f-num)" text-anchor="${["start", "middle", "end"][j]}">${ds[i] ? ds[i].slice(8, 10) + "/" + ds[i].slice(5, 7) + "/" + ds[i].slice(2, 4) : ""}</text>`).join("")}
+    ${band ? `<rect x="${L}" y="${y(band[1])}" width="${W - L - R}" height="${Math.max(2, y(band[0]) - y(band[1]))}" fill="var(--accent)" fill-opacity=".14"/>` : ""}
+    <path d="${area}" fill="var(--accent)" fill-opacity=".07" stroke="none"/>
+    ${mas.map((m, i) => `<path d="${path(m)}" fill="none" stroke="${MA_COLORS[i]}" stroke-width="1.3"/>`).join("")}
+    <path d="${path(closes)}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>
+    ${levels.map(l => `<line x1="${L}" x2="${W - R}" y1="${y(l.v)}" y2="${y(l.v)}" stroke="${l.color}" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <text x="${L + 4}" y="${y(l.v) - 4}" font-size="10" font-weight="600" fill="${l.color}" font-family="var(--f-ui)">${esc(l.label)} ${lbl(l.v)}</text>`).join("")}
+    ${last != null ? `<circle cx="${x(n - 1)}" cy="${y(last)}" r="3.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5"/>
+      <rect x="${W - R + 2}" y="${y(last) - 9}" width="${R - 4}" height="18" rx="4" fill="var(--accent)"/>
+      <text x="${W - R + 6}" y="${y(last) + 4}" font-size="10.5" font-weight="600" fill="var(--surface)" font-family="var(--f-num)">${fmt(last / div, dec === 0 ? 0 : 2)}</text>` : ""}
+  </svg>`;
+}
+function sparkSVG(v, good) {
+  v = (v || []).filter(x => x != null);
+  if (v.length < 2) return "";
+  const W = 90, H = 26, lo = Math.min(...v), hi = Math.max(...v);
+  const d = v.map((p, i) => (i ? "L" : "M") + (W * i / (v.length - 1)).toFixed(1) + " " + (2 + (H - 4) * (1 - (p - lo) / (hi - lo || 1))).toFixed(1)).join("");
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="${good}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+// ---------- Đầu trang + bối cảnh ----------
+const RG_TEXT = {
+  thuan_loi: "Xu hướng chung ủng hộ. Quy tắc cho phép mở tối đa {n} vị thế mới, giải ngân tại điểm mua và đặt cắt lỗ ngay khi mua.",
+  trung_tinh: "Thị trường giằng co. Quy tắc giới hạn tối đa {n} vị thế mới với tỷ trọng nhỏ và cắt lỗ chặt.",
+  rui_ro: "Xu hướng chung xấu. Quy tắc hạn chế mua mới (tối đa {n} mã, chỉ giải ngân thăm dò), ưu tiên bảo vệ danh mục: tuân thủ cắt lỗ, không bình quân giá xuống.",
+};
+function regimeBox(el) {
+  const t = D.thi_truong;
+  if (!t) { el.innerHTML = ""; return; }
+  const n = D.cfg_co_hoi.so_ma_toi_da[t.trang_thai];
+  const top3 = t.yeu_to.filter(x => x[1] !== 0).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 4);
+  el.innerHTML = `<span class="score rg-${t.trang_thai}">${t.diem}</span>
+    <div class="txt"><b class="${{ thuan_loi: "up", trung_tinh: "ref", rui_ro: "down" }[t.trang_thai]}">Bối cảnh thị trường: ${esc(t.nhan)} (${t.diem}/100)</b>
+    <span>${esc(RG_TEXT[t.trang_thai].replace("{n}", n))}</span>
+    <div class="chips">${top3.map(([s, p]) => `<span class="chip ${p > 0 ? "good" : "bad"}">${esc(s)}</span>`).join("")}</div></div>`;
+}
+
+function renderHeader() {
+  const v = D.vnindex.filter(x => x != null);
+  if (v.length) {
+    $("vni-last").textContent = fmt(v[v.length - 1], 2);
+    const c = $("vni-3m");
+    c.textContent = `${pct(D.vni3m, 1, true)} trong 3 tháng`;
+    c.className = "chg " + cls(D.vni3m);
+    const W = 200, H = 52, lo = Math.min(...v), hi = Math.max(...v);
+    const x = i => W * i / (v.length - 1), y = p => 4 + (H - 8) * (1 - (p - lo) / (hi - lo || 1));
+    const d = v.map((p, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p).toFixed(1)).join("");
+    $("vni-spark").innerHTML = `<path d="${d}L${W} ${H}L0 ${H}Z" fill="var(--accent)" fill-opacity=".1"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+  }
+  const t = D.thi_truong, pill = $("regime-pill");
+  pill.hidden = !t;
+  if (t) { pill.className = "regime-pill rg-" + t.trang_thai; pill.innerHTML = `${esc(t.nhan)}<small>Bối cảnh thị trường ${t.diem}/100</small>`; }
+  const lastDay = D.ngay[D.ngay.length - 1];
+  $("eyebrow").textContent = `${D.san.join(" · ")} · Phân tích cơ bản + kỹ thuật`;
+  $("sub-text").textContent = D.trong_phien
+    ? `Giá trong phiên ${dmy(lastDay)} · cập nhật lúc ${D.tao_luc.slice(11)}`
+    : `Dữ liệu đến phiên ${dmy(lastDay)} · cập nhật lúc ${D.tao_luc.slice(11)} ngày ${dmy(D.tao_luc.slice(0, 10))}`;
+  $("n-co-hoi").textContent = (D.co_hoi || []).filter(x => x.trong_gioi_han).length;
+  $("n-bang").textContent = rows.length;
+}
+
+// ---------- Tab: Cơ hội hôm nay ----------
+function renderCoHoi() {
+  regimeBox($("ch-regime"));
+  const list = D.co_hoi || [];
+  $("ch-cards").innerHTML = list.length ? list.map(c => {
+    const closes = D.gia_200[c.ma] || [];
+    const lv = [
+      { v: c.cat_lo, color: "var(--down)", label: "Cắt lỗ" },
+      { v: c.muc_tieu_1, color: "var(--up)", label: "Mục tiêu 1" },
+    ];
+    const checks = c.chat_luong.concat(c.diem_mua);
+    return `<article class="card panel${c.trong_gioi_han ? "" : " dim"}">
+      <div class="c-head">
+        <div class="d-top"><h3>${esc(c.ma)}</h3><span class="setup">${esc(c.loai_mua)}</span>
+          ${c.trong_gioi_han ? "" : `<span class="chip warn">Vượt số mã tối đa theo bối cảnh thị trường</span>`}</div>
+        <p class="d-name">${esc(c.ten)} <span class="muted" style="font-weight:400">· ${esc(c.nganh)} · ${esc(c.san)}</span></p>
+        <div class="d-price"><strong>${fmt(c.gia)}</strong><span class="${chgClass(c)}">${pct(c.thay_doi, 2, true)}</span>
+          <span class="muted" style="font-size:12px">Điểm ${fmt(c.diem_tong, 1)} · PTCB ${fmt(c.diem_cb)} · PTKT ${fmt(c.diem_kt)}</span></div>
+      </div>
+      <div class="d-sec chart">${chartSVG(closes, D.ngay, { show: 120, levels: lv, band: c.vung_mua, label: "Giá " + c.ma })}
+        <div class="legend"><span><i style="background:var(--accent)"></i>Giá</span><span><i style="background:var(--ref)"></i>MA20</span><span><i style="background:var(--ceil)"></i>MA50</span><span>Dải xanh: vùng mua tham chiếu</span></div></div>
+      <dl class="levels" style="margin:0">
+        <div><dt>Vùng mua</dt><dd>${fmt(c.vung_mua[0])}<small>đến ${fmt(c.vung_mua[1])}</small></dd></div>
+        <div><dt>Cắt lỗ</dt><dd class="down">${fmt(c.cat_lo)}<small>${pct(-c.rui_ro_pct, 1)}</small></dd></div>
+        <div><dt>Mục tiêu 1 (2R)</dt><dd class="up">${fmt(c.muc_tieu_1)}<small>${pct(c.muc_tieu_1 / c.gia - 1, 1, true)}</small></dd></div>
+        <div><dt>Mục tiêu 2 (3R)</dt><dd class="up">${fmt(c.muc_tieu_2)}<small>${pct(c.muc_tieu_2 / c.gia - 1, 1, true)}</small></dd></div>
+      </dl>
+      <div class="d-sec"><h4>${checks.length}/${checks.length} tiêu chí đạt</h4>
+        <ul class="checks">${checks.map(([n, ok, v]) => `<li class="${ok ? "" : "fail"}"><span>${esc(n)}</span><span class="v">${esc(v)}</span></li>`).join("")}</ul></div>
+    </article>`;
+  }).join("") : `<div class="panel empty" style="grid-column:1/-1">Hôm nay chưa có mã nào đạt đủ mọi tiêu chí. Xem danh sách theo dõi bên dưới: khi một mã có thêm điểm mua hoặc thị trường cải thiện, nó sẽ xuất hiện ở đây.</div>`;
+
+  $("ch-watch").innerHTML = (D.gan_dat || []).map(c => {
+    const miss = c.chat_luong.concat(c.diem_mua).filter(x => !x[1]);
+    return `<tr class="click" tabindex="0" data-ma="${esc(c.ma)}">
+      <td class="l tk"><b>${esc(c.ma)}</b><small>${esc(c.nganh)}</small></td>
+      <td>${fmt(c.gia)}</td><td>${fmt(c.diem_tong, 1)}</td>
+      <td class="wrap">${miss.map(([n, , v]) => `<span class="chip warn">${esc(n)}: ${esc(v)}</span>`).join(" ")}</td></tr>`;
+  }).join("") || `<tr><td colspan="4" class="empty">Không có mã nào gần đạt.</td></tr>`;
+
+  const ch = D.cfg_co_hoi, dm = D.cfg_danh_muc;
+  $("ch-rules").innerHTML = [
+    ["Chất lượng doanh nghiệp", null],
+    ["Điểm phân tích cơ bản", `≥ ${ch.diem_cb}/100`],
+    ["ROE hiện tại và độ ổn định", `ROE ≥ ${pct(ch.roe)}, ROE thấp nhất trong 4 quý gần nhất ≥ ${pct(ch.roe_min_4q)}`],
+    ["Tăng trưởng lợi nhuận", `LN 4 quý tăng ≥ ${pct(ch.tt_ln_ttm)}; quý gần nhất tăng so với cùng kỳ; ít nhất 3/4 quý gần nhất tăng; có lãi 4 quý liên tiếp`],
+    ["Định giá", `PEG ≤ ${fmt(ch.peg, 1)}`],
+    ["Sức khoẻ tài chính", `DN thường: nợ vay/VCSH ≤ ${fmt(ch.no_vay_vcsh, 1)} và dòng tiền kinh doanh 12 tháng dương; ngân hàng: nợ xấu ≤ 2%`],
+    ["Quy mô và thanh khoản", `Vốn hoá ≥ ${fmt(ch.von_hoa_ty)} tỷ; GTGD trung bình 20 phiên ≥ ${fmt(ch.gtgd_ty)} tỷ`],
+    ["Điểm mua kỹ thuật", null],
+    ["Xu hướng", `Điểm PTKT ≥ ${ch.diem_kt}; giá trên MA20 và MA50; MA50 trên MA200 và đang đi lên`],
+    ["Động lượng", `RSI14 trong khoảng ${ch.rsi_min}–${ch.rsi_max}`],
+    ["Không mua đuổi", `Giá không cao hơn MA20 quá ${pct(ch.cach_ma20_toi_da)}; chưa tăng kịch trần trong phiên`],
+    ["Điểm mua (cần 1 trong 3)", "Vượt đỉnh 20 phiên với khối lượng ≥ 1,5 lần trung bình · Điều chỉnh chạm MA20 rồi giữ được trên MA20 · Nền giá 10 phiên biên độ ≤ 8% và cách đỉnh 52 tuần ≤ 10%"],
+    ["Mức giá tham chiếu", null],
+    ["Vùng mua", "Từ giá hiện tại đến +2% (không vượt MA20 + " + pct(ch.cach_ma20_toi_da) + "); làm tròn theo bước giá của sàn"],
+    ["Cắt lỗ", `Cao hơn trong hai mức: giá − ${pct(dm.cat_lo_pct)} hoặc giá − 2×ATR14`],
+    ["Mục tiêu", "Mục tiêu 1 = giá + 2 lần khoảng cắt lỗ (2R); mục tiêu 2 = 3R"],
+    ["Số mã tối đa theo bối cảnh", `Thuận lợi: ${ch.so_ma_toi_da.thuan_loi} · Trung tính: ${ch.so_ma_toi_da.trung_tinh} · Rủi ro cao: ${ch.so_ma_toi_da.rui_ro}`],
+  ].map(([a, b]) => b == null ? `<tr class="h"><td colspan="2">${esc(a)}</td></tr>` : `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
+}
+
+// ---------- Tab: Bảng xếp hạng ----------
 const COLS = [
-  { k: "rank", label: "#", cls: "rank" },
-  { k: "ma", label: "Mã", left: true },
-  { k: "gia", label: "Giá" },
-  { k: "thay_doi", label: "+/−" },
-  { k: "diem_tong", label: "Điểm tổng", left: true },
-  { k: "diem_cb", label: "PTCB" },
-  { k: "diem_kt", label: "PTKT" },
-  { k: "pe", label: "P/E" },
-  { k: "roe", label: "ROE" },
-  { k: "tt_ln_ttm", label: "LN 4 quý" },
-  { k: "tt_ln_quy", label: "LN quý" },
-  { k: "rs", label: "RS" },
-  { k: "rsi14", label: "RSI" },
-  { k: "cach_dinh_52t", label: "Cách đỉnh 52T" },
+  { k: "rank", label: "#" }, { k: "ma", label: "Mã", left: true }, { k: "gia", label: "Giá" }, { k: "thay_doi", label: "+/−" },
+  { k: "diem_tong", label: "Điểm tổng", left: true }, { k: "diem_cb", label: "PTCB" }, { k: "diem_kt", label: "PTKT" },
+  { k: "pe", label: "P/E" }, { k: "roe", label: "ROE" }, { k: "tt_ln_ttm", label: "LN 4 quý" }, { k: "tt_ln_quy", label: "LN quý" },
+  { k: "rs", label: "RS" }, { k: "rsi14", label: "RSI" }, { k: "cach_dinh_52t", label: "Cách đỉnh 52T" },
 ];
-
 function cell(r, k) {
   switch (k) {
     case "rank": return `<td class="rank">${r.rank}</td>`;
@@ -307,14 +629,12 @@ function cell(r, k) {
     case "cach_dinh_52t": return `<td>${pct(r.cach_dinh_52t)}</td>`;
   }
 }
-
 function filtered() {
   const q = state.q.trim().toLowerCase();
-  let out = rows.filter(r =>
+  const out = rows.filter(r =>
     (state.tab === "all" || r.top) &&
     (!q || r.ma.toLowerCase().includes(q) || (r.ten || "").toLowerCase().includes(q)) &&
-    (!state.nganh || r.nganh === state.nganh) &&
-    (!state.san || r.san === state.san) &&
+    (!state.nganh || r.nganh === state.nganh) && (!state.san || r.san === state.san) &&
     (!state.grades.size || state.grades.has(r.xep_loai)));
   const k = state.sort, dir = state.dir;
   out.sort((a, b) => {
@@ -326,195 +646,352 @@ function filtered() {
   });
   return out;
 }
-
 function renderHead() {
   document.querySelector("#tbl thead").innerHTML = "<tr>" + COLS.map(c => {
     const s = state.sort === c.k ? ` aria-sort="${state.dir < 0 ? "descending" : "ascending"}"` : "";
     return `<th class="${c.left ? "l" : ""}"${s}><button data-k="${c.k}">${c.label}</button></th>`;
   }).join("") + "</tr>";
 }
-
 function renderTable() {
   const list = filtered();
-  const tb = document.querySelector("#tbl tbody");
-  tb.innerHTML = list.map(r =>
-    `<tr tabindex="0" data-ma="${esc(r.ma)}" aria-selected="${r.ma === state.sel}">${COLS.map(c => cell(r, c.k)).join("")}</tr>`).join("");
-  document.getElementById("empty").hidden = list.length > 0;
-  document.getElementById("shown").textContent = `Đang hiện ${list.length} mã`;
+  document.querySelector("#tbl tbody").innerHTML = list.map(r =>
+    `<tr class="click" tabindex="0" data-ma="${esc(r.ma)}" aria-selected="${r.ma === state.sel}">${COLS.map(c => cell(r, c.k)).join("")}</tr>`).join("");
+  $("empty").hidden = list.length > 0;
+  $("shown").textContent = `Đang hiện ${list.length} mã`;
   if (list.length && !list.some(r => r.ma === state.sel)) select(list[0].ma, false);
-  if (!list.length) document.getElementById("detail").innerHTML = "";
+  else if (state.sel) renderDetail(byMa[state.sel]);
+  if (!list.length) $("detail").innerHTML = "";
 }
-
 function select(ma, scroll) {
   state.sel = ma;
   document.querySelectorAll("#tbl tbody tr").forEach(tr => tr.setAttribute("aria-selected", tr.dataset.ma === ma));
-  renderDetail(rows.find(r => r.ma === ma));
-  if (scroll && window.matchMedia("(max-width: 1100px)").matches)
-    document.getElementById("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+  renderDetail(byMa[ma]);
+  if (scroll && window.matchMedia("(max-width: 1100px)").matches) $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-// Biểu đồ giá 200 phiên với MA20, MA50
-function sma(a, n) {
-  return a.map((_, i) => {
-    if (i < n - 1) return null;
-    let s = 0;
-    for (let j = i - n + 1; j <= i; j++) { if (a[j] == null) return null; s += a[j]; }
-    return s / n;
-  });
-}
-function chartSVG(closes) {
-  const W = 380, H = 180, L = 4, R = 56, T = 10, B = 22;
-  const ma20 = sma(closes, 20), ma50 = sma(closes, 50);
-  const vals = closes.concat(ma20, ma50).filter(v => v != null);
-  if (!vals.length) return "";
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  const pad = (hi - lo) * 0.06 || hi * 0.05; lo -= pad; hi += pad;
-  const n = closes.length;
-  const x = i => L + (W - L - R) * i / (n - 1);
-  const y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
-  const path = a => { let d = "", pen = false; a.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1); pen = true; }); return d; };
-  const first = closes.findIndex(v => v != null);
-  const area = path(closes) + `L${x(n - 1).toFixed(1)} ${H - B}L${x(first).toFixed(1)} ${H - B}Z`;
-  const ticks = [0, 1, 2, 3].map(i => lo + (hi - lo) * (0.1 + 0.8 * i / 3));
-  const last = closes[n - 1];
-  const dates = D.ngay;
-  const xl = [0, Math.floor((n - 1) / 2), n - 1];
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ giá 200 phiên">
-    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/>
-      <text x="${W - R + 6}" y="${y(t) + 4}" font-size="10" fill="var(--muted)" font-family="var(--f-num)">${fmt(t / 1000, 1)}</text>`).join("")}
-    ${xl.map((i, j) => `<text x="${x(i)}" y="${H - 6}" font-size="10" fill="var(--muted)" font-family="var(--f-num)" text-anchor="${["start", "middle", "end"][j]}">${dates[i] ? dates[i].slice(8, 10) + "/" + dates[i].slice(5, 7) + "/" + dates[i].slice(2, 4) : ""}</text>`).join("")}
-    <path d="${area}" fill="var(--accent)" fill-opacity=".08" stroke="none"/>
-    <path d="${path(ma50)}" fill="none" stroke="var(--ceil)" stroke-width="1.3"/>
-    <path d="${path(ma20)}" fill="none" stroke="var(--ref)" stroke-width="1.3"/>
-    <path d="${path(closes)}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/>
-    ${last != null ? `<circle cx="${x(n - 1)}" cy="${y(last)}" r="3.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5"/>
-      <rect x="${W - R + 2}" y="${y(last) - 9}" width="${R - 4}" height="18" rx="4" fill="var(--accent)"/>
-      <text x="${W - R + 6}" y="${y(last) + 4}" font-size="10.5" font-weight="600" fill="var(--surface)" font-family="var(--f-num)">${fmt(last / 1000, 2)}</text>` : ""}
-  </svg>`;
-}
-
 function parts(list) {
   return `<div class="parts">${list.map(([name, p, mx]) => {
     const w = Math.max(0, Math.min(100, p / mx * 100));
     return `<div class="part"><span>${esc(name)}</span><span class="pbar"><i class="${w >= 99.9 ? "full" : w === 0 ? "zero" : ""}" style="width:${w}%"></i></span><span class="pts">${fmt(p, p % 1 ? 1 : 0)}/${mx}</span></div>`;
   }).join("")}</div>`;
 }
-
 function metrics(items) {
   return `<dl class="metrics">${items.map(([k, v, c]) => `<div><dt>${k}</dt><dd class="${c || ""}">${v}</dd></div>`).join("")}</dl>`;
 }
-
 function chips(text, kind) {
   const list = (text || "").split(";").map(s => s.trim()).filter(Boolean);
   return list.length ? list.map(s => `<span class="chip ${kind}">${esc(s)}</span>`).join("") : `<span class="none">Không có</span>`;
 }
-
 function renderDetail(r) {
-  const el = document.getElementById("detail");
+  const el = $("detail");
   if (!r) { el.innerHTML = ""; return; }
-  const closes = D.gia_200[r.ma] || [];
   const bank = r.loai === "NH";
-  const health = bank
-    ? [["Nợ xấu", pct(r.npl, 2)], ["NIM", pct(r.nim, 2)]]
-    : [["Nợ vay/VCSH", r.no_vay_vcsh == null ? "–" : fmt(r.no_vay_vcsh, 2)]];
+  const health = bank ? [["Nợ xấu", pct(r.npl, 2)], ["NIM", pct(r.nim, 2)]] : [["Nợ vay/VCSH", r.no_vay_vcsh == null ? "–" : fmt(r.no_vay_vcsh, 2)]];
   el.innerHTML = `
     <div class="d-head">
-      <div class="d-top"><h2>${esc(r.ma)}</h2><span class="badge g-${r.xep_loai}" title="Hạng">${r.xep_loai}</span>${r.top ? `<span class="tag">Top</span>` : ""}</div>
+      <div class="d-top"><h3>${esc(r.ma)}</h3><span class="badge g-${r.xep_loai}" title="Hạng">${r.xep_loai}</span>${r.top ? `<span class="tag">Top</span>` : ""}</div>
       <p class="d-name">${esc(r.ten)}</p>
       <p class="d-meta">${esc(r.nganh)} · ${esc(r.san)} · BCTC ${esc(r.ky_bctc || "–")} · hạng ${r.rank}/${rows.length}</p>
       <div class="d-price"><strong>${fmt(r.gia)}</strong><span class="${chgClass(r)}">${pct(r.thay_doi, 2, true)}</span></div>
     </div>
-    <div class="d-sec chart">
-      ${chartSVG(closes)}
-      <div class="legend"><span><i style="background:var(--accent)"></i>Giá (nghìn đồng)</span><span><i style="background:var(--ref)"></i>MA20</span><span><i style="background:var(--ceil)"></i>MA50</span><span>200 phiên</span></div>
-    </div>
-    <div class="d-sec">
-      <div class="total">
-        <span class="big">${fmt(r.diem_tong, 1)}</span>
-        <div class="split">
-          <span>Điểm tổng = ${fmt(D.trong_so.co_ban * 100)}% PTCB + ${fmt(D.trong_so.ky_thuat * 100)}% PTKT</span>
-          <span class="bar" style="width:100%"><i class="fill-${r.xep_loai}" style="width:${r.diem_tong}%"></i></span>
-        </div>
-      </div>
-    </div>
-    <div class="d-sec"><h3>Phân tích cơ bản <span class="num">${fmt(r.diem_cb)}/100</span></h3>${parts(r.phan_cb || [])}</div>
-    <div class="d-sec"><h3>Phân tích kỹ thuật <span class="num">${fmt(r.diem_kt, 1)}/100</span></h3>${parts(r.phan_kt || [])}</div>
-    <div class="d-sec"><h3>Định giá</h3>${metrics([
+    <div class="d-sec chart">${chartSVG(D.gia_200[r.ma] || [], D.ngay, { label: "Giá " + r.ma })}
+      <div class="legend"><span><i style="background:var(--accent)"></i>Giá (nghìn đồng)</span><span><i style="background:var(--ref)"></i>MA20</span><span><i style="background:var(--ceil)"></i>MA50</span><span>200 phiên</span></div></div>
+    <div class="d-sec"><div class="total"><span class="big">${fmt(r.diem_tong, 1)}</span>
+      <div class="split"><span>Điểm tổng = ${fmt(D.trong_so.co_ban * 100)}% PTCB + ${fmt(D.trong_so.ky_thuat * 100)}% PTKT</span>
+      <span class="bar" style="width:100%"><i class="fill-${r.xep_loai}" style="width:${r.diem_tong}%"></i></span></div></div></div>
+    <div class="d-sec"><h4>Phân tích cơ bản <span class="num">${fmt(r.diem_cb)}/100</span></h4>${parts(r.phan_cb || [])}</div>
+    <div class="d-sec"><h4>Phân tích kỹ thuật <span class="num">${fmt(r.diem_kt, 1)}/100</span></h4>${parts(r.phan_kt || [])}</div>
+    <div class="d-sec"><h4>Định giá</h4>${metrics([
       ["P/E", r.pe > 0 ? fmt(r.pe, 1) : "–"], ["P/E ngành", fmt(r.pe_nganh, 1)], ["P/B", fmt(r.pb, 2)],
-      ["PEG", fmt(r.peg, 2)], ["Cổ tức", pct(r.co_tuc, 1)], ["Vốn hoá", r.von_hoa_ty ? fmt(r.von_hoa_ty) + " tỷ" : "–"],
-    ])}</div>
-    <div class="d-sec"><h3>Hiệu quả và tăng trưởng</h3>${metrics([
+      ["PEG", fmt(r.peg, 2)], ["Cổ tức", pct(r.co_tuc, 1)], ["Vốn hoá", r.von_hoa_ty ? fmt(r.von_hoa_ty) + " tỷ" : "–"]])}</div>
+    <div class="d-sec"><h4>Hiệu quả và tăng trưởng</h4>${metrics([
       ["ROE", pct(r.roe, 1)], ["ROA", pct(r.roa, 1)], ...health,
       ["LN 4 quý", pct(r.tt_ln_ttm, 0, true), cls(r.tt_ln_ttm)], ["LN quý", pct(r.tt_ln_quy, 0, true), cls(r.tt_ln_quy)],
-      ["DT 4 quý", pct(r.tt_dt_ttm, 0, true), cls(r.tt_dt_ttm)], ["DT quý", pct(r.tt_dt_quy, 0, true), cls(r.tt_dt_quy)],
-    ])}</div>
-    <div class="d-sec"><h3>Kỹ thuật</h3>${metrics([
+      ["DT 4 quý", pct(r.tt_dt_ttm, 0, true), cls(r.tt_dt_ttm)], ["DT quý", pct(r.tt_dt_quy, 0, true), cls(r.tt_dt_quy)]])}</div>
+    <div class="d-sec"><h4>Kỹ thuật</h4>${metrics([
       ["RSI 14", fmt(r.rsi14), r.rsi14 > 75 ? "ref" : ""], ["RS (1–99)", fmt(r.rs)], ["Cách đỉnh 52T", pct(r.cach_dinh_52t, 1)],
       ["So MA50", pct(r.pct_ma50, 1, true), cls(r.pct_ma50)], ["So MA200", pct(r.pct_ma200, 1, true), cls(r.pct_ma200)],
       ["Vượt VN-Index 3T", pct(r.vuot_vnindex_3t, 1, true), cls(r.vuot_vnindex_3t)],
       ["Hiệu suất 1T", pct(r.r1t, 1, true), cls(r.r1t)], ["Hiệu suất 3T", pct(r.r3t, 1, true), cls(r.r3t)], ["Hiệu suất 6T", pct(r.r6t, 1, true), cls(r.r6t)],
-      ["GTGD TB20", fmt(r.gtgd_tb20 / 1e9, 1) + " tỷ"], ["ATR", pct(r.atr_pct, 1)], ["Beta", fmt(r.beta, 2)],
-    ])}</div>
-    <div class="d-sec"><h3>Điểm mạnh</h3><div class="chips">${chips(r.diem_manh, "good")}</div></div>
-    <div class="d-sec"><h3>Lưu ý</h3><div class="chips">${chips(r.luu_y, "warn")}</div></div>`;
+      ["GTGD TB20", fmt(r.gtgd_tb20 / 1e9, 1) + " tỷ"], ["ATR", pct(r.atr_pct, 1)], ["Beta", fmt(r.beta, 2)]])}</div>
+    <div class="d-sec"><h4>Điểm mạnh</h4><div class="chips">${chips(r.diem_manh, "good")}</div></div>
+    <div class="d-sec"><h4>Lưu ý</h4><div class="chips">${chips(r.luu_y, "warn")}</div></div>`;
 }
-
-function renderMarket() {
-  const v = D.vnindex.filter(x => x != null);
-  if (v.length) {
-    document.getElementById("vni-last").textContent = fmt(v[v.length - 1], 2);
-    const c = document.getElementById("vni-3m");
-    c.textContent = `${pct(D.vni3m, 1, true)} trong 3 tháng`;
-    c.className = "chg " + cls(D.vni3m);
-    const W = 220, H = 52, lo = Math.min(...v), hi = Math.max(...v);
-    const x = i => W * i / (v.length - 1), y = p => 4 + (H - 8) * (1 - (p - lo) / (hi - lo || 1));
-    const d = v.map((p, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p).toFixed(1)).join("");
-    document.getElementById("vni-spark").innerHTML =
-      `<path d="${d}L${W} ${H}L0 ${H}Z" fill="var(--accent)" fill-opacity=".1"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
-  }
-  const lastDay = D.ngay[D.ngay.length - 1];
-  document.getElementById("eyebrow").textContent = `${D.san.join(" · ")} · Phân tích cơ bản + kỹ thuật`;
-  document.getElementById("sub-text").textContent = D.trong_phien
-    ? `Giá trong phiên ${dmy(lastDay)} · cập nhật lúc ${D.tao_luc.slice(11)}`
-    : `Dữ liệu đến phiên ${dmy(lastDay)} · cập nhật lúc ${D.tao_luc.slice(11)} ngày ${dmy(D.tao_luc.slice(0, 10))}`;
-  document.getElementById("f1").textContent = fmt(D.dem.xet);
-  document.getElementById("f1t").textContent = `mã trên ${D.san.join(", ")} được quét`;
-  document.getElementById("f2").textContent = fmt(D.dem.thanh_khoan);
-  document.getElementById("f2t").textContent = `đạt thanh khoản (GTGD ≥ ${fmt(D.loc.gtgd_tb20_toi_thieu_ty)} tỷ/phiên, giá ≥ ${fmt(D.loc.gia_toi_thieu)}đ)`;
-  document.getElementById("f3").textContent = fmt(D.dem.top);
-  document.getElementById("f3t").textContent = `đạt cả PTCB ≥ ${D.loc_top.diem_co_ban_toi_thieu} và PTKT ≥ ${D.loc_top.diem_ky_thuat_toi_thieu}, giá trên MA50`;
-  document.getElementById("cnt-top").textContent = rows.filter(r => r.top).length;
-  document.getElementById("cnt-all").textContent = rows.length;
-}
-
-function renderFilters() {
+function renderBang() {
+  $("f1").textContent = fmt(D.dem.xet);
+  $("f1t").textContent = `mã trên ${D.san.join(", ")} được quét`;
+  $("f2").textContent = fmt(D.dem.thanh_khoan);
+  $("f2t").textContent = `đạt thanh khoản (GTGD ≥ ${fmt(D.loc.gtgd_tb20_toi_thieu_ty)} tỷ/phiên, giá ≥ ${fmt(D.loc.gia_toi_thieu)}đ)`;
+  $("f3").textContent = fmt(D.dem.top);
+  $("f3t").textContent = `đạt cả PTCB ≥ ${D.loc_top.diem_co_ban_toi_thieu} và PTKT ≥ ${D.loc_top.diem_ky_thuat_toi_thieu}, giá trên MA50`;
+  $("cnt-top").textContent = rows.filter(r => r.top).length;
+  $("cnt-all").textContent = rows.length;
   const count = {};
   rows.forEach(r => { count[r.nganh] = (count[r.nganh] || 0) + 1; });
-  document.getElementById("nganh").innerHTML = `<option value="">Tất cả ngành</option>` +
+  $("nganh").innerHTML = `<option value="">Tất cả ngành</option>` +
     Object.keys(count).sort((a, b) => a.localeCompare(b, "vi")).map(n => `<option value="${esc(n)}">${esc(n)} (${count[n]})</option>`).join("");
-  document.getElementById("san").innerHTML = `<option value="">Tất cả sàn</option>` +
-    [...new Set(rows.map(r => r.san))].sort().map(s => `<option>${esc(s)}</option>`).join("");
-}
-
-function renderMethod() {
-  document.getElementById("method").innerHTML = D.giai_thich.filter(([a, b]) => a || b).map(([a, b]) =>
+  $("san").innerHTML = `<option value="">Tất cả sàn</option>` + [...new Set(rows.map(r => r.san))].sort().map(s => `<option>${esc(s)}</option>`).join("");
+  $("nganh").value = state.nganh; $("san").value = state.san;
+  $("method").innerHTML = D.giai_thich.filter(([a, b]) => a || b).map(([a, b]) =>
     b ? `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>` : `<tr class="h"><td colspan="2">${esc(a)}</td></tr>`).join("");
+  renderHead(); renderTable();
 }
 
-function setTab(t) {
-  state.tab = t;
-  try { localStorage.setItem("blcp.tab", t); } catch (e) {}
-  document.getElementById("tab-top").setAttribute("aria-selected", t === "top");
-  document.getElementById("tab-all").setAttribute("aria-selected", t === "all");
-  renderTable();
+// ---------- Tab: Danh mục ----------
+let DM = store.get("blcp.danhmuc", []);
+if (!Array.isArray(DM)) DM = [];
+let editing = null;
+const SIG = {
+  CAT_LO: "Cắt lỗ", BAN: "Bán: chạm điểm dừng lãi", GIAM: "Giảm tỷ trọng", CHOT: "Chốt lời một phần",
+  THAN_TRONG: "Thận trọng", GIU: "Giữ", NA: "Chưa có dữ liệu",
+};
+const SIG_ORDER = ["CAT_LO", "BAN", "GIAM", "CHOT", "THAN_TRONG", "GIU", "NA"];
+
+function phienTu(ngay) {
+  if (!ngay) return null;
+  const a = new Date(ngay + "T00:00:00"), b = new Date((D.ngay[D.ngay.length - 1] || D.tao_luc.slice(0, 10)) + "T00:00:00");
+  let n = 0;
+  for (let d = new Date(a); d < b; d.setDate(d.getDate() + 1)) { const w = d.getDay(); if (w !== 0 && w !== 6) n++; }
+  return n;
 }
 
-document.getElementById("tab-top").onclick = () => setTab("top");
-document.getElementById("tab-all").onclick = () => setTab("all");
-document.getElementById("q").oninput = e => { state.q = e.target.value; renderTable(); };
-document.getElementById("nganh").onchange = e => { state.nganh = e.target.value; renderTable(); };
-document.getElementById("san").onchange = e => { state.san = e.target.value; renderTable(); };
-document.getElementById("grades").onclick = e => {
+// Áp quy tắc cho một vị thế. Thứ tự ưu tiên: cắt lỗ → dừng lãi → xu hướng xấu → chốt lời → thận trọng → giữ.
+function danhGia(h, tongGiaTri) {
+  const r = byMa[h.ma], k = (D.tat_ca || {})[h.ma];
+  const x = r || k ? { ...(k || {}), ...(r || {}) } : null;
+  if (!x || x.gia == null) return { sig: "NA", ly_do: ["Mã không thuộc HOSE/HNX hoặc chưa có dữ liệu giá"], gia: null };
+  const c = D.cfg_danh_muc, gia = x.gia, lai = gia / h.gia_von - 1;
+  const catCung = h.gia_von * (1 - c.cat_lo_pct);
+  // Đỉnh để tính điểm dừng lãi: đỉnh đóng cửa kể từ ngày mua (nếu biết ngày mua và có chuỗi giá);
+  // không có ngày mua thì dùng đỉnh 20 phiên nhưng chỉ khi đã lãi ≥ 10% (giả định đỉnh hình thành khi đang nắm giữ).
+  let dinh = null;
+  const closes = D.gia_200[h.ma];
+  if (h.ngay && closes) {
+    const i0 = D.ngay.findIndex(d => d >= h.ngay);
+    if (i0 >= 0) dinh = Math.max(...closes.slice(i0).filter(v => v != null));
+  } else if (h.ngay) {
+    const ph = phienTu(h.ngay);
+    if (ph != null && ph >= 20) dinh = x.dinh_dong_cua_20p;
+  } else if (lai >= 0.10) {
+    dinh = x.dinh_dong_cua_20p;
+  }
+  let dungLai = dinh != null && x.atr != null ? dinh - c.atr_dung_lai * x.atr : null;
+  if (dungLai != null && dungLai <= h.gia_von) dungLai = null;  // chỉ dùng khi điểm dừng đã bảo vệ được lãi
+  const nguong = dungLai != null ? Math.max(catCung, dungLai) : catCung;
+  const ly_do = [];
+  let sig = "GIU";
+  const tt = D.thi_truong ? D.thi_truong.trang_thai : "trung_tinh";
+  if (gia <= catCung) {
+    sig = "CAT_LO"; ly_do.push(`Lỗ ${pct(lai, 1)}, chạm ngưỡng cắt lỗ −${pct(c.cat_lo_pct)} so với giá vốn`);
+  } else if (dungLai != null && gia < dungLai) {
+    sig = "BAN"; ly_do.push(`Giá thủng điểm dừng lãi ${fmt(dungLai)} (đỉnh ${fmt(dinh)} − ${fmt(c.atr_dung_lai, 1)}×ATR), còn lãi ${pct(lai, 1)}`);
+  } else if (x.ma50 != null && gia < x.ma50 && !x.ma50_tang) {
+    sig = "GIAM"; ly_do.push("Giá dưới MA50 và MA50 đang đi xuống: xu hướng trung hạn xấu đi");
+  } else if (x.ma200 != null && gia < x.ma200 && lai < 0) {
+    sig = "GIAM"; ly_do.push("Đang lỗ và giá dưới MA200 (xu hướng dài hạn giảm)");
+  } else if (lai >= c.chot_loi_pct && ((x.rsi14 || 0) > 75 || (x.pct_ma50 || 0) > 0.2)) {
+    sig = "CHOT"; ly_do.push(`Lãi ${pct(lai, 1)} ≥ ${pct(c.chot_loi_pct)} và giá đã nóng (RSI ${fmt(x.rsi14)}, cao hơn MA50 ${pct(x.pct_ma50)})`);
+  } else if (tt === "rui_ro" && lai < 0 && x.ma20 != null && gia < x.ma20) {
+    sig = "THAN_TRONG"; ly_do.push("Thị trường rủi ro cao, vị thế đang lỗ và dưới MA20: không bình quân giá xuống");
+  } else {
+    ly_do.push(lai >= 0 ? "Xu hướng còn giữ, chưa chạm ngưỡng dừng" : `Lỗ ${pct(lai, 1)} vẫn trong giới hạn cắt lỗ`);
+  }
+  if (r && r.tt_ln_quy != null && r.tt_ln_quy < -0.2) ly_do.push(`LN quý gần nhất giảm ${pct(r.tt_ln_quy)} so với cùng kỳ`);
+  if (x.rsi14 != null && x.rsi14 > 80 && sig === "GIU") ly_do.push(`RSI ${fmt(x.rsi14)}: quá mua`);
+  const gt = gia * h.kl;
+  if (tongGiaTri > 0 && gt / tongGiaTri > c.ty_trong_toi_da) ly_do.push(`Tỷ trọng ${pct(gt / tongGiaTri)} vượt ${pct(c.ty_trong_toi_da)}: rủi ro tập trung`);
+  const ph = phienTu(h.ngay);
+  if (ph != null && ph < 2) ly_do.push("Hàng mua chưa về tài khoản (T+2), chưa bán được");
+  return { sig, ly_do, gia, lai, nguong, gia_tri: gt, thay_doi: x.thay_doi, san: x.san };
+}
+
+function renderDanhMuc() {
+  regimeBox($("dm-regime"));
+  const tong = DM.reduce((s, h) => { const x = byMa[h.ma] || (D.tat_ca || {})[h.ma]; return s + (x && x.gia != null ? x.gia : h.gia_von) * h.kl; }, 0);
+  const evals = DM.map(h => ({ h, e: danhGia(h, tong) }));
+  evals.sort((a, b) => SIG_ORDER.indexOf(a.e.sig) - SIG_ORDER.indexOf(b.e.sig));
+  const von = DM.reduce((s, h) => s + h.gia_von * h.kl, 0);
+  const lai = tong - von;
+  const canLam = evals.filter(({ e }) => ["CAT_LO", "BAN", "GIAM", "CHOT"].includes(e.sig)).length;
+  $("n-dm").textContent = DM.length;
+  $("pf-empty").hidden = DM.length > 0;
+  $("pf-tiles").hidden = !DM.length;
+  $("pf-tiles").innerHTML = `
+    <div><dt>Tổng vốn</dt><dd>${fmt(von)}</dd></div>
+    <div><dt>Giá trị hiện tại</dt><dd>${fmt(tong)}</dd></div>
+    <div><dt>Lãi/lỗ</dt><dd class="${cls(lai)}">${lai > 0 ? "+" : ""}${fmt(lai)}<small>${pct(von ? lai / von : 0, 1, true)}</small></dd></div>
+    <div><dt>Vị thế cần xử lý theo quy tắc</dt><dd class="${canLam ? "down" : "up"}">${canLam}<small>/ ${DM.length} mã</small></dd></div>`;
+  $("pf-body").innerHTML = evals.map(({ h, e }) => `<tr>
+    <td class="l tk"><b>${esc(h.ma)}</b><small>${h.ngay ? "Mua " + dmy(h.ngay) : ""}</small></td>
+    <td>${fmt(h.kl)}</td><td>${fmt(h.gia_von)}</td>
+    <td>${e.gia == null ? "–" : `${fmt(e.gia)} <small class="${chgClass({ thay_doi: e.thay_doi, san: e.san })}">${pct(e.thay_doi, 1, true)}</small>`}</td>
+    <td class="${cls(e.lai)}">${e.lai == null ? "–" : pct(e.lai, 1, true)}</td>
+    <td>${e.gia_tri && tong ? pct(e.gia_tri / tong) : "–"}</td>
+    <td class="l"><span class="sig sig-${e.sig}">${SIG[e.sig]}</span></td>
+    <td>${e.nguong ? fmt(Math.round(e.nguong)) : "–"}</td>
+    <td class="wrap">${e.ly_do.map(esc).join("<br>")}</td>
+    <td><button class="btn small" data-edit="${h.id}">Sửa</button> <button class="btn small danger" data-del="${h.id}">Xoá</button></td>
+  </tr>`).join("");
+  const dm = D.cfg_danh_muc;
+  $("dm-rules").innerHTML = [
+    ["Cắt lỗ", `Giá ≤ giá vốn − ${pct(dm.cat_lo_pct)}`],
+    ["Bán: chạm điểm dừng lãi", `Giá xuống dưới (đỉnh đóng cửa kể từ ngày mua − ${fmt(dm.atr_dung_lai, 1)} × ATR14), khi mức này đã cao hơn giá vốn. Không nhập ngày mua thì dùng đỉnh 20 phiên, chỉ áp dụng khi đã lãi ≥ 10%`],
+    ["Giảm tỷ trọng", "Giá dưới MA50 và MA50 đi xuống; hoặc đang lỗ và giá dưới MA200"],
+    ["Chốt lời một phần", `Lãi ≥ ${pct(dm.chot_loi_pct)} và giá nóng (RSI14 > 75 hoặc cao hơn MA50 trên 20%)`],
+    ["Thận trọng", "Bối cảnh thị trường Rủi ro cao, vị thế đang lỗ và giá dưới MA20"],
+    ["Giữ", "Không chạm điều kiện nào ở trên"],
+    ["Ngưỡng dừng", "Mức giá mà nếu thủng sẽ chuyển sang Cắt lỗ/Bán: đang lãi thì lấy mức cao hơn giữa cắt lỗ cứng và điểm dừng lãi"],
+    ["Cảnh báo thêm", `LN quý giảm > 20%; RSI > 80; tỷ trọng một mã > ${pct(dm.ty_trong_toi_da)}; hàng chưa về (T+2)`],
+  ].map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
+  const opts = Object.keys(D.tat_ca || {}).sort();
+  if ($("dl-ma").childElementCount !== opts.length)
+    $("dl-ma").innerHTML = opts.map(m => `<option value="${m}">${esc((D.tat_ca[m] || {}).ten || "")}</option>`).join("");
+}
+
+function parseGia(s) {
+  s = String(s).trim().replace(/\s/g, "");
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "");
+  s = s.replace(",", ".");
+  let v = parseFloat(s);
+  if (!(v > 0)) return null;
+  if (v < 1000) v *= 1000;  // nhập theo nghìn đồng, ví dụ 62,5 → 62.500
+  return Math.round(v);
+}
+function parseKL(s) { const v = parseInt(String(s).replace(/[.,\s]/g, ""), 10); return v > 0 ? v : null; }
+function saveDM() { store.set("blcp.danhmuc", DM); }
+
+$("pf-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const ma = $("f-ma").value.trim().toUpperCase(), gia = parseGia($("f-gia").value), kl = parseKL($("f-kl").value);
+  const err = $("f-err");
+  const msg = !/^[A-Z0-9]{3,6}$/.test(ma) ? "Mã cổ phiếu không hợp lệ, ví dụ: FPT."
+    : !gia ? "Nhập giá vốn, ví dụ 62.000 hoặc 62 (nghìn đồng)."
+    : !kl ? "Nhập khối lượng cổ phiếu, ví dụ 1.000." : "";
+  err.hidden = !msg; err.textContent = msg;
+  if (msg) return;
+  const item = { id: editing || Date.now().toString(36), ma, gia_von: gia, kl, ngay: $("f-ngay").value || "" };
+  if (editing) DM = DM.map(h => h.id === editing ? item : h); else DM.push(item);
+  editing = null; saveDM();
+  e.target.reset(); $("f-submit").textContent = "Thêm vào danh mục"; $("f-cancel").hidden = true;
+  $("pf-link").hidden = true; $("pf-share-msg").textContent = "";
+  renderDanhMuc();
+});
+$("f-cancel").onclick = () => { editing = null; $("pf-form").reset(); $("f-submit").textContent = "Thêm vào danh mục"; $("f-cancel").hidden = true; };
+$("pf-body").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.edit) {
+    const h = DM.find(x => x.id === b.dataset.edit); if (!h) return;
+    editing = h.id;
+    $("f-ma").value = h.ma; $("f-gia").value = fmt(h.gia_von); $("f-kl").value = fmt(h.kl); $("f-ngay").value = h.ngay || "";
+    $("f-submit").textContent = "Lưu thay đổi"; $("f-cancel").hidden = false;
+    $("pf-form").scrollIntoView({ behavior: "smooth", block: "center" }); $("f-gia").focus();
+  }
+  if (b.dataset.del) {
+    if (b.dataset.armed !== "1") {  // bấm 2 lần để xoá
+      b.dataset.armed = "1"; b.textContent = "Bấm lần nữa để xoá";
+      setTimeout(() => { if (b.isConnected) { b.dataset.armed = ""; b.textContent = "Xoá"; } }, 3000);
+      return;
+    }
+    DM = DM.filter(x => x.id !== b.dataset.del); saveDM(); renderDanhMuc();
+  }
+});
+
+// Link danh mục: mã hoá trong phần # của địa chỉ (không gửi lên máy chủ)
+const b64e = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const b64d = s => decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))));
+$("pf-share").onclick = async () => {
+  if (!DM.length) { $("pf-share-msg").textContent = "Danh mục đang trống."; return; }
+  const code = b64e(JSON.stringify(DM.map(h => [h.ma, h.gia_von, h.kl, h.ngay || ""])));
+  const url = location.href.split("#")[0] + "#dm-" + code;
+  const inp = $("pf-link"); inp.hidden = false; inp.value = url;
+  try { await navigator.clipboard.writeText(url); $("pf-share-msg").textContent = "Đã sao chép link. Mở link này trên máy khác để nạp danh mục."; }
+  catch (e) { inp.select(); $("pf-share-msg").textContent = "Sao chép link trong ô trên (Ctrl+C)."; }
+};
+function importFromHash() {
+  const h = location.hash;
+  if (!h.startsWith("#dm-")) return false;
+  let list;
+  try { list = JSON.parse(b64d(h.slice(4))).map((a, i) => ({ id: Date.now().toString(36) + i, ma: a[0], gia_von: a[1], kl: a[2], ngay: a[3] || "" })); }
+  catch (e) { return false; }
+  history.replaceState(null, "", location.pathname + "#danh-muc");
+  if (!DM.length) { DM = list; saveDM(); return true; }
+  const bn = $("pf-import");
+  bn.hidden = false;
+  bn.innerHTML = `<span>Link chứa danh mục ${list.length} mã (${esc(list.map(x => x.ma).join(", "))}). Máy này đang có danh mục ${DM.length} mã.</span>
+    <button class="btn primary" id="imp-yes" type="button">Thay bằng danh mục trong link</button><button class="btn" id="imp-no" type="button">Giữ danh mục hiện tại</button>`;
+  $("imp-yes").onclick = () => { DM = list; saveDM(); bn.hidden = true; renderDanhMuc(); };
+  $("imp-no").onclick = () => { bn.hidden = true; };
+  return true;
+}
+
+// ---------- Tab: Thị trường ----------
+function renderThiTruong() {
+  const t = D.thi_truong;
+  if (!t) return;
+  const col = { thuan_loi: "up", trung_tinh: "ref", rui_ro: "down" }[t.trang_thai];
+  $("mk-regime").innerHTML = `
+    <div class="d-sec"><h4>Bối cảnh thị trường</h4>
+      <div class="total"><span class="big ${col}">${t.diem}</span><div class="split"><b class="${col}" style="font-size:16px">${esc(t.nhan)}</b>
+      <span>${esc(RG_TEXT[t.trang_thai].replace("{n}", D.cfg_co_hoi.so_ma_toi_da[t.trang_thai]))}</span></div></div>
+      <div class="gauge"><i style="left:${t.diem}%"></i></div><div class="gauge-l"><span>0 · Rủi ro cao</span><span>45</span><span>65</span><span>Thuận lợi · 100</span></div></div>
+    <div class="d-sec"><h4>Các yếu tố (điểm gốc 50)</h4><ul class="factors">${t.yeu_to.map(([s, p]) =>
+      `<li><span>${esc(s)}</span><b class="${p > 0 ? "up" : p < 0 ? "down" : "muted"}">${p > 0 ? "+" : ""}${p}</b></li>`).join("")}</ul></div>`;
+  const v = D.vnindex_dai;
+  if (v) $("mk-chart").innerHTML = `<h4>VN-Index 250 phiên <span class="num">${fmt(t.vni, 2)} <span class="${cls(t.vni_thay_doi)}">${pct(t.vni_thay_doi, 2, true)}</span></span></h4>
+    ${chartSVG(v.c, v.ngay, { show: 250, ma: [50, 200], div: 1, dec: 0, h: 200, label: "VN-Index" })}
+    <div class="legend"><span><i style="background:var(--accent)"></i>VN-Index</span><span><i style="background:var(--ref)"></i>MA50</span><span><i style="background:var(--ceil)"></i>MA200</span>
+    <span>1 tháng ${pct(t.vni_1t, 1, true)} · 3 tháng ${pct(t.vni_3t, 1, true)} · RSI ${fmt(t.vni_rsi)}</span></div>`;
+  $("mk-breadth").innerHTML = `
+    <div><dt>Cổ phiếu trên MA50</dt><dd class="${t.do_rong_ma50 >= .6 ? "up" : t.do_rong_ma50 <= .4 ? "down" : "ref"}">${pct(t.do_rong_ma50)}</dd></div>
+    <div><dt>Cổ phiếu trên MA200</dt><dd>${pct(t.do_rong_ma200)}</dd></div>
+    <div><dt>Tăng / giảm / đứng</dt><dd><span class="up">${t.so_ma_tang}</span> / <span class="down">${t.so_ma_giam}</span> / <span class="ref">${t.so_ma_dung}</span></dd></div>
+    <div><dt>Ngày phân phối (25 phiên)</dt><dd class="${t.ngay_phan_phoi >= 6 ? "down" : t.ngay_phan_phoi <= 3 ? "up" : "ref"}">${t.ngay_phan_phoi ?? "–"}</dd></div>`;
+  $("mk-world").innerHTML = (D.the_gioi || []).map(w => {
+    const pt = w.don_vi !== "%";
+    const ch = v => v == null ? "–" : pt ? (v > 0 ? "+" : "") + fmt(v, 2) + " điểm" : pct(v, 1, true);
+    const eff = w.anh_huong > 0 ? ["good", "Thuận lợi"] : w.anh_huong < 0 ? ["bad", "Bất lợi"] : ["warn", "Trung tính"];
+    return `<tr><td class="l tk"><b style="font-family:var(--f-ui)">${esc(w.ten)}</b><small>${esc(w.nhom)} · ${dmy(w.ngay)}</small></td>
+      <td>${fmt(w.gia, w.gia > 1000 ? 0 : 2)}</td><td class="${cls(w.thay_doi)}">${ch(w.thay_doi)}</td><td class="${cls(w.thay_doi_1t)}">${ch(w.thay_doi_1t)}</td>
+      <td>${sparkSVG(w.spark, w.tren_ma50 ? "var(--up)" : "var(--down)")}</td>
+      <td class="l">${w.tren_ma50 ? '<span class="up">Trên MA50</span>' : '<span class="down">Dưới MA50</span>'}</td>
+      <td class="l"><span class="chip ${eff[0]}">${eff[1]}</span></td></tr>`;
+  }).join("") || `<tr><td colspan="7" class="empty">Chưa tải được dữ liệu thế giới.</td></tr>`;
+}
+
+// ---------- Điều hướng ----------
+const VIEWS = ["co-hoi", "bang-xep-hang", "danh-muc", "thi-truong"];
+function renderView() {
+  ({ "co-hoi": renderCoHoi, "bang-xep-hang": renderBang, "danh-muc": renderDanhMuc, "thi-truong": renderThiTruong })[state.view]();
+}
+function setView(v, push = true) {
+  if (!VIEWS.includes(v)) v = "co-hoi";
+  state.view = v;
+  VIEWS.forEach(x => { $("view-" + x).hidden = x !== v; });
+  document.querySelectorAll(".nav button").forEach(b => b.setAttribute("aria-current", b.dataset.v === v ? "page" : "false"));
+  store.set("blcp.view", v);
+  if (push) history.replaceState(null, "", location.pathname + location.search + "#" + v);
+  renderView();
+}
+document.querySelector(".nav").onclick = e => { const b = e.target.closest("button"); if (b) setView(b.dataset.v); };
+$("regime-pill").onclick = () => setView("thi-truong");
+$("ch-watch").addEventListener("click", e => {
+  const tr = e.target.closest("tr[data-ma]"); if (!tr) return;
+  state.tab = "all"; setTab("all", false); state.sel = tr.dataset.ma; setView("bang-xep-hang");
+  select(tr.dataset.ma, true);
+});
+$("ch-watch").addEventListener("keydown", e => { if (e.key === "Enter") e.target.closest("tr[data-ma]")?.click(); });
+
+function setTab(t, render = true) {
+  state.tab = t; store.set("blcp.tab", t);
+  $("tab-top").setAttribute("aria-selected", t === "top");
+  $("tab-all").setAttribute("aria-selected", t === "all");
+  if (render) renderTable();
+}
+$("tab-top").onclick = () => setTab("top");
+$("tab-all").onclick = () => setTab("all");
+$("q").oninput = e => { state.q = e.target.value; renderTable(); };
+$("nganh").onchange = e => { state.nganh = e.target.value; renderTable(); };
+$("san").onchange = e => { state.san = e.target.value; renderTable(); };
+$("grades").onclick = e => {
   const b = e.target.closest("button"); if (!b) return;
   const g = b.dataset.g;
   state.grades.has(g) ? state.grades.delete(g) : state.grades.add(g);
@@ -540,31 +1017,31 @@ tbody.onkeydown = e => {
   }
 };
 
-// Khi đăng trên web: định kỳ tải du_lieu.json (do máy chủ cập nhật) và vẽ lại, giữ nguyên bộ lọc và mã đang chọn
+// ---------- Tự cập nhật khi đăng trên web ----------
 async function poll() {
   if (document.hidden || !location.protocol.startsWith("http")) return;
   try {
     const res = await fetch("du_lieu.json?t=" + Date.now(), { cache: "no-store" });
     if (!res.ok) return;
     const nd = await res.json();
-    document.getElementById("live").hidden = false;
+    $("live").hidden = false;
     if (nd.tao_luc === D.tao_luc) return;
     load(nd);
-    renderMarket(); renderFilters();
-    document.getElementById("nganh").value = state.nganh;
-    document.getElementById("san").value = state.san;
-    renderTable();
-    if (state.sel && rows.some(r => r.ma === state.sel)) select(state.sel, false);
+    renderHeader(); renderView();
   } catch (e) { /* mất mạng hoặc không có du_lieu.json: giữ dữ liệu đang hiện */ }
 }
 
 async function boot() {
   if (!D) {
     try { D = await (await fetch("du_lieu.json", { cache: "no-store" })).json(); }
-    catch (e) { document.getElementById("sub-text").textContent = "Không tải được dữ liệu. Kiểm tra kết nối mạng rồi tải lại trang."; return; }
+    catch (e) { $("sub-text").textContent = "Không tải được dữ liệu. Kiểm tra kết nối mạng rồi tải lại trang."; return; }
   }
   load(D);
-  renderMarket(); renderFilters(); renderMethod(); renderHead(); setTab(state.tab);
+  setTab(state.tab, false);
+  renderHeader();
+  const imported = importFromHash();
+  const fromHash = location.hash.slice(1);
+  setView(imported ? "danh-muc" : VIEWS.includes(fromHash) ? fromHash : store.get("blcp.view", "co-hoi"));
   poll();
   setInterval(poll, 3 * 60 * 1000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });

@@ -149,8 +149,9 @@ def fetch_fundamental(sym: str):
     inc = http("GET", f"{VCI_IQ}/v1/company/{sym}/financial-statement?section=INCOME_STATEMENT")
     if not stats or not inc:
         return None
-    rows = stats.get("data") or []
-    last = max(rows, key=lambda r: (r.get("yearReport") or 0, r.get("quarter") or 0)) if rows else {}
+    rows = sorted(stats.get("data") or [], key=lambda r: (r.get("yearReport") or 0, r.get("quarter") or 0))
+    last = rows[-1] if rows else {}
+    last = {**last, "roe_lich_su": [r.get("roe") for r in rows[-8:]]}
     quarters = [
         {k: v for k, v in q.items() if k in ("yearReport", "lengthReport", "isa3", "isb38", "isi64", "isa22")}
         for q in (inc.get("data") or {}).get("quarters", [])
@@ -227,7 +228,13 @@ def technical(df: pd.DataFrame) -> dict:
 
     cross_window = (ma50 > ma200).iloc[-20:]
     golden = bool(cross_window.iloc[-1] and not cross_window.all()) if ma200.notna().iloc[-20] else False
+    dinh_20p = h.iloc[-21:-1].max()
     breakout = bool(last >= c.iloc[-21:-1].max() and v.iloc[-1] > 1.5 * vol20.iloc[-2])
+    # Về MA20: 3 phiên gần nhất có giá thấp nhất chạm vùng MA20 (±1,5%) và đóng cửa vẫn trên MA20
+    pullback = bool((l.iloc[-3:] <= ma20.iloc[-3:] * 1.015).any() and last > ma20.iloc[-1])
+    # Nền chặt: biên độ 10 phiên ≤ 8% và giá cách đỉnh 52 tuần không quá 10%
+    nen_10p = h.iloc[-10:].max() / l.iloc[-10:].min() - 1
+    nen_chat = bool(nen_10p <= 0.08 and last / hi52 - 1 >= -0.10)
 
     return {
         "gia": last,
@@ -249,6 +256,16 @@ def technical(df: pd.DataFrame) -> dict:
         "r1t": ret(c, 21), "r3t": ret(c, 63), "r6t": ret(c, 126), "r9t": ret(c, 189), "r12t": ret(c, 252),
         "golden_cross_20p": golden,
         "breakout_20p": breakout,
+        "pullback_ma20": pullback,
+        "nen_chat": nen_chat,
+        "bien_do_10p": nen_10p,
+        "pct_ma20": last / ma20.iloc[-1] - 1,
+        "ma50_tang": bool(ma50.iloc[-1] > ma50.iloc[-6]),
+        "atr": atr.iloc[-1],
+        "dinh_20p": dinh_20p,
+        "dinh_dong_cua_20p": c.iloc[-20:].max(),
+        "day_10p": l.iloc[-10:].min(),
+        "vol_hom_nay": v.iloc[-1] / vol20.iloc[-2] if vol20.iloc[-2] else np.nan,
     }
 
 
@@ -295,9 +312,21 @@ def fundamental(raw: dict, loai: str) -> dict:
         out["tt_dt_quy"] = _growth(last.get(rev_f), yoy.get(rev_f))
         out["lai_4_quy"] = bool(np4 and all(x > 0 for x in np4))
         out["chuyen_lai"] = bool((last.get(PROFIT_FIELD) or 0) > 0 >= (yoy.get(PROFIT_FIELD) or 0) and yoy)
+        # Số quý (trong 4 quý gần nhất) có LNST tăng so với cùng kỳ
+        n_up = 0
+        for k in range(4):
+            a, b = qmap.get(_prev_q(y, q, k), {}), qmap.get(_prev_q(y, q, k + 4), {})
+            if a.get(PROFIT_FIELD) is not None and b.get(PROFIT_FIELD) is not None and a[PROFIT_FIELD] > b[PROFIT_FIELD]:
+                n_up += 1
+        out["so_quy_tang_truong"] = n_up
 
     g = lambda k: ratio.get(k) if ratio.get(k) not in (None, 0, 0.0) else np.nan
+    roe_hist = [x for x in (ratio.get("roe_lich_su") or []) if x is not None]
+    pcf = ratio.get("priceToCashFlow")
     out.update({
+        "roe_min_4q": min(roe_hist[-4:]) if len(roe_hist) >= 4 else np.nan,
+        # P/CF dương ⇔ dòng tiền HĐKD 12 tháng dương (không áp dụng cho ngân hàng, CK, bảo hiểm)
+        "dong_tien_duong": (pcf is not None and pcf > 0) if loai == "CT" else None,
         "roe": g("roe"), "roa": g("roa"),
         "no_vay_vcsh": ratio.get("debtPerEquity", np.nan) if loai != "NH" else np.nan,
         "thanh_toan_hh": g("currentRatio"),
@@ -409,6 +438,206 @@ def grade(x):
 
 
 # ----------------------------------------------------------------------------
+# Thị trường Việt Nam + thế giới
+# ----------------------------------------------------------------------------
+# (mã Yahoo, tên, nhóm, chiều ảnh hưởng tới TTCK VN khi chỉ số tăng: +1 tích cực, -1 tiêu cực, 0 không rõ ràng)
+THE_GIOI = [
+    ("^GSPC", "S&P 500", "Chứng khoán Mỹ", 1),
+    ("^IXIC", "Nasdaq", "Chứng khoán Mỹ", 1),
+    ("000001.SS", "Shanghai Composite", "Chứng khoán Trung Quốc", 1),
+    ("EEM", "ETF thị trường mới nổi (EEM)", "Dòng vốn ngoại", 1),
+    ("DX-Y.NYB", "Chỉ số USD (DXY)", "Tỷ giá", -1),
+    ("VND=X", "Tỷ giá USD/VND", "Tỷ giá", -1),
+    ("^TNX", "Lợi suất TPCP Mỹ 10 năm", "Lãi suất", -1),
+    ("BZ=F", "Dầu Brent", "Hàng hoá", 0),
+    ("GC=F", "Vàng", "Hàng hoá", 0),
+]
+
+
+def fetch_yahoo(sym: str):
+    d = http("GET", f"https://query1.finance.yahoo.com/v8/finance/chart/{requests.utils.quote(sym)}?range=1y&interval=1d",
+             headers={"Referer": None, "Origin": None,
+                      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36"})
+    try:
+        res = d["chart"]["result"][0]
+        pts = [(t, c) for t, c in zip(res["timestamp"], res["indicators"]["quote"][0]["close"]) if c is not None]
+        return {"t": [p[0] for p in pts], "c": [p[1] for p in pts]} if len(pts) > 60 else None
+    except (TypeError, KeyError, IndexError):
+        return None
+
+
+def the_gioi(today: str, ttl: float, refresh: bool) -> list[dict]:
+    out = []
+    raw = parallel(lambda s: cached(f"the_gioi/{today}/{s.replace('^', '_')}", ttl, lambda: fetch_yahoo(s), refresh),
+                   [x[0] for x in THE_GIOI], 4, "thế giới")
+    for sym, ten, nhom, chieu in THE_GIOI:
+        d = raw.get(sym)
+        if not d:
+            continue
+        c = pd.Series(d["c"], dtype=float)
+        ma50 = c.rolling(50).mean().iloc[-1]
+        last = c.iloc[-1]
+        xu_huong = 1 if last > ma50 else -1
+        # ^TNX là lợi suất (%), đo biến động theo điểm phần trăm thay vì %
+        chg1m = (last - c.iloc[-22]) if sym == "^TNX" else ret(c, 21)
+        out.append({
+            "ma": sym, "ten": ten, "nhom": nhom, "chieu": chieu, "gia": last,
+            "thay_doi": (last - c.iloc[-2]) if sym == "^TNX" else ret(c, 1), "thay_doi_1t": chg1m,
+            "tren_ma50": last > ma50, "don_vi": "điểm %" if sym == "^TNX" else "%",
+            "anh_huong": chieu * xu_huong,  # +1 thuận lợi, -1 bất lợi, 0 trung tính
+            "ngay": datetime.fromtimestamp(d["t"][-1], VN_TZ).strftime("%Y-%m-%d"),
+            "spark": [round(x, 4) for x in c.iloc[-60:]],
+        })
+    return out
+
+
+def thi_truong(vni_df: pd.DataFrame | None, tech_all: dict, world: list[dict]) -> dict:
+    """Chấm điểm bối cảnh thị trường 0–100 từ xu hướng VN-Index, độ rộng thị trường, ngày phân phối và thế giới."""
+    yeu_to = []  # (mô tả, điểm cộng/trừ)
+    out = {}
+    if vni_df is not None and len(vni_df) > 200:
+        c, v = vni_df["close"], vni_df["volume"]
+        ma20, ma50, ma200 = c.rolling(20).mean().iloc[-1], c.rolling(50).mean().iloc[-1], c.rolling(200).mean().iloc[-1]
+        last = c.iloc[-1]
+        out.update({"vni": last, "vni_thay_doi": ret(c, 1), "vni_1t": ret(c, 21), "vni_3t": ret(c, 63),
+                    "vni_ma20": ma20, "vni_ma50": ma50, "vni_ma200": ma200, "vni_rsi": rsi(c).iloc[-1]})
+        yeu_to.append(("VN-Index trên MA50" if last > ma50 else "VN-Index dưới MA50", 15 if last > ma50 else -15))
+        yeu_to.append(("VN-Index trên MA200" if last > ma200 else "VN-Index dưới MA200", 10 if last > ma200 else -10))
+        yeu_to.append(("MA50 trên MA200 (xu hướng trung hạn tăng)" if ma50 > ma200 else "MA50 dưới MA200 (xu hướng trung hạn giảm)",
+                       5 if ma50 > ma200 else -5))
+        yeu_to.append(("VN-Index trên MA20" if last > ma20 else "VN-Index dưới MA20", 5 if last > ma20 else -5))
+        # Ngày phân phối (O'Neil): giảm ≥ 0,2% với khối lượng cao hơn phiên trước, trong 25 phiên gần nhất
+        if v.iloc[-25:].sum() > 0:
+            chg = c.pct_change()
+            dist = int(((chg <= -0.002) & (v > v.shift())).iloc[-25:].sum())
+            out["ngay_phan_phoi"] = dist
+            if dist >= 6:
+                yeu_to.append((f"{dist} ngày phân phối trong 25 phiên (áp lực bán lớn)", -10))
+            elif dist <= 3:
+                yeu_to.append((f"Chỉ {dist} ngày phân phối trong 25 phiên", 5))
+            else:
+                yeu_to.append((f"{dist} ngày phân phối trong 25 phiên", 0))
+
+    t = [x for x in tech_all.values() if nz(x.get("ma50"))]
+    if t:
+        tren50 = sum(x["gia"] > x["ma50"] for x in t) / len(t)
+        t200 = [x for x in t if nz(x.get("ma200"))]
+        tren200 = sum(x["gia"] > x["ma200"] for x in t200) / len(t200) if t200 else np.nan
+        tang = sum(x["thay_doi"] > 0 for x in t)
+        giam = sum(x["thay_doi"] < 0 for x in t)
+        out.update({"do_rong_ma50": tren50, "do_rong_ma200": tren200, "so_ma_tang": tang, "so_ma_giam": giam,
+                    "so_ma_dung": len(t) - tang - giam})
+        yeu_to.append((f"{tren50:.0%} cổ phiếu trên MA50", 10 if tren50 >= 0.6 else -10 if tren50 <= 0.4 else 0))
+
+    w = {x["ma"]: x for x in world}
+    if "^GSPC" in w:
+        yeu_to.append(("S&P 500 trên MA50" if w["^GSPC"]["tren_ma50"] else "S&P 500 dưới MA50", 5 if w["^GSPC"]["tren_ma50"] else -5))
+    if "DX-Y.NYB" in w and nz(w["DX-Y.NYB"]["thay_doi_1t"]) and w["DX-Y.NYB"]["thay_doi_1t"] > 0.02:
+        yeu_to.append((f"USD mạnh lên {w['DX-Y.NYB']['thay_doi_1t']:+.1%} trong 1 tháng (bất lợi dòng vốn ngoại)", -5))
+    if "VND=X" in w and nz(w["VND=X"]["thay_doi_1t"]) and w["VND=X"]["thay_doi_1t"] > 0.01:
+        yeu_to.append((f"Tỷ giá USD/VND tăng {w['VND=X']['thay_doi_1t']:+.1%} trong 1 tháng", -5))
+    if "^TNX" in w and nz(w["^TNX"]["thay_doi_1t"]) and w["^TNX"]["thay_doi_1t"] > 0.3:
+        yeu_to.append((f"Lợi suất TPCP Mỹ tăng {w['^TNX']['thay_doi_1t']:+.2f} điểm % trong 1 tháng", -5))
+    if "EEM" in w:
+        yeu_to.append(("Thị trường mới nổi (EEM) trên MA50" if w["EEM"]["tren_ma50"] else "Thị trường mới nổi (EEM) dưới MA50",
+                       3 if w["EEM"]["tren_ma50"] else -3))
+
+    diem = max(0, min(100, 50 + sum(p for _, p in yeu_to)))
+    out["diem"] = diem
+    out["trang_thai"] = "thuan_loi" if diem >= 65 else "trung_tinh" if diem >= 45 else "rui_ro"
+    out["nhan"] = {"thuan_loi": "Thuận lợi", "trung_tinh": "Trung tính", "rui_ro": "Rủi ro cao"}[out["trang_thai"]]
+    out["yeu_to"] = yeu_to
+    return out
+
+
+# ----------------------------------------------------------------------------
+# Cơ hội trong ngày: tiêu chí chất lượng + điểm mua kỹ thuật
+# ----------------------------------------------------------------------------
+def buoc_gia(p: float, san: str) -> int:
+    if san == "HOSE":
+        return 10 if p < 10000 else 50 if p < 50000 else 100
+    return 100
+
+
+def lam_tron_xuong(p: float, san: str) -> float:
+    b = buoc_gia(p, san)
+    return math.floor(p / b) * b
+
+
+def lam_tron_len(p: float, san: str) -> float:
+    b = buoc_gia(p, san)
+    return math.ceil(p / b) * b
+
+
+def kiem_tra_co_hoi(r: dict, ch: dict) -> tuple[list, list, str | None]:
+    """Trả về (tiêu chí chất lượng, tiêu chí điểm mua, loại điểm mua). Mỗi tiêu chí: [tên, đạt?, giá trị]."""
+    f = lambda x, p="{:.0%}": p.format(x) if nz(x) else "–"
+    loai = r["loai"]
+    cl = [
+        [f"Điểm PTCB ≥ {ch['diem_cb']}", r["diem_cb"] >= ch["diem_cb"], f"{r['diem_cb']:.0f}"],
+        [f"ROE ≥ {ch['roe']:.0%}", nz(r.get("roe")) and r["roe"] >= ch["roe"], f(r.get("roe"))],
+        [f"ROE thấp nhất 4 quý ≥ {ch['roe_min_4q']:.0%} (ổn định)", nz(r.get("roe_min_4q")) and r["roe_min_4q"] >= ch["roe_min_4q"], f(r.get("roe_min_4q"))],
+        [f"LN 4 quý tăng ≥ {ch['tt_ln_ttm']:.0%}", nz(r.get("tt_ln_ttm")) and r["tt_ln_ttm"] >= ch["tt_ln_ttm"], f(r.get("tt_ln_ttm"), "{:+.0%}")],
+        ["LN quý gần nhất tăng so với cùng kỳ", nz(r.get("tt_ln_quy")) and r["tt_ln_quy"] > 0, f(r.get("tt_ln_quy"), "{:+.0%}")],
+        ["≥ 3/4 quý gần nhất LN tăng so với cùng kỳ", (r.get("so_quy_tang_truong") or 0) >= 3, f"{r.get('so_quy_tang_truong') or 0}/4"],
+        ["Có lãi 4 quý liên tiếp", bool(r.get("lai_4_quy")), "Có" if r.get("lai_4_quy") else "Không"],
+        [f"PEG ≤ {ch['peg']}", nz(r.get("peg")) and r["peg"] <= ch["peg"], f(r.get("peg"), "{:.2f}")],
+        [f"GTGD TB20 ≥ {ch['gtgd_ty']} tỷ", r["gtgd_tb20"] >= ch["gtgd_ty"] * 1e9, f"{r['gtgd_tb20'] / 1e9:.1f} tỷ"],
+        [f"Vốn hoá ≥ {ch['von_hoa_ty']:,} tỷ", nz(r.get("von_hoa_ty")) and r["von_hoa_ty"] >= ch["von_hoa_ty"], f(r.get("von_hoa_ty"), "{:,.0f} tỷ")],
+    ]
+    if loai == "CT":
+        cl.append([f"Nợ vay/VCSH ≤ {ch['no_vay_vcsh']}", nz(r.get("no_vay_vcsh")) and r["no_vay_vcsh"] <= ch["no_vay_vcsh"], f(r.get("no_vay_vcsh"), "{:.2f}")])
+        cl.append(["Dòng tiền kinh doanh 12 tháng dương", bool(r.get("dong_tien_duong")), "Có" if r.get("dong_tien_duong") else "Không"])
+    if loai == "NH":
+        cl.append(["Nợ xấu ≤ 2%", nz(r.get("npl")) and r["npl"] <= 0.02, f(r.get("npl"), "{:.2%}")])
+
+    lim = {"HOSE": 0.07, "HNX": 0.10, "UPCOM": 0.15}.get(r["san"], 0.07)
+    loai_mua = ("Vượt đỉnh 20 phiên kèm khối lượng" if r["breakout_20p"]
+                else "Điều chỉnh về MA20" if r["pullback_ma20"]
+                else "Nền giá chặt sát đỉnh" if r["nen_chat"] else None)
+    kt = [
+        [f"Điểm PTKT ≥ {ch['diem_kt']}", r["diem_kt"] >= ch["diem_kt"], f"{r['diem_kt']:.0f}"],
+        ["Giá trên MA20 và MA50", r["gia"] > r["ma20"] and r["gia"] > r["ma50"], f(r.get("pct_ma50"), "{:+.1%}") + " so MA50"],
+        ["MA50 trên MA200 và đang đi lên", (not nz(r.get("ma200")) or r["ma50"] > r["ma200"]) and r["ma50_tang"],
+         "MA50 dưới MA200" if nz(r.get("ma200")) and r["ma50"] <= r["ma200"] else "Đạt" if r["ma50_tang"] else "MA50 đi xuống"],
+        [f"RSI trong {ch['rsi_min']}–{ch['rsi_max']}", nz(r.get("rsi14")) and ch["rsi_min"] <= r["rsi14"] <= ch["rsi_max"], f(r.get("rsi14"), "{:.0f}")],
+        [f"Không mua đuổi: giá ≤ MA20 + {ch['cach_ma20_toi_da']:.0%}", r["pct_ma20"] <= ch["cach_ma20_toi_da"], f(r.get("pct_ma20"), "{:+.1%}") + " so MA20"],
+        ["Chưa tăng kịch trần hôm nay", r["thay_doi"] < lim - 0.002, f(r.get("thay_doi"), "{:+.1%}")],
+        ["Có điểm mua: vượt đỉnh / về MA20 / nền chặt", loai_mua is not None, loai_mua or "Chưa có"],
+    ]
+    return cl, kt, loai_mua
+
+
+def co_hoi(df: pd.DataFrame, tt: dict, cfg: dict) -> tuple[list, list]:
+    ch, dm = cfg["co_hoi"], cfg["danh_muc"]
+    toi_da = ch["so_ma_toi_da"][tt["trang_thai"]]
+    dat, gan_dat = [], []
+    for r in df.to_dict("records"):
+        cl, kt, loai_mua = kiem_tra_co_hoi(r, ch)
+        so_truot = sum(not c[1] for c in cl + kt)
+        gia, san = r["gia"], r["san"]
+        cat_lo = lam_tron_xuong(max(gia * (1 - dm["cat_lo_pct"]), gia - 2 * r["atr"]), san)
+        rr = gia - cat_lo
+        item = {
+            "ma": r["ma"], "ten": r["ten"], "san": san, "nganh": r["nganh"], "gia": gia, "thay_doi": r["thay_doi"],
+            "diem_tong": r["diem_tong"], "diem_cb": r["diem_cb"], "diem_kt": r["diem_kt"],
+            "loai_mua": loai_mua, "chat_luong": cl, "diem_mua": kt, "so_truot": so_truot,
+            "vung_mua": [gia, lam_tron_len(max(gia, min(gia * 1.02, r["ma20"] * (1 + ch["cach_ma20_toi_da"]))), san)],
+            "cat_lo": cat_lo, "rui_ro_pct": rr / gia,
+            "muc_tieu_1": lam_tron_len(gia + 2 * rr, san), "muc_tieu_2": lam_tron_len(gia + 3 * rr, san),
+        }
+        if so_truot == 0:
+            dat.append(item)
+        elif so_truot <= 2:
+            gan_dat.append(item)
+    dat.sort(key=lambda x: (x["loai_mua"] == "Vượt đỉnh 20 phiên kèm khối lượng", x["diem_tong"]), reverse=True)
+    gan_dat.sort(key=lambda x: (x["so_truot"], -x["diem_tong"]))
+    for i, x in enumerate(dat):
+        x["trong_gioi_han"] = i < toi_da
+    return dat[:5], gan_dat[:8]
+
+
+# ----------------------------------------------------------------------------
 # Quy trình chính
 # ----------------------------------------------------------------------------
 def run(cfg: dict, symbols: list[str] | None, refresh: bool):
@@ -458,6 +687,7 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
             continue
         frames[s] = df
         tech[s] = technical(df)
+    tech_all = dict(tech)  # mọi mã có giá: dùng cho độ rộng thị trường và đánh giá danh mục
     # Mã chỉ định qua --ma luôn được giữ lại; các mã khác phải đạt thanh khoản (dùng làm mặt bằng so sánh RS, P/E ngành)
     tech = {s: t for s, t in tech.items()
             if (symbols and s in symbols)
@@ -482,7 +712,7 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
     print("3) Tải dữ liệu tài chính...")
     names = sorted(tech)
     targets = [s for s in symbols if s in tech] if symbols else names
-    fund_raw = parallel(lambda s: cached(f"co_ban/{s}", ttl["co_ban"], lambda: fetch_fundamental(s), refresh),
+    fund_raw = parallel(lambda s: cached(f"co_ban_v2/{s}",ttl["co_ban"], lambda: fetch_fundamental(s), refresh),
                         targets, workers, "BCTC")
     key = hashlib.md5(",".join(names).encode()).hexdigest()[:10]
     vnd = cached(f"vnd/{today}_{key}", ttl["gia"], lambda: fetch_vnd_ratios(names), refresh) or {}
@@ -545,6 +775,24 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
         m &= df["ln_ttm"].fillna(-1) > 0
     top = df[m].head(top_cfg["so_ma_hien_thi"])
 
+    print("4) Bối cảnh thị trường Việt Nam và thế giới...")
+    world = the_gioi(today, ttl["gia"], refresh)
+    bao_loi_nguon("thế giới")
+    tt = thi_truong(to_frame(vnindex) if vnindex else None, tech_all, world)
+    dat, gan_dat = co_hoi(df, tt, cfg)
+    print(f"   Thị trường: {tt['nhan']} ({tt['diem']}/100). Cơ hội đạt đủ tiêu chí: "
+          f"{', '.join(x['ma'] for x in dat) or 'không có'}")
+
+    # Dữ liệu kỹ thuật gọn cho mọi mã có giá (để đánh giá danh mục kể cả mã thanh khoản thấp)
+    tat_ca = {
+        s: {"ten": info.at[s, "ten"], "san": info.at[s, "san"], "nganh": info.at[s, "nganh"],
+            **{k: (None if not nz(x.get(k)) else round(float(x[k]), 4))
+               for k in ("gia", "thay_doi", "ma20", "ma50", "ma200", "rsi14", "atr", "dinh_dong_cua_20p",
+                         "day_10p", "pct_ma50", "cach_dinh_52t", "gtgd_tb20")},
+            "ma50_tang": x["ma50_tang"]}
+        for s, x in tech_all.items()
+    }
+
     print(f"\nHoàn tất trong {time.time() - t0:.0f}s. VN-Index 3 tháng: {vni3m:+.1%}" if nz(vni3m) else "")
 
     # Chuỗi giá 200 phiên (căn theo ngày giao dịch của VN-Index) để vẽ biểu đồ trên trang web
@@ -554,10 +802,14 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
     ctx = {
         "vni3m": vni3m,
         "vnindex": [round(x, 2) for x in vni.reindex(axis).ffill()] if vni is not None else [],
+        # VN-Index dài hơn (đủ để vẽ MA200 trên 250 phiên) cho tab Thị trường
+        "vnindex_dai": {"ngay": [d.strftime("%Y-%m-%d") for d in vni.index[-450:]],
+                        "c": [round(x, 2) for x in vni.iloc[-450:]]} if vni is not None else None,
         "ngay": [d.strftime("%Y-%m-%d") for d in axis],
         "gia_200": closes,
         "so_ma_xet": len(tickers), "so_ma_thanh_khoan": len(names), "so_ma_top": len(top),
         "cfg": cfg,
+        "thi_truong": tt, "the_gioi": world, "co_hoi": dat, "gan_dat": gan_dat, "tat_ca": tat_ca,
     }
     return df, top, ctx
 
@@ -678,6 +930,8 @@ def web_data(df: pd.DataFrame, top: pd.DataFrame, ctx: dict) -> dict:
             return bool(v)
         if isinstance(v, (list, tuple)):
             return [clean(x) for x in v]
+        if isinstance(v, dict):
+            return {k: clean(x) for k, x in v.items()}
         return v
 
     top_set = set(top["ma"])
@@ -697,6 +951,9 @@ def web_data(df: pd.DataFrame, top: pd.DataFrame, ctx: dict) -> dict:
         "san": cfg["san"], "loc": cfg["loc_thanh_khoan"], "loc_top": cfg["loc_top"], "trong_so": cfg["trong_so"],
         "giai_thich": GIAI_THICH,
         "rows": rows,
+        "thi_truong": clean(ctx["thi_truong"]), "the_gioi": clean(ctx["the_gioi"]), "vnindex_dai": ctx["vnindex_dai"],
+        "co_hoi": clean(ctx["co_hoi"]), "gan_dat": clean(ctx["gan_dat"]), "tat_ca": clean(ctx["tat_ca"]),
+        "cfg_co_hoi": cfg["co_hoi"], "cfg_danh_muc": cfg["danh_muc"],
     }
 
 
