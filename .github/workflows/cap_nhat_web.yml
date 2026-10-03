@@ -1,0 +1,57 @@
+name: Cập nhật bảng lọc cổ phiếu
+
+on:
+  schedule:
+    # Giờ máy chủ là UTC (= giờ VN − 7). Thứ 2–6:
+    - cron: "*/20 2-7 * * 1-5"   # mỗi 20 phút từ 9:00 đến 14:40 giờ VN
+    - cron: "20 8 * * 1-5"       # 15:20 giờ VN, sau khi đóng cửa
+  workflow_dispatch:              # nút "Run workflow" để chạy tay
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Giữ BCTC đã tải giữa các lần chạy (công cụ tự làm mới sau 72 giờ)
+      - uses: actions/cache@v4
+        with:
+          path: cache/co_ban
+          key: co-ban-${{ github.run_id }}
+          restore-keys: co-ban-
+
+      - name: Chạy bộ lọc
+        run: python loc_co_phieu.py --web site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

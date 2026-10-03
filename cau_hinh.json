@@ -1,0 +1,23 @@
+{
+  "san": ["HOSE", "HNX"],
+  "loai_doanh_nghiep": ["CT", "NH", "CK", "BH"],
+
+  "loc_thanh_khoan": {
+    "gtgd_tb20_toi_thieu_ty": 5,
+    "gia_toi_thieu": 5000,
+    "so_phien_toi_thieu": 200
+  },
+
+  "trong_so": { "co_ban": 0.5, "ky_thuat": 0.5 },
+
+  "loc_top": {
+    "diem_co_ban_toi_thieu": 55,
+    "diem_ky_thuat_toi_thieu": 55,
+    "yeu_cau_gia_tren_ma50": true,
+    "yeu_cau_lai_ttm_duong": true,
+    "so_ma_hien_thi": 30
+  },
+
+  "cache_gio": { "gia": 1, "co_ban": 72, "danh_sach": 24 },
+  "so_luong_tai_song_song": 8
+}
