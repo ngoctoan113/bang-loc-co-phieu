@@ -5,12 +5,18 @@ on:
     # Giờ máy chủ là UTC (= giờ VN − 7). Thứ 2–6:
     - cron: "*/20 2-7 * * 1-5"   # mỗi 20 phút từ 9:00 đến 14:40 giờ VN
     - cron: "20 8 * * 1-5"       # 15:20 giờ VN, sau khi đóng cửa
+    - cron: "0 1 * * 6"          # 8:00 sáng thứ Bảy: chạy thêm kiểm định quá khứ
   workflow_dispatch:              # nút "Run workflow" để chạy tay
+    inputs:
+      kiem_dinh:
+        description: "Chạy lại kiểm định quá khứ (mất vài phút)"
+        type: boolean
+        default: false
   push:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write   # lưu nhật ký tín hiệu và kết quả kiểm định vào kho
   pages: write
   id-token: write
 
@@ -21,7 +27,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -39,15 +45,29 @@ jobs:
           key: du-lieu-${{ github.run_id }}
           restore-keys: du-lieu-
 
+      - name: Kiểm định quá khứ (thứ Bảy hoặc khi chọn chạy tay)
+        if: github.event.schedule == '0 1 * * 6' || inputs.kiem_dinh == true || hashFiles('nhat_ky/kiem_dinh.json') == ''
+        run: python kiem_dinh.py
+
       # Nguồn dữ liệu đôi khi từ chối máy chủ GitHub: thử lại tối đa 3 lần, cách nhau 90 giây
       - name: Chạy bộ lọc
         run: |
           for i in 1 2 3; do
-            python loc_co_phieu.py --web site && exit 0
+            python loc_co_phieu.py --web site --ghi-nhat-ky && exit 0
             echo "Lần $i thất bại, thử lại sau 90 giây..."
             sleep 90
           done
           exit 1
+
+      - name: Lưu nhật ký tín hiệu và kết quả kiểm định vào kho
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add nhat_ky
+          if ! git diff --cached --quiet; then
+            git commit -m "Cập nhật nhật ký tín hiệu $(TZ=Asia/Ho_Chi_Minh date '+%Y-%m-%d %H:%M')"
+            git pull --rebase origin main && git push
+          fi
 
       - uses: actions/upload-pages-artifact@v3
         with:

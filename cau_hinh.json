@@ -20,18 +20,22 @@
   },
 
   "co_hoi": {
+    "_ghi_chu": "Ngưỡng = null là tiêu chí đã bỏ sau kiểm định quá khứ 10/2026 (xem tab Kiểm định). Đặt lại số để bật.",
     "diem_cb": 65,
     "diem_kt": 65,
-    "roe": 0.15,
+    "roe": null,
     "roe_min_4q": 0.12,
-    "tt_ln_ttm": 0.10,
+    "tt_ln_ttm": null,
     "peg": 1.5,
-    "no_vay_vcsh": 1.0,
+    "no_vay_vcsh": null,
     "gtgd_ty": 10,
     "von_hoa_ty": 1000,
     "rsi_min": 50,
-    "rsi_max": 72,
-    "cach_ma20_toi_da": 0.06,
+    "rsi_max": null,
+    "atr_pct_toi_da": 0.03,
+    "cach_ma20_toi_da": 0.15,
+    "cat_lo_pct": 0.10,
+    "so_phien_giu": 20,
     "so_ma_toi_da": { "thuan_loi": 5, "trung_tinh": 3, "rui_ro": 1 }
   },
 

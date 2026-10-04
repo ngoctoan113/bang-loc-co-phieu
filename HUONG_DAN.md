@@ -37,7 +37,30 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
 - **Thị trường**: điểm bối cảnh 0–100 từ xu hướng VN-Index (MA20/50/200), độ rộng thị trường, ngày phân phối,
   và thế giới (S&P 500, Nasdaq, Shanghai, EEM, DXY, USD/VND, lợi suất TPCP Mỹ 10 năm, dầu Brent, vàng – nguồn Yahoo Finance).
 
-Các ngưỡng nằm trong `cau_hinh.json` (mục `co_hoi`, `danh_muc`).
+- **Kiểm định**: hai cách kiểm tra bộ tiêu chí có thực sự hiệu quả không.
+  - *Nhật ký tín hiệu thực tế* (`nhat_ky/tin_hieu.csv`): mỗi mã xuất hiện ở "Cơ hội hôm nay" được ghi lại và theo dõi
+    theo đúng quy tắc (T+2, giữ 20 phiên, cắt lỗ khẩn cấp), so với VN-Index cùng kỳ. Máy chủ GitHub tự ghi và lưu vào kho.
+  - *Kiểm định quá khứ* (`python kiem_dinh.py` → `nhat_ky/kiem_dinh.json`, máy chủ chạy sáng thứ Bảy hằng tuần):
+    dựng lại tiêu chí trên ~3 năm dữ liệu (BCTC tính từ ngày công bố, thanh khoản tại từng thời điểm),
+    so sánh khi đạt / không đạt / khi bỏ từng tiêu chí và khi thêm tiêu chí đề xuất, tách hai nửa giai đoạn.
+
+Các ngưỡng nằm trong `cau_hinh.json` (mục `co_hoi`, `danh_muc`). Ngưỡng `null` = tiêu chí đang tắt.
+
+### Kết quả kiểm định 10/2026 và thay đổi đã áp dụng
+Giai đoạn 10/2023–10/2026, 50.838 điểm mua kỹ thuật của 300 mã:
+
+| Bộ quy tắc | Số GD | Thắng | LN TB/GD | Vượt VN-Index |
+|---|---|---|---|---|
+| Mọi điểm mua kỹ thuật | 5.127 | 42% | −0,55% | −1,79% |
+| Quy tắc cũ (cắt lỗ 7%/2ATR, chốt lời 2R) | 208 | 37% | −0,90% | −1,25% |
+| **Quy tắc mới, như trên trang** | 137 | 55% | **+1,66%** | **+0,81%** |
+
+- Thêm **biến động thấp: ATR ≤ 3%** (tiêu chí có tác dụng rõ và ổn định nhất).
+- Bỏ ROE ≥ 15%, LN 4 quý ≥ 10%, nợ vay/VCSH ≤ 1, trần RSI 72 (không giúp hoặc làm kém đi); nới "không mua đuổi" lên MA20 + 15%.
+- Đổi cách thoát lệnh: **giữ 20 phiên, cắt lỗ khẩn cấp 10%** thay cho cắt lỗ 7%/2ATR + chốt lời 2R
+  (cắt lỗ chặt làm bị "rũ" khỏi mã tốt). Quy tắc danh mục (`danh_muc`) chưa thay đổi.
+- Các tiêu chí đã bỏ vẫn được kiểm định hằng tuần trong nhóm "đề xuất" để xem có nên đưa lại.
+- Giới hạn: chỉ có mã còn niêm yết (thiên lệch sống sót), mẫu ~140 GD nên kết quả còn dao động; nhật ký thực tế là phép thử quyết định.
 
 ## Bản trực tuyến tự cập nhật (GitHub Pages)
 
