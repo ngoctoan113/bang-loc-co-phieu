@@ -1,5 +1,6 @@
 {
   "san": ["HOSE", "HNX"],
+  "san_danh_muc": ["UPCOM"],
   "loai_doanh_nghiep": ["CT", "NH", "CK", "BH"],
 
   "loc_thanh_khoan": {

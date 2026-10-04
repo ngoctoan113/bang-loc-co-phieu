@@ -660,38 +660,42 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
     if len(uni) > 1000 and (not snap.exists() or time.time() - snap.stat().st_mtime > 7 * 86400):
         snap.write_text(json.dumps(uni, ensure_ascii=False, indent=0), encoding="utf-8")
     info = pd.DataFrame(uni).drop_duplicates("ma").set_index("ma")
-    m = info["san"].isin(cfg["san"]) & info["loai"].isin(cfg["loai_doanh_nghiep"]) & (info.index.str.len() == 3)
-    tickers = sorted(info.index[m])
+    co_phieu = info["loai"].isin(cfg["loai_doanh_nghiep"]) & (info.index.str.len() == 3)
+    tickers = sorted(info.index[co_phieu & info["san"].isin(cfg["san"])])
     if symbols:
         missing = [s for s in symbols if s not in info.index]
         if missing:
             print("   Không tìm thấy mã:", ", ".join(missing))
         symbols = [s for s in symbols if s in info.index]
         tickers = sorted(set(tickers) | set(symbols))
-    print(f"   {len(tickers)} mã cần xét")
+    screen = set(tickers)  # các mã được chấm điểm / lọc cơ hội
+    # Các sàn chỉ tải giá để đánh giá danh mục (VD: UPCOM), không đưa vào bảng lọc
+    them = sorted(set(info.index[co_phieu & info["san"].isin(cfg.get("san_danh_muc", []))]) - screen)
+    print(f"   {len(tickers)} mã cần xét" + (f" (+{len(them)} mã chỉ dùng cho danh mục)" if them else ""))
 
     print("2) Tải giá lịch sử...")
     px = parallel(lambda s: cached(f"gia/{today}/{s}", ttl["gia"], lambda: fetch_ohlc(s), refresh),
-                  tickers, workers, "giá")
+                  tickers + them, workers, "giá")
     vnindex = cached(f"gia/{today}/VNINDEX", ttl["gia"], lambda: fetch_ohlc("VNINDEX"), refresh)
-    print(f"   {sum(1 for v in px.values() if v)}/{len(tickers)} mã có giá")
+    print(f"   {sum(1 for s in tickers if px.get(s))}/{len(tickers)} mã có giá"
+          + (f", {sum(1 for s in them if px.get(s))}/{len(them)} mã danh mục" if them else ""))
     bao_loi_nguon("giá")
 
     lk = cfg["loc_thanh_khoan"]
     tech, frames = {}, {}
-    for s in tickers:
+    for s in tickers + them:
         if not px.get(s):
             continue
         df = to_frame(px[s])
-        if len(df) < 60:
+        if len(df) < (60 if s in screen else 30):
             continue
         frames[s] = df
         tech[s] = technical(df)
-    tech_all = dict(tech)  # mọi mã có giá: dùng cho độ rộng thị trường và đánh giá danh mục
+    tech_all = dict(tech)  # mọi mã có giá (kể cả UPCOM): dùng để đánh giá danh mục
     # Mã chỉ định qua --ma luôn được giữ lại; các mã khác phải đạt thanh khoản (dùng làm mặt bằng so sánh RS, P/E ngành)
     tech = {s: t for s, t in tech.items()
             if (symbols and s in symbols)
-            or (t["gtgd_tb20"] >= lk["gtgd_tb20_toi_thieu_ty"] * 1e9
+            or (s in screen and t["gtgd_tb20"] >= lk["gtgd_tb20_toi_thieu_ty"] * 1e9
                 and t["gia"] >= lk["gia_toi_thieu"] and t["so_phien"] >= lk["so_phien_toi_thieu"])}
     print(f"   {len(tech)} mã đạt thanh khoản (GTGD TB20 ≥ {lk['gtgd_tb20_toi_thieu_ty']} tỷ, giá ≥ {lk['gia_toi_thieu']:,}đ)")
     if not tech:
@@ -778,7 +782,8 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
     print("4) Bối cảnh thị trường Việt Nam và thế giới...")
     world = the_gioi(today, ttl["gia"], refresh)
     bao_loi_nguon("thế giới")
-    tt = thi_truong(to_frame(vnindex) if vnindex else None, tech_all, world)
+    # Độ rộng thị trường chỉ tính trên các sàn được lọc (HOSE, HNX) để khớp với VN-Index
+    tt = thi_truong(to_frame(vnindex) if vnindex else None, {s: t for s, t in tech_all.items() if s in screen}, world)
     dat, gan_dat = co_hoi(df, tt, cfg)
     print(f"   Thị trường: {tt['nhan']} ({tt['diem']}/100). Cơ hội đạt đủ tiêu chí: "
           f"{', '.join(x['ma'] for x in dat) or 'không có'}")
@@ -786,7 +791,7 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool):
     # Dữ liệu kỹ thuật gọn cho mọi mã có giá (để đánh giá danh mục kể cả mã thanh khoản thấp)
     tat_ca = {
         s: {"ten": info.at[s, "ten"], "san": info.at[s, "san"], "nganh": info.at[s, "nganh"],
-            **{k: (None if not nz(x.get(k)) else round(float(x[k]), 4))
+            **{k: (None if not nz(x.get(k)) else round(float(x[k])) if abs(x[k]) >= 1000 else round(float(x[k]), 4))
                for k in ("gia", "thay_doi", "ma20", "ma50", "ma200", "rsi14", "atr", "dinh_dong_cua_20p",
                          "day_10p", "pct_ma50", "cach_dinh_52t", "gtgd_tb20")},
             "ma50_tang": x["ma50_tang"]}
@@ -976,7 +981,9 @@ def export_html(df: pd.DataFrame, top: pd.DataFrame, ctx: dict, web_dir: Path | 
     path.write_text(page, encoding="utf-8")
     if web_dir:
         web_dir.mkdir(parents=True, exist_ok=True)
-        (web_dir / "index.html").write_text(page, encoding="utf-8")
+        # Bản web không nhúng dữ liệu: trang tự tải du_lieu.json (tránh tải dữ liệu hai lần)
+        (web_dir / "index.html").write_text(
+            page.split("<title>")[0] + (ROOT / "mau_trang_web.html").read_text(encoding="utf-8"), encoding="utf-8")
         (web_dir / "du_lieu.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         (web_dir / ".nojekyll").write_text("", encoding="utf-8")
         return web_dir / "index.html"
