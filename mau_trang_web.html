@@ -149,6 +149,12 @@ td.wrap { white-space: normal; font-family: var(--f-ui); min-width: 220px; font-
 .g-C { color: var(--ref); background: var(--ref-soft); } .g-D { color: var(--down); background: var(--down-soft); }
 .fill-A { background: var(--up); } .fill-B { background: var(--accent); } .fill-C { background: var(--ref); } .fill-D { background: var(--down); }
 .empty { padding: 24px; color: var(--muted); text-align: center; margin: 0; }
+td.gs { font-size: 12px; color: var(--muted); }
+td.gs.hi { color: var(--up); font-weight: 600; }
+td.gs.lo { color: var(--down); }
+.nhom-nen_tang { background: var(--up-soft); color: var(--up); }
+.nhom-trung_binh { background: var(--ref-soft); color: var(--ref); }
+.nhom-dau_co { background: var(--down-soft); color: var(--down); }
 
 #detail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow: auto; min-width: 0; }
 .d-head { padding: 16px 16px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
@@ -227,6 +233,7 @@ td.wrap { white-space: normal; font-family: var(--f-ui); min-width: 220px; font-
 .sig-CHOT { background: var(--ceil-soft); color: var(--ceil); }
 .sig-GIU { background: var(--up-soft); color: var(--up); }
 .sig-NA { background: var(--surface-2); color: var(--muted); }
+.sig-CAP_NHAT { background: var(--accent-soft); color: var(--accent); }
 .share { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
 .share input { flex: 1; min-width: 0; font: 12px var(--f-num); }
 .banner { padding: 12px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--accent-soft); border-color: var(--accent); }
@@ -326,12 +333,13 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
     <section class="funnel panel" aria-label="Phễu lọc">
       <div class="step"><b id="f1">–</b><span id="f1t">mã được quét</span></div>
       <div class="step"><b id="f2">–</b><span id="f2t">đạt thanh khoản</span></div>
-      <div class="step hit"><b id="f3">–</b><span id="f3t">đạt cả PTCB và PTKT</span></div>
+      <div class="step hit"><b id="f3">–</b><span id="f3t">vào danh sách Top</span></div>
     </section>
     <section class="controls" aria-label="Bộ lọc">
       <div class="tabs" role="tablist">
         <button id="tab-top" role="tab" aria-selected="true">Danh sách Top<span class="cnt" id="cnt-top"></span></button>
         <button id="tab-all" role="tab" aria-selected="false">Tất cả<span class="cnt" id="cnt-all"></span></button>
+        <button id="tab-tang" role="tab" aria-selected="false">Đang tăng mạnh<span class="cnt" id="cnt-tang"></span></button>
       </div>
       <input id="q" type="search" placeholder="Tìm mã hoặc tên công ty" aria-label="Tìm mã hoặc tên công ty">
       <select id="nganh" aria-label="Ngành"></select>
@@ -344,6 +352,7 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
       </div>
       <span class="note" id="shown"></span>
     </section>
+    <p class="hint panel" id="tang-note" hidden style="padding:12px 16px; max-width:none"></p>
     <main class="board">
       <div class="table-wrap panel">
         <table id="tbl"><thead></thead><tbody></tbody></table>
@@ -425,7 +434,17 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
     </tr></thead><tbody id="nk-body"></tbody></table></div></div>
 
     <div>
-      <h2 class="sec">Kiểm định trên dữ liệu quá khứ</h2>
+      <h2 class="sec">Điểm số có dự báo được không?</h2>
+      <p class="hint" id="nc-intro"></p>
+    </div>
+    <dl class="tiles panel" id="nc-tiles" style="margin:0"></dl>
+    <div class="panel"><div class="table-wrap" style="max-height:none"><table><thead><tr>
+      <th class="l"><span>Điểm / nhóm / yếu tố</span></th><th><span>Hệ số dự báo (IC)</span></th><th><span>Độ tin cậy (t)</span></th>
+      <th><span>Nửa đầu</span></th><th><span>Nửa sau</span></th><th class="l"><span>Đánh giá</span></th>
+    </tr></thead><tbody id="nc-body"></tbody></table></div></div>
+
+    <div>
+      <h2 class="sec">Kiểm định quy tắc "Cơ hội hôm nay" trên dữ liệu quá khứ</h2>
       <p class="hint" id="kd-intro"></p>
     </div>
     <div class="panel"><div class="table-wrap" style="max-height:none"><table><thead><tr>
@@ -492,13 +511,19 @@ function chgClass(r) {
 }
 
 let rows = [], byMa = {};
+let tang = [];
 function load(data) {
   D = data;
-  rows = D.rows.map((r, i) => ({ ...r, rank: i + 1 }));
-  byMa = Object.fromEntries(rows.map(r => [r.ma, r]));
+  // Bảng xếp hạng gồm các mã đủ thanh khoản; mã đang tăng mạnh nhưng chưa đủ thanh khoản vẫn có dữ liệu để xem chi tiết
+  let i = 0;
+  const all = D.rows.map(r => r.du_thanh_khoan === false ? { ...r, rank: null } : { ...r, rank: ++i });
+  rows = all.filter(r => r.rank != null);
+  byMa = Object.fromEntries(all.map(r => [r.ma, r]));
+  tang = (D.dang_tang || []).map(x => ({ ...(byMa[x.ma] || {}), ...x }));
 }
+const NHOM_TANG = { nen_tang: "Tăng có nền tảng", trung_binh: "Trung bình", dau_co: "Tăng đầu cơ" };
 const state = { view: "co-hoi", tab: "top", q: "", nganh: "", san: "", grades: new Set(), sort: "diem_tong", dir: -1, sel: null };
-state.tab = store.get("blcp.tab", "top") === "all" ? "all" : "top";
+state.tab = ["all", "tang"].includes(store.get("blcp.tab", "top")) ? store.get("blcp.tab", "top") : "top";
 
 // ---------- Biểu đồ ----------
 function sma(a, n) {
@@ -609,7 +634,7 @@ function renderCoHoi() {
           ${c.trong_gioi_han ? "" : `<span class="chip warn">Vượt số mã tối đa theo bối cảnh thị trường</span>`}</div>
         <p class="d-name">${esc(c.ten)} <span class="muted" style="font-weight:400">· ${esc(c.nganh)} · ${esc(c.san)}</span></p>
         <div class="d-price"><strong>${fmt(c.gia)}</strong><span class="${chgClass(c)}">${pct(c.thay_doi, 2, true)}</span>
-          <span class="muted" style="font-size:12px">Điểm ${fmt(c.diem_tong, 1)} · PTCB ${fmt(c.diem_cb)} · PTKT ${fmt(c.diem_kt)}</span></div>
+          <span class="muted" style="font-size:12px">Điểm tổng ${fmt(c.diem_tong, 1)} · hạng ${esc(c.xep_loai || "")}</span></div>
       </div>
       <div class="d-sec chart">${chartSVG(closes, D.ngay, { show: 120, levels: lv, band: c.vung_mua, label: "Giá " + c.ma })}
         <div class="legend"><span><i style="background:var(--accent)"></i>Giá</span><span><i style="background:var(--ref)"></i>MA20</span><span><i style="background:var(--ceil)"></i>MA50</span><span>Dải xanh: vùng mua tham chiếu · nét đứt đỏ: cắt lỗ khẩn cấp</span></div></div>
@@ -635,14 +660,14 @@ function renderCoHoi() {
   const ch = D.cfg_co_hoi, on = k => ch[k] != null;
   $("ch-rules").innerHTML = [
     ["Chất lượng doanh nghiệp", null],
-    ["Điểm phân tích cơ bản", `≥ ${ch.diem_cb}/100`],
+    ["Điểm tổng (5 nhóm yếu tố)", `≥ ${ch.diem_tong}/100`],
     ["ROE", [on("roe") && `ROE ≥ ${pct(ch.roe)}`, on("roe_min_4q") && `ROE thấp nhất trong 4 quý gần nhất ≥ ${pct(ch.roe_min_4q)} (ổn định)`].filter(Boolean).join("; ")],
     ["Tăng trưởng lợi nhuận", [on("tt_ln_ttm") && `LN 4 quý tăng ≥ ${pct(ch.tt_ln_ttm)}`, "quý gần nhất tăng so với cùng kỳ", "ít nhất 3/4 quý gần nhất tăng", "có lãi 4 quý liên tiếp"].filter(Boolean).join("; ")],
     ["Định giá", on("peg") ? `PEG ≤ ${fmt(ch.peg, 1)}` : "Không lọc"],
     ["Sức khoẻ tài chính", [on("no_vay_vcsh") && `DN thường: nợ vay/VCSH ≤ ${fmt(ch.no_vay_vcsh, 1)}`, "DN thường: dòng tiền kinh doanh 12 tháng dương", "ngân hàng: nợ xấu ≤ 2%"].filter(Boolean).join("; ")],
     ["Quy mô và thanh khoản", `Vốn hoá ≥ ${fmt(ch.von_hoa_ty)} tỷ; GTGD trung bình 20 phiên ≥ ${fmt(ch.gtgd_ty)} tỷ`],
     ["Điểm mua kỹ thuật", null],
-    ["Xu hướng", `Điểm PTKT ≥ ${ch.diem_kt}; giá trên MA20 và MA50; MA50 trên MA200 và đang đi lên`],
+    ["Xu hướng", "Giá trên MA20 và MA50; MA50 trên MA200 và đang đi lên"],
     ["Động lượng", on("rsi_max") ? `RSI14 trong khoảng ${ch.rsi_min}–${ch.rsi_max}` : `RSI14 ≥ ${ch.rsi_min} (không đặt trần)`],
     ["Biến động thấp", on("atr_pct_toi_da") ? `ATR14 ≤ ${pct(ch.atr_pct_toi_da)} giá: tiêu chí có tác dụng rõ nhất trong kiểm định quá khứ` : "Không lọc"],
     ["Không mua đuổi", (on("cach_ma20_toi_da") ? `Giá không cao hơn MA20 quá ${pct(ch.cach_ma20_toi_da)}; ` : "") + "chưa tăng kịch trần trong phiên"],
@@ -657,31 +682,43 @@ function renderCoHoi() {
 
 // ---------- Tab: Bảng xếp hạng ----------
 const COLS = [
-  { k: "rank", label: "#" }, { k: "ma", label: "Mã", left: true }, { k: "gia", label: "Giá" }, { k: "thay_doi", label: "+/−" },
-  { k: "diem_tong", label: "Điểm tổng", left: true }, { k: "diem_cb", label: "PTCB" }, { k: "diem_kt", label: "PTKT" },
-  { k: "pe", label: "P/E" }, { k: "roe", label: "ROE" }, { k: "tt_ln_ttm", label: "LN 4 quý" }, { k: "tt_ln_quy", label: "LN quý" },
-  { k: "rs", label: "RS" }, { k: "rsi14", label: "RSI" }, { k: "cach_dinh_52t", label: "Cách đỉnh 52T" },
+  { k: "rank", label: "#" }, { k: "ma", label: "Mã", left: true }, { k: "san", label: "Sàn", left: true }, { k: "gia", label: "Giá" },
+  { k: "thay_doi", label: "+/−" }, { k: "r1w", label: "5 phiên" },
+  { k: "diem_tong", label: "Điểm tổng", left: true }, { k: "d_on_dinh", label: "Ổn định" }, { k: "d_gia_tri", label: "Định giá" },
+  { k: "d_chat_luong", label: "Chất lượng" }, { k: "d_quy_mo", label: "Quy mô" }, { k: "d_xu_huong", label: "Xu hướng" },
+  { k: "pe", label: "P/E" }, { k: "roe", label: "ROE" }, { k: "tt_ln_quy", label: "LN quý" }, { k: "rsi14", label: "RSI" },
+];
+const COLS_TANG = [
+  { k: "ma", label: "Mã", left: true }, { k: "san", label: "Sàn", left: true }, { k: "gia", label: "Giá" }, { k: "thay_doi", label: "+/−" },
+  { k: "r1w", label: "5 phiên" }, { k: "gtgd_tb5", label: "GTGD 5 phiên" }, { k: "diem_tong", label: "Điểm tổng", left: true },
+  { k: "nhom", label: "Đánh giá", left: true }, { k: "luu_y", label: "Lưu ý", left: true },
 ];
 function cell(r, k) {
   switch (k) {
-    case "rank": return `<td class="rank">${r.rank}</td>`;
+    case "rank": return `<td class="rank">${r.rank ?? "–"}</td>`;
+    case "san": return `<td class="l" style="font-family:var(--f-ui); font-size:12px">${esc(r.san)}</td>`;
+    case "r1w": return `<td class="${cls(r.r1w)}">${pct(r.r1w, 1, true)}</td>`;
+    case "d_on_dinh": case "d_gia_tri": case "d_chat_luong": case "d_quy_mo": case "d_xu_huong":
+      return `<td class="gs ${r[k] >= 70 ? "hi" : r[k] <= 30 ? "lo" : ""}">${fmt(r[k])}</td>`;
+    case "gtgd_tb5": return `<td>${fmt(r.gtgd_tb5 / 1e9, 1)} tỷ</td>`;
+    case "nhom": return `<td class="l"><span class="chip nhom-${r.nhom}">${NHOM_TANG[r.nhom] || ""}</span></td>`;
+    case "luu_y": return `<td class="wrap">${esc((r.luu_y || "").split(";").slice(0, 2).join(";"))}</td>`;
     case "ma": return `<td class="l tk"><b>${esc(r.ma)}</b><small>${esc(r.nganh)}</small></td>`;
     case "gia": return `<td>${fmt(r.gia)}</td>`;
     case "thay_doi": return `<td class="${chgClass(r)}">${pct(r.thay_doi, 1, true)}</td>`;
     case "diem_tong": return `<td class="l"><span class="score"><span class="badge g-${r.xep_loai}">${r.xep_loai}</span><span>${fmt(r.diem_tong, 1)}</span><span class="bar"><i class="fill-${r.xep_loai}" style="width:${r.diem_tong}%"></i></span></span></td>`;
-    case "diem_cb": case "diem_kt": return `<td>${fmt(r[k])}</td>`;
     case "pe": return `<td>${r.pe > 0 ? fmt(r.pe, 1) : "–"}</td>`;
     case "roe": return `<td>${pct(r.roe)}</td>`;
     case "tt_ln_ttm": case "tt_ln_quy": return `<td class="${cls(r[k])}">${pct(r[k], 0, true)}</td>`;
-    case "rs": return `<td>${fmt(r.rs)}</td>`;
     case "rsi14": return `<td class="${r.rsi14 > 75 ? "ref" : ""}">${fmt(r.rsi14)}</td>`;
     case "cach_dinh_52t": return `<td>${pct(r.cach_dinh_52t)}</td>`;
   }
 }
 function filtered() {
   const q = state.q.trim().toLowerCase();
-  const out = rows.filter(r =>
-    (state.tab === "all" || r.top) &&
+  const src = state.tab === "tang" ? tang : rows;
+  const out = src.filter(r =>
+    (state.tab !== "top" || r.top) &&
     (!q || r.ma.toLowerCase().includes(q) || (r.ten || "").toLowerCase().includes(q)) &&
     (!state.nganh || r.nganh === state.nganh) && (!state.san || r.san === state.san) &&
     (!state.grades.size || state.grades.has(r.xep_loai)));
@@ -696,15 +733,23 @@ function filtered() {
   return out;
 }
 function renderHead() {
-  document.querySelector("#tbl thead").innerHTML = "<tr>" + COLS.map(c => {
+  const cols = state.tab === "tang" ? COLS_TANG : COLS;
+  document.querySelector("#tbl thead").innerHTML = "<tr>" + cols.map(c => {
     const s = state.sort === c.k ? ` aria-sort="${state.dir < 0 ? "descending" : "ascending"}"` : "";
     return `<th class="${c.left ? "l" : ""}"${s}><button data-k="${c.k}">${c.label}</button></th>`;
   }).join("") + "</tr>";
 }
 function renderTable() {
   const list = filtered();
+  const cols = state.tab === "tang" ? COLS_TANG : COLS;
   document.querySelector("#tbl tbody").innerHTML = list.map(r =>
-    `<tr class="click" tabindex="0" data-ma="${esc(r.ma)}" aria-selected="${r.ma === state.sel}">${COLS.map(c => cell(r, c.k)).join("")}</tr>`).join("");
+    `<tr class="click" tabindex="0" data-ma="${esc(r.ma)}" aria-selected="${r.ma === state.sel}">${cols.map(c => cell(r, c.k)).join("")}</tr>`).join("");
+  const dt = D.cfg_dang_tang;
+  $("tang-note").hidden = state.tab !== "tang";
+  if (dt) $("tang-note").innerHTML = `Mã tăng ≥ ${pct(dt.tang_5_phien)} trong 5 phiên, giá trị giao dịch 5 phiên ≥ ${fmt(dt.gtgd_tb5_ty)} tỷ/phiên. `
+    + `Kiểm chứng 3 năm cho thấy đuổi theo mã vừa tăng mạnh nói chung <b>không có lợi</b> (−0,3% so với thị trường sau 20 phiên). `
+    + `Nhưng trong nhóm này, mã <b class="up">có nền tảng (điểm ≥ ${dt.diem_nen_tang})</b> vẫn tiếp tục tốt hơn thị trường +2,2%, `
+    + `còn mã <b class="down">đầu cơ (điểm < ${dt.diem_dau_co})</b> thường kém −2,3%.`;
   $("empty").hidden = list.length > 0;
   $("shown").textContent = `Đang hiện ${list.length} mã`;
   if (list.length && !list.some(r => r.ma === state.sel)) select(list[0].ma, false);
@@ -739,16 +784,15 @@ function renderDetail(r) {
     <div class="d-head">
       <div class="d-top"><h3>${esc(r.ma)}</h3><span class="badge g-${r.xep_loai}" title="Hạng">${r.xep_loai}</span>${r.top ? `<span class="tag">Top</span>` : ""}</div>
       <p class="d-name">${esc(r.ten)}</p>
-      <p class="d-meta">${esc(r.nganh)} · ${esc(r.san)} · BCTC ${esc(r.ky_bctc || "–")} · hạng ${r.rank}/${rows.length}</p>
+      <p class="d-meta">${esc(r.nganh)} · ${esc(r.san)} · BCTC ${esc(r.ky_bctc || "–")} · ${r.rank ? `hạng ${r.rank}/${rows.length}` : `chưa đủ thanh khoản để xếp hạng (GTGD TB20 ${fmt((r.gtgd_tb20 || 0) / 1e9, 1)} tỷ)`}</p>
       <div class="d-price"><strong>${fmt(r.gia)}</strong><span class="${chgClass(r)}">${pct(r.thay_doi, 2, true)}</span></div>
     </div>
     <div class="d-sec chart">${chartSVG(D.gia_200[r.ma] || [], D.ngay, { label: "Giá " + r.ma })}
       <div class="legend"><span><i style="background:var(--accent)"></i>Giá (nghìn đồng)</span><span><i style="background:var(--ref)"></i>MA20</span><span><i style="background:var(--ceil)"></i>MA50</span><span>200 phiên</span></div></div>
     <div class="d-sec"><div class="total"><span class="big">${fmt(r.diem_tong, 1)}</span>
-      <div class="split"><span>Điểm tổng = ${fmt(D.trong_so.co_ban * 100)}% PTCB + ${fmt(D.trong_so.ky_thuat * 100)}% PTKT</span>
+      <div class="split"><span>Điểm tổng = trung bình 5 nhóm; mỗi nhóm xếp hạng so với các mã đủ thanh khoản (100 = tốt nhất)</span>
       <span class="bar" style="width:100%"><i class="fill-${r.xep_loai}" style="width:${r.diem_tong}%"></i></span></div></div></div>
-    <div class="d-sec"><h4>Phân tích cơ bản <span class="num">${fmt(r.diem_cb)}/100</span></h4>${parts(r.phan_cb || [])}</div>
-    <div class="d-sec"><h4>Phân tích kỹ thuật <span class="num">${fmt(r.diem_kt, 1)}/100</span></h4>${parts(r.phan_kt || [])}</div>
+    <div class="d-sec"><h4>Điểm theo nhóm yếu tố</h4>${parts(r.phan_nhom || [])}</div>
     <div class="d-sec"><h4>Định giá</h4>${metrics([
       ["P/E", r.pe > 0 ? fmt(r.pe, 1) : "–"], ["P/E ngành", fmt(r.pe_nganh, 1)], ["P/B", fmt(r.pb, 2)],
       ["PEG", fmt(r.peg, 2)], ["Cổ tức", pct(r.co_tuc, 1)], ["Vốn hoá", r.von_hoa_ty ? fmt(r.von_hoa_ty) + " tỷ" : "–"]])}</div>
@@ -769,16 +813,17 @@ function renderBang() {
   $("f1").textContent = fmt(D.dem.xet);
   $("f1t").textContent = `mã trên ${D.san.join(", ")} được quét`;
   $("f2").textContent = fmt(D.dem.thanh_khoan);
-  $("f2t").textContent = `đạt thanh khoản (GTGD ≥ ${fmt(D.loc.gtgd_tb20_toi_thieu_ty)} tỷ/phiên, giá ≥ ${fmt(D.loc.gia_toi_thieu)}đ)`;
+  $("f2t").textContent = `đủ thanh khoản (GTGD TB 20 phiên ≥ ${fmt(D.loc.gtgd_tb20_toi_thieu_ty)} tỷ hoặc 5 phiên ≥ ${fmt(D.loc.gtgd_tb5_toi_thieu_ty)} tỷ, giá ≥ ${fmt(D.loc.gia_toi_thieu)}đ)`;
   $("f3").textContent = fmt(D.dem.top);
-  $("f3t").textContent = `đạt cả PTCB ≥ ${D.loc_top.diem_co_ban_toi_thieu} và PTKT ≥ ${D.loc_top.diem_ky_thuat_toi_thieu}, giá trên MA50`;
+  $("f3t").textContent = `vào Top: điểm tổng ≥ ${D.loc_top.diem_toi_thieu}` + (D.loc_top.yeu_cau_xu_huong_tang ? " và giá > MA50 > MA200" : "");
   $("cnt-top").textContent = rows.filter(r => r.top).length;
   $("cnt-all").textContent = rows.length;
+  $("cnt-tang").textContent = tang.length;
   const count = {};
   rows.forEach(r => { count[r.nganh] = (count[r.nganh] || 0) + 1; });
   $("nganh").innerHTML = `<option value="">Tất cả ngành</option>` +
     Object.keys(count).sort((a, b) => a.localeCompare(b, "vi")).map(n => `<option value="${esc(n)}">${esc(n)} (${count[n]})</option>`).join("");
-  $("san").innerHTML = `<option value="">Tất cả sàn</option>` + [...new Set(rows.map(r => r.san))].sort().map(s => `<option>${esc(s)}</option>`).join("");
+  $("san").innerHTML = `<option value="">Tất cả sàn</option>` + [...new Set(rows.concat(tang).map(r => r.san))].sort().map(s => `<option>${esc(s)}</option>`).join("");
   $("nganh").value = state.nganh; $("san").value = state.san;
   $("method").innerHTML = D.giai_thich.filter(([a, b]) => a || b).map(([a, b]) =>
     b ? `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>` : `<tr class="h"><td colspan="2">${esc(a)}</td></tr>`).join("");
@@ -791,9 +836,9 @@ if (!Array.isArray(DM)) DM = [];
 let editing = null;
 const SIG = {
   CAT_LO: "Cắt lỗ", BAN: "Bán: chạm điểm dừng lãi", GIAM: "Giảm tỷ trọng", CHOT: "Chốt lời một phần",
-  THAN_TRONG: "Thận trọng", GIU: "Giữ", NA: "Chưa có dữ liệu",
+  THAN_TRONG: "Thận trọng", GIU: "Giữ", NA: "Chưa có dữ liệu", CAP_NHAT: "Cần cập nhật giá vốn",
 };
-const SIG_ORDER = ["CAT_LO", "BAN", "GIAM", "CHOT", "THAN_TRONG", "GIU", "NA"];
+const SIG_ORDER = ["CAP_NHAT", "CAT_LO", "BAN", "GIAM", "CHOT", "THAN_TRONG", "GIU", "NA"];
 
 function phienTu(ngay) {
   if (!ngay) return null;
@@ -809,6 +854,22 @@ function danhGia(h, tongGiaTri) {
   const x = r || k ? { ...(k || {}), ...(r || {}) } : null;
   if (!x || x.gia == null) return { sig: "NA", ly_do: ["Chưa có dữ liệu giá: mã sai, mới niêm yết, tạm ngừng giao dịch hoặc có dưới 30 phiên giao dịch"], gia: null };
   const c = D.cfg_danh_muc, gia = x.gia, lai = gia / h.gia_von - 1;
+  // Nguồn dữ liệu điều chỉnh lùi lịch sử giá sau chia cổ tức bằng cổ phiếu / thưởng / phát hành quyền.
+  // Nếu giá vốn cao hơn hẳn mọi mức giá (đã điều chỉnh) kể từ ngày mua thì giá vốn nhiều khả năng chưa được quy đổi.
+  const cl = D.gia_200[h.ma];
+  let dinhKe = null;
+  if (cl) {
+    const i0 = h.ngay ? D.ngay.findIndex(d => d >= h.ngay) : 0;
+    const seg = cl.slice(Math.max(0, i0)).filter(v => v != null);
+    if (seg.length) dinhKe = Math.max(...seg);
+  } else if (x.cach_dinh_52t != null) {
+    dinhKe = gia / (1 + x.cach_dinh_52t);
+  }
+  if (dinhKe && h.gia_von > dinhKe * 1.1) {
+    return { sig: "CAP_NHAT", gia, lai, nguong: null, gia_tri: gia * h.kl, thay_doi: x.thay_doi, san: x.san,
+      ly_do: [`Giá vốn ${fmt(h.gia_von)} cao hơn mọi mức giá kể từ ${h.ngay ? "ngày mua" : "200 phiên gần nhất"} (cao nhất ${fmt(dinhKe)} sau điều chỉnh). `
+        + "Nhiều khả năng mã đã chia cổ tức bằng cổ phiếu/thưởng/quyền mua: hãy sửa giá vốn và khối lượng theo số cổ phiếu sau quyền."] };
+  }
   const catCung = h.gia_von * (1 - c.cat_lo_pct);
   // Đỉnh để tính điểm dừng lãi: đỉnh đóng cửa kể từ ngày mua (nếu biết ngày mua và có chuỗi giá);
   // không có ngày mua thì dùng đỉnh 20 phiên nhưng chỉ khi đã lãi ≥ 10% (giả định đỉnh hình thành khi đang nắm giữ).
@@ -1049,11 +1110,30 @@ function renderKiemDinh() {
     <div><dt>Hơn VN-Index cùng kỳ (TB)</dt><dd class="${cls(tk.vuot_vni)}">${tk.n && tk.vuot_vni != null ? pct(tk.vuot_vni, 2, true) : "–"}</dd></div>`;
   $("nk-body").innerHTML = nk.tin_hieu.map(x => `<tr>
     <td class="l">${dmy(x.ngay)}</td><td class="l tk"><b>${esc(x.ma)}</b></td><td class="l" style="font-family:var(--f-ui)">${esc(x.loai_mua)}</td>
-    <td>${fmt(x.gia)}</td><td class="down">${fmt(x.cat_lo)}</td><td>${x.so_phien_giu} phiên</td>
+    <td>${fmt(x.gia)}${x.dieu_chinh ? `<br><small class="muted" title="Nguồn dữ liệu đã điều chỉnh lịch sử giá do sự kiện quyền">quy đổi ×${fmt(x.dieu_chinh, 3)} (gốc ${fmt(x.gia_goc)})</small>` : ""}</td><td class="down">${fmt(x.cat_lo)}</td><td>${x.so_phien_giu} phiên</td>
     <td class="l"><span class="chip ${TT_CLS[x.trang_thai] || "warn"}">${esc(TT_TEN[x.trang_thai] || x.trang_thai)}</span></td>
     <td>${fmt(x.gia_ra)}</td><td class="${cls(x.ln)}">${x.ln == null ? "–" : pct(x.ln, 1, true)}</td>
     <td>${x.so_phien ?? "–"}</td><td class="${cls(x.ln_vni)}">${x.ln_vni == null ? "–" : pct(x.ln_vni, 1, true)}</td></tr>`).join("")
     || `<tr><td colspan="11" class="empty">Chưa có tín hiệu nào được ghi. Nhật ký tự động ghi khi trang được cập nhật trong các phiên giao dịch.</td></tr>`;
+
+  // Sức dự báo của điểm số
+  const nc = D.kiem_dinh && D.kiem_dinh.nghien_cuu_diem;
+  $("nc-intro").innerHTML = nc ? `Mỗi 5 phiên trong 3 năm, xếp hạng các mã đủ thanh khoản theo từng yếu tố rồi đo tương quan với lợi nhuận 20 phiên sau đó `
+    + `<b>so với trung bình thị trường</b> (IC: 0 = không dự báo được; > 0,05 là tốt với dữ liệu chứng khoán). Một yếu tố đáng tin khi dương ở cả hai nửa giai đoạn `
+    + `(chia tại ${dmy(nc.giua)}). Chạy lại mỗi sáng thứ Bảy để phát hiện khi điểm số mất tác dụng.` : "Chưa có kết quả.";
+  $("nc-tiles").innerHTML = nc ? `
+    <div><dt>Hệ số dự báo của Điểm tổng</dt><dd class="${nc.yeu_to[0].ic > 0.03 ? "up" : "down"}">${fmt(nc.yeu_to[0].ic, 3)}<small>t = ${fmt(nc.yeu_to[0].t, 1)}</small></dd></div>
+    <div><dt>20 mã điểm cao nhất · vượt TB</dt><dd class="${cls(nc.top20_vuot_tb)}">${pct(nc.top20_vuot_tb, 2, true)}<small>/20 phiên</small></dd></div>
+    <div><dt>Danh sách Top · vượt TB</dt><dd class="${cls(nc.danh_sach_top_vuot_tb)}">${pct(nc.danh_sach_top_vuot_tb, 2, true)}<small>~${fmt(nc.danh_sach_top_so_ma_tb)} mã/phiên</small></dd></div>
+    <div><dt>Danh sách Top · số phiên thắng</dt><dd>${pct(nc.danh_sach_top_ty_le_thang)}</dd></div>` : "";
+  $("nc-body").innerHTML = nc ? nc.yeu_to.map(x => {
+    const tot = x.ic > 0.03 && x.ic_nua_dau > 0 && x.ic_nua_sau > 0, xau = x.ic_nua_dau < 0 && x.ic_nua_sau < 0;
+    const nx = tot ? ["good", "Dự báo tốt, ổn định"] : xau ? ["bad", "Ngược chiều"] : ["warn", x.nhom === "Tham khảo" ? "Không dự báo được (không dùng)" : "Yếu / chưa ổn định"];
+    const ten = x.nhom === "Yếu tố" ? "· " + x.ten : x.nhom === "Nhóm" ? "Nhóm " + x.ten : x.nhom === "Tham khảo" ? x.ten + " (không dùng)" : x.ten;
+    return `<tr><td class="l" style="font-family:var(--f-ui); white-space:normal; ${x.nhom === "Điểm" ? "font-weight:700" : x.nhom === "Nhóm" ? "font-weight:600" : ""}">${esc(ten)}</td>
+      <td class="${cls(x.ic)}">${fmt(x.ic, 3)}</td><td>${fmt(x.t, 1)}</td><td class="${cls(x.ic_nua_dau)}">${fmt(x.ic_nua_dau, 3)}</td>
+      <td class="${cls(x.ic_nua_sau)}">${fmt(x.ic_nua_sau, 3)}</td><td class="l"><span class="chip ${nx[0]}">${nx[1]}</span></td></tr>`;
+  }).join("") : "";
 
   // Kiểm định quá khứ
   const kd = D.kiem_dinh;
@@ -1108,13 +1188,20 @@ $("ch-watch").addEventListener("click", e => {
 $("ch-watch").addEventListener("keydown", e => { if (e.key === "Enter") e.target.closest("tr[data-ma]")?.click(); });
 
 function setTab(t, render = true) {
+  if (state.tab === "tang" && t !== "tang") { state.sort = "diem_tong"; state.dir = -1; }
   state.tab = t; store.set("blcp.tab", t);
+  // Tab "Đang tăng mạnh" mặc định sắp theo mức tăng 5 phiên; hai tab còn lại theo điểm tổng
+  if (t === "tang" && state.sort !== "r1w") { state.sort = "r1w"; state.dir = -1; }
+  else if (t !== "tang" && !COLS.some(c => c.k === state.sort)) { state.sort = "diem_tong"; state.dir = -1; }
   $("tab-top").setAttribute("aria-selected", t === "top");
   $("tab-all").setAttribute("aria-selected", t === "all");
+  $("tab-tang").setAttribute("aria-selected", t === "tang");
+  if (render) renderHead();
   if (render) renderTable();
 }
 $("tab-top").onclick = () => setTab("top");
 $("tab-all").onclick = () => setTab("all");
+$("tab-tang").onclick = () => setTab("tang");
 $("q").oninput = e => { state.q = e.target.value; renderTable(); };
 $("nganh").onchange = e => { state.nganh = e.target.value; renderTable(); };
 $("san").onchange = e => { state.san = e.target.value; renderTable(); };

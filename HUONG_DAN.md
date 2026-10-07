@@ -30,7 +30,9 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
   điều chỉnh về MA20 / nền giá chặt), chưa tăng quá xa. Kèm vùng mua, cắt lỗ, mục tiêu tham chiếu tính theo quy tắc.
   Số mã tối đa phụ thuộc bối cảnh thị trường (Thuận lợi 5 · Trung tính 3 · Rủi ro cao 1).
   Bên dưới là danh sách theo dõi các mã chỉ thiếu 1–2 tiêu chí.
-- **Bảng xếp hạng**: toàn bộ mã đủ thanh khoản, chấm điểm PTCB + PTKT.
+- **Bảng xếp hạng**: mọi mã HOSE/HNX/UPCOM đủ thanh khoản, chấm điểm theo 5 nhóm yếu tố (xem "Cách chấm điểm").
+  Ba tab con: *Danh sách Top* (điểm ≥ 65 và giá > MA50 > MA200) · *Tất cả* · *Đang tăng mạnh* (tăng ≥ 8% trong 5 phiên,
+  gắn nhãn "Tăng có nền tảng" / "Trung bình" / "Tăng đầu cơ" theo điểm).
 - **Danh mục của tôi**: nhập mã, giá vốn, khối lượng, ngày mua. Trang áp quy tắc để báo Cắt lỗ / Bán (chạm điểm dừng lãi)
   / Giảm tỷ trọng / Chốt lời một phần / Thận trọng / Giữ, kèm ngưỡng dừng và lý do. Danh mục chỉ lưu trên trình duyệt;
   dùng nút "Tạo link" để mở cùng danh mục trên máy khác (dữ liệu nằm trong link, không gửi lên máy chủ).
@@ -91,25 +93,48 @@ Lưu ý:
 
 Dữ liệu được lưu cache trong `cache/` (giá: 1 giờ, BCTC: 72 giờ).
 
-## Tiêu chí chấm điểm
+## Cách chấm điểm (từ 10/2026)
 
-**Phân tích cơ bản (100đ)**: ROE · tăng trưởng LNST 4 quý · tăng trưởng LNST quý gần nhất so với cùng kỳ ·
-tăng trưởng doanh thu · P/E so với trung vị ngành · PEG · sức khoẻ tài chính (nợ vay/VCSH, thanh toán;
-ngân hàng dùng nợ xấu, NIM).
+Mỗi yếu tố được **xếp hạng phần trăm so với mọi mã đủ thanh khoản trong cùng phiên** (100 = tốt nhất);
+điểm nhóm = trung bình các yếu tố trong nhóm; **Điểm tổng = trung bình 5 nhóm**. Hạng A ≥ 70 · B ≥ 60 · C ≥ 45 · D < 45.
 
-**Phân tích kỹ thuật (100đ)**: xu hướng (giá so với MA20/50/200, MA200 đi lên) · động lượng (RSI14, MACD) ·
-sức mạnh giá tương đối RS 1–99 (kiểu IBD) · khoảng cách tới đỉnh 52 tuần · dòng tiền (khối lượng).
+| Nhóm | Yếu tố |
+|---|---|
+| Ổn định giá | ATR14 (% giá) thấp · biên độ 10 phiên hẹp |
+| Định giá | lợi suất lợi nhuận 1/PE cao · P/E thấp so với trung vị ngành |
+| Chất lượng | ROE thấp nhất 4 quý · ROE · số quý LN tăng so với cùng kỳ |
+| Quy mô | vốn hoá |
+| Xu hướng giá | gần đỉnh 52 tuần · giá > MA50 > MA200 |
 
-**Điểm tổng** = 50% PTCB + 50% PTKT. Thang điểm chi tiết xem sheet *Giai thich* trong file Excel.
+**Vì sao đổi** (nghiên cứu 10/2026: 146 thời điểm × ~200 mã, 10/2023–10/2026, đo tương quan thứ hạng IC giữa yếu tố và
+lợi nhuận 20 phiên sau đó so với trung bình thị trường):
+
+| | IC | Nửa đầu | Nửa sau | 20 mã điểm cao nhất vượt TB |
+|---|---|---|---|---|
+| Điểm cũ (50% PTCB + 50% PTKT) | +0,030 | +0,072 | −0,013 | +0,68%/20 phiên |
+| **Điểm mới** | **+0,110** | +0,108 | +0,112 | **+1,29%/20 phiên** |
+
+- Bỏ khỏi điểm: tăng trưởng LN/doanh thu, MACD, RS/động lượng 3–12 tháng, RSI, các mốc MA chi tiết (không dự báo ổn định).
+- Mã vừa tăng mạnh 5 phiên nói chung **không** tiếp tục vượt thị trường (−0,3%); trong đó mã điểm ≥ 60 vượt +2,2%,
+  mã điểm < 45 kém −2,3% → tab "Đang tăng mạnh" gắn nhãn theo điểm.
+- Danh sách Top mới vượt TB +1,4%/20 phiên ở cả hai nửa giai đoạn (cũ: +0,7%, nửa sau chỉ +0,3%).
+- Nghiên cứu được chạy lại mỗi sáng thứ Bảy (tab Kiểm định → "Điểm số có dự báo được không?").
+
+**Đủ thanh khoản**: GTGD TB 20 phiên ≥ 5 tỷ (≥ 200 phiên dữ liệu) **hoặc** GTGD TB 5 phiên ≥ 10 tỷ (≥ 120 phiên),
+giá ≥ 5.000đ — để không bỏ sót mã vừa có dòng tiền vào.
+
+**Sự kiện quyền** (chia cổ tức bằng cổ phiếu, thưởng…): nguồn giá điều chỉnh lùi lịch sử. Nhật ký tín hiệu tự quy đổi
+giá ghi nhận; tab Danh mục báo "Cần cập nhật giá vốn" khi giá vốn cao hơn mọi mức giá (đã điều chỉnh) kể từ ngày mua.
 
 ## Tuỳ chỉnh (`cau_hinh.json`)
 | Khoá | Ý nghĩa |
 |---|---|
-| `san` | Sàn cần lọc: `HOSE`, `HNX`, `UPCOM` |
+| `san` | Sàn đưa vào bảng: `HOSE`, `HNX`, `UPCOM` |
 | `loai_doanh_nghiep` | `CT` doanh nghiệp thường, `NH` ngân hàng, `CK` chứng khoán, `BH` bảo hiểm |
-| `loc_thanh_khoan` | GTGD TB 20 phiên tối thiểu (tỷ đồng), giá tối thiểu, số phiên tối thiểu |
-| `trong_so` | Tỷ trọng PTCB / PTKT trong điểm tổng (VD: thiên về đầu tư giá trị → `0.7 / 0.3`) |
-| `loc_top` | Điều kiện để vào danh sách Top |
+| `loc_thanh_khoan` | GTGD TB 20 phiên / 5 phiên tối thiểu (tỷ đồng), giá tối thiểu, số phiên tối thiểu |
+| `loc_top` | Điều kiện vào danh sách Top (điểm tối thiểu, yêu cầu xu hướng tăng) |
+| `dang_tang` | Ngưỡng tăng 5 phiên, GTGD tối thiểu, ngưỡng điểm "có nền tảng" / "đầu cơ" |
+| `co_hoi`, `danh_muc` | Quy tắc tab Cơ hội hôm nay và Danh mục |
 
 ## Hạn chế cần biết
 - Dữ liệu từ API công khai, có thể chậm cập nhật hoặc sai lệch; BCTC chỉ có sau khi doanh nghiệp công bố.

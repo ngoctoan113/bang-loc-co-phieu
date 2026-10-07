@@ -245,6 +245,8 @@ def technical_series(df: pd.DataFrame) -> pd.DataFrame:
         "gia": c,
         "thay_doi": c / c.shift() - 1,
         "gtgd_tb20": (c * v).rolling(20).mean(),
+        "gtgd_tb5": (c * v).rolling(5).mean(),
+        "r1w": c / c.shift(5) - 1,
         "so_phien": pos + 1,
         "ma20": ma20, "ma50": ma50, "ma200": ma200,
         "ma200_tang": (ma200 > ma200.shift(20)) & (pos >= 220),
@@ -365,103 +367,92 @@ def fundamental(raw: dict, loai: str, as_of: str | None = None) -> dict:
 
 
 # ----------------------------------------------------------------------------
-# Chấm điểm
+# Chấm điểm theo yếu tố
 # ----------------------------------------------------------------------------
+# Nghiên cứu 10/2026 (146 thời điểm × ~200 mã, 10/2023–10/2026): chỉ giữ các yếu tố có tương quan thứ hạng (IC) dương
+# và ổn định ở cả hai nửa giai đoạn với lợi nhuận 20 phiên vượt trung bình thị trường. Điểm kỹ thuật/tăng trưởng
+# cũ (MA, MACD, RS, tăng trưởng LN) không có sức dự báo nên đã bỏ khỏi điểm số (vẫn hiển thị để tham khảo).
+# Mỗi nhóm = trung bình thứ hạng phần trăm của các yếu tố trong nhóm, so với các mã đủ thanh khoản cùng phiên.
+NHOM_DIEM = [
+    ("on_dinh", "Ổn định giá", [("atr_pct", -1), ("bien_do_10p", -1)]),
+    ("gia_tri", "Định giá", [("ep", 1), ("pe_rel", -1)]),
+    ("chat_luong", "Chất lượng", [("roe_min_4q", 1), ("roe", 1), ("so_quy_tang_truong", 1)]),
+    ("quy_mo", "Quy mô", [("von_hoa_ty", 1)]),
+    ("xu_huong", "Xu hướng giá", [("cach_dinh_52t", 1), ("xu_huong_tang", 1)]),
+]
+
+
 def nz(x):
     return x is not None and not (isinstance(x, float) and math.isnan(x))
 
 
-def step(x, rules):
-    """rules: [(ngưỡng, điểm), ...] theo thứ tự giảm dần; trả về điểm của ngưỡng đầu tiên đạt."""
-    if not nz(x):
-        return 0
-    for thr, pts in rules:
-        if x >= thr:
-            return pts
-    return 0
+def them_yeu_to(df: pd.DataFrame) -> pd.DataFrame:
+    """Thêm các cột yếu tố suy ra: lợi suất lợi nhuận, P/E so với ngành, xu hướng tăng."""
+    pe = pd.to_numeric(df["pe"], errors="coerce")
+    pen = pd.to_numeric(df["pe_nganh"], errors="coerce")
+    df["ep"] = np.where(pe > 0, 1 / pe, 0.0)                              # lỗ / không có P/E → 0 (kém nhất)
+    df["pe_rel"] = np.where((pe > 0) & (pen > 0), pe / pen, 5.0)          # lỗ → coi như rất đắt
+    df["xu_huong_tang"] = ((df["gia"] > df["ma50"]) & (df["ma50"] > df["ma200"])).astype(float)
+    return df
 
 
-def score_fundamental(r: dict) -> tuple[float, list, list, list]:
-    good, warn = [], []
-    parts = [
-        ("ROE", step(r.get("roe"), [(0.20, 20), (0.15, 15), (0.10, 8)]), 20),
-        ("Tăng trưởng LN 4 quý", step(r.get("tt_ln_ttm"), [(0.30, 20), (0.15, 15), (0.05, 8), (0.0001, 4)]), 20),
-        ("Tăng trưởng LN quý", step(r.get("tt_ln_quy"), [(0.30, 15), (0.15, 10), (0.0001, 5)]), 15),
-        ("Tăng trưởng doanh thu", step(r.get("tt_dt_ttm"), [(0.20, 10), (0.10, 7), (0.0001, 3)]), 10),
-    ]
-
-    pe, pe_ng, peg = r.get("pe"), r.get("pe_nganh"), r.get("peg")
-    v = 0
-    if nz(pe) and pe > 0 and nz(pe_ng):
-        v = 10 if pe <= 0.8 * pe_ng else 6 if pe <= pe_ng else 3 if pe <= 1.2 * pe_ng else 0
-    parts.append(("P/E so với ngành", v, 10))
-    v = 0
-    if nz(peg) and peg > 0:
-        v = 10 if peg <= 0.7 else 7 if peg <= 1 else 3 if peg <= 1.5 else 0
-    parts.append(("PEG", v, 10))
-
-    loai = r.get("loai")
-    h = 0
-    if loai == "NH":
-        h += 8 if nz(r.get("npl")) and r["npl"] <= 0.015 else 4 if nz(r.get("npl")) and r["npl"] <= 0.025 else 0
-        h += 4 if nz(r.get("nim")) and r["nim"] >= 0.03 else 2 if nz(r.get("nim")) and r["nim"] >= 0.025 else 0
-        h += 3 if r.get("lai_4_quy") else 0
-    else:
-        d = r.get("no_vay_vcsh")
-        lim = (0.5, 1.0, 1.5) if loai == "CT" else (1.0, 1.5, 2.0)
-        h += 8 if nz(d) and d <= lim[0] else 5 if nz(d) and d <= lim[1] else 2 if nz(d) and d <= lim[2] else 0
-        h += 4 if loai != "CT" or (nz(r.get("thanh_toan_hh")) and r["thanh_toan_hh"] >= 1.2) else 0
-        h += 3 if r.get("lai_4_quy") else 0
-    parts.append(("Sức khoẻ tài chính", h, 15))
-    s = sum(p[1] for p in parts)
-
-    # Diễn giải
-    if nz(r.get("roe")) and r["roe"] >= 0.15: good.append(f"ROE {r['roe']:.0%}")
-    if nz(r.get("tt_ln_ttm")) and r["tt_ln_ttm"] >= 0.15: good.append(f"LN 4 quý +{r['tt_ln_ttm']:.0%}")
-    if nz(r.get("tt_ln_quy")) and r["tt_ln_quy"] >= 0.25: good.append(f"LN quý gần nhất +{r['tt_ln_quy']:.0%}")
-    if r.get("chuyen_lai"): good.append("Quý gần nhất chuyển lỗ thành lãi")
-    if nz(peg) and 0 < peg <= 1: good.append(f"PEG {peg:.2f}")
-    if nz(pe) and nz(pe_ng) and 0 < pe <= 0.8 * pe_ng: good.append(f"P/E {pe:.1f} thấp hơn ngành ({pe_ng:.1f})")
-    if nz(r.get("tt_ln_ttm")) and r["tt_ln_ttm"] < 0: warn.append(f"LN 4 quý {r['tt_ln_ttm']:.0%}")
-    if nz(r.get("tt_ln_quy")) and r["tt_ln_quy"] < -0.1: warn.append(f"LN quý {r['tt_ln_quy']:.0%}")
-    if not nz(pe) or pe <= 0: warn.append("P/E âm/không có")
-    elif nz(pe_ng) and pe > 1.5 * pe_ng: warn.append(f"P/E {pe:.1f} cao hơn ngành")
-    if loai == "CT" and nz(r.get("no_vay_vcsh")) and r["no_vay_vcsh"] > 1.5: warn.append(f"Nợ vay/VCSH {r['no_vay_vcsh']:.1f}")
-    if loai == "NH" and nz(r.get("npl")) and r["npl"] > 0.025: warn.append(f"Nợ xấu {r['npl']:.1%}")
-    return s, good, warn, parts
+def _pct_trong(x: pd.Series, ref: pd.Series) -> pd.Series:
+    """Thứ hạng phần trăm của từng giá trị x trong phân phối ref (0..1), kiểu xếp hạng trung bình."""
+    r = np.sort(ref.dropna().to_numpy(dtype=float))
+    if not len(r):
+        return pd.Series(np.nan, index=x.index)
+    v = x.to_numpy(dtype=float)
+    lo, hi = np.searchsorted(r, v, "left"), np.searchsorted(r, v, "right")
+    out = (lo + (hi - lo + 1) / 2) / len(r)
+    return pd.Series(np.where(np.isnan(v), np.nan, np.clip(out, 0, 1)), index=x.index)
 
 
-def score_technical(r: dict) -> tuple[float, list, list, list]:
-    good, warn = [], []
-    c = r["gia"]
-    trend = (5 if c > r["ma20"] else 0) + (10 if c > r["ma50"] else 0)         + (5 if nz(r["ma200"]) and c > r["ma200"] else 0)         + (10 if nz(r["ma200"]) and r["ma50"] > r["ma200"] else 0) + (5 if r["ma200_tang"] else 0)
-    rs_ = r.get("rsi14")
-    mom = (10 if nz(rs_) and 50 <= rs_ <= 70 else 5 if nz(rs_) and 70 < rs_ <= 80 else 3 if nz(rs_) and 40 <= rs_ < 50 else 0)         + (8 if r["macd"] > r["macd_signal"] else 0) + (7 if r["macd"] > 0 else 0)
-    parts = [
-        ("Xu hướng (MA)", trend, 35),
-        ("Động lượng (RSI, MACD)", mom, 25),
-        ("Sức mạnh giá RS", round(0.25 * (r.get("rs") or 0), 1), 25),
-        ("Gần đỉnh 52 tuần", step(r["cach_dinh_52t"], [(-0.10, 10), (-0.20, 6), (-0.30, 3)]), 10),
-        ("Dòng tiền (khối lượng)", 5 if nz(r["vol20_vs_vol50"]) and r["vol20_vs_vol50"] > 1 else 0, 5),
-    ]
-    s = sum(p[1] for p in parts)
-
-    if nz(r["ma200"]) and c > r["ma50"] > r["ma200"] and r["ma200_tang"]: good.append("Xu hướng tăng (Giá>MA50>MA200)")
-    if (r.get("rs") or 0) >= 80: good.append(f"Sức mạnh giá RS {r['rs']:.0f}")
-    if r["cach_dinh_52t"] >= -0.05: good.append("Sát đỉnh 52 tuần")
-    if r["breakout_20p"]: good.append("Vượt đỉnh 20 phiên kèm vol lớn")
-    if r["golden_cross_20p"]: good.append("MA50 cắt lên MA200 (20 phiên)")
-    if r["macd"] > r["macd_signal"] and r["macd_hist_tang"]: good.append("MACD cắt lên/hist tăng")
-    if nz(rs_) and rs_ > 75: warn.append(f"RSI quá mua {rs_:.0f}")
-    if nz(rs_) and rs_ < 35: warn.append(f"RSI yếu {rs_:.0f}")
-    if c < r["ma50"]: warn.append("Giá dưới MA50")
-    if nz(r["ma200"]) and c < r["ma200"]: warn.append("Giá dưới MA200")
-    if r["pct_ma50"] > 0.15: warn.append(f"Giá cao hơn MA50 {r['pct_ma50']:.0%} (dễ điều chỉnh)")
-    return s, good, warn, parts
+def cham_diem(df: pd.DataFrame, ref: pd.Series | None = None) -> pd.DataFrame:
+    """Điểm 0–100 cho từng nhóm và điểm tổng (trung bình 5 nhóm). ref: các mã làm mặt bằng so sánh."""
+    ref = pd.Series(True, index=df.index) if ref is None else ref
+    for key, _, yeu_to in NHOM_DIEM:
+        parts = []
+        for col, chieu in yeu_to:
+            x = pd.to_numeric(df[col], errors="coerce").astype(float) * chieu
+            parts.append(_pct_trong(x, x[ref]).fillna(0.5))           # thiếu dữ liệu → mức trung bình
+        df["d_" + key] = 100 * sum(parts) / len(parts)
+    df["diem_tong"] = df[["d_" + k for k, _, _ in NHOM_DIEM]].mean(axis=1).round(1)
+    for k, _, _ in NHOM_DIEM:
+        df["d_" + k] = df["d_" + k].round(0)
+    return df
 
 
 def grade(x):
-    return "A" if x >= 75 else "B" if x >= 60 else "C" if x >= 45 else "D"
+    return "A" if x >= 70 else "B" if x >= 60 else "C" if x >= 45 else "D"
+
+
+def dien_giai(r: dict) -> tuple[list, list]:
+    """Điểm mạnh / lưu ý bằng lời cho một mã (dựa trên các yếu tố có ý nghĩa trong nghiên cứu)."""
+    good, warn = [], []
+    g = lambda k: r.get(k) if nz(r.get(k)) else None
+    atr, pe, pen, roe_min, sq = g("atr_pct"), g("pe"), g("pe_nganh"), g("roe_min_4q"), g("so_quy_tang_truong")
+    if atr is not None and atr <= 0.02: good.append(f"Biến động thấp (ATR {atr:.1%})")
+    if r.get("nen_chat"): good.append("Nền giá chặt sát đỉnh")
+    if pe and pe > 0 and pen and pe <= 0.8 * pen: good.append(f"P/E {pe:.1f} thấp hơn ngành ({pen:.1f})")
+    if roe_min is not None and roe_min >= 0.15: good.append(f"ROE ổn định (thấp nhất 4 quý {roe_min:.0%})")
+    if sq is not None and sq >= 3: good.append(f"LN tăng {int(sq)}/4 quý gần nhất")
+    if g("cach_dinh_52t") is not None and r["cach_dinh_52t"] >= -0.05: good.append("Sát đỉnh 52 tuần")
+    if r.get("xu_huong_tang"): good.append("Xu hướng tăng (Giá > MA50 > MA200)")
+    if g("rsi14") is not None and r["rsi14"] > 70: good.append(f"Động lượng mạnh (RSI {r['rsi14']:.0f})")
+    if g("von_hoa_ty") is not None and r["von_hoa_ty"] >= 10000: good.append(f"Vốn hoá lớn ({r['von_hoa_ty']:,.0f} tỷ)")
+    if atr is not None and atr >= 0.04: warn.append(f"Biến động mạnh (ATR {atr:.1%})")
+    if not pe or pe <= 0: warn.append("Đang lỗ / P/E âm")
+    elif pe > 100: warn.append("P/E > 100 (lợi nhuận rất mỏng)")
+    elif pen and pe > 1.5 * pen: warn.append(f"P/E {pe:.1f} cao hơn ngành ({pen:.1f})")
+    if g("tt_ln_quy") is not None and r["tt_ln_quy"] < -0.2: warn.append(f"LN quý {r['tt_ln_quy']:.0%}")
+    if g("tt_ln_ttm") is not None and r["tt_ln_ttm"] < 0: warn.append(f"LN 4 quý {r['tt_ln_ttm']:.0%}")
+    if g("ma200") is not None and r["gia"] < r["ma200"]: warn.append("Giá dưới MA200")
+    if g("rsi14") is not None and r["rsi14"] < 40: warn.append(f"Động lượng yếu (RSI {r['rsi14']:.0f})")
+    if g("r1w") is not None and r["r1w"] > 0.08 and r.get("diem_tong", 50) < 45:
+        warn.append(f"Vừa tăng {r['r1w']:.0%}/5 phiên nhưng nền tảng yếu")
+    if r.get("loai") == "NH" and g("npl") is not None and r["npl"] > 0.025: warn.append(f"Nợ xấu {r['npl']:.1%}")
+    if r.get("loai") == "CT" and g("no_vay_vcsh") is not None and r["no_vay_vcsh"] > 2: warn.append(f"Nợ vay/VCSH {r['no_vay_vcsh']:.1f}")
+    return good, warn
 
 
 # ----------------------------------------------------------------------------
@@ -602,7 +593,7 @@ def kiem_tra_co_hoi(r: dict, ch: dict) -> tuple[list, list, str | None]:
     f = lambda x, p="{:.0%}": p.format(x) if nz(x) else "–"
     on = lambda k: ch.get(k) is not None
     loai = r["loai"]
-    cl = [[f"Điểm PTCB ≥ {ch['diem_cb']}", r["diem_cb"] >= ch["diem_cb"], f"{r['diem_cb']:.0f}"]]
+    cl = [[f"Điểm tổng ≥ {ch['diem_tong']}", r["diem_tong"] >= ch["diem_tong"], f"{r['diem_tong']:.0f}"]]
     if on("roe"):
         cl.append([f"ROE ≥ {ch['roe']:.0%}", nz(r.get("roe")) and r["roe"] >= ch["roe"], f(r.get("roe"))])
     if on("roe_min_4q"):
@@ -633,7 +624,6 @@ def kiem_tra_co_hoi(r: dict, ch: dict) -> tuple[list, list, str | None]:
                 else "Nền giá chặt sát đỉnh" if r["nen_chat"] else None)
     rsi_ok = nz(r.get("rsi14")) and r["rsi14"] >= ch["rsi_min"] and (not on("rsi_max") or r["rsi14"] <= ch["rsi_max"])
     kt = [
-        [f"Điểm PTKT ≥ {ch['diem_kt']}", r["diem_kt"] >= ch["diem_kt"], f"{r['diem_kt']:.0f}"],
         ["Giá trên MA20 và MA50", r["gia"] > r["ma20"] and r["gia"] > r["ma50"], f(r.get("pct_ma50"), "{:+.1%}") + " so MA50"],
         ["MA50 trên MA200 và đang đi lên", (not nz(r.get("ma200")) or r["ma50"] > r["ma200"]) and r["ma50_tang"],
          "MA50 dưới MA200" if nz(r.get("ma200")) and r["ma50"] <= r["ma200"] else "Đạt" if r["ma50_tang"] else "MA50 đi xuống"],
@@ -662,7 +652,7 @@ def co_hoi(df: pd.DataFrame, tt: dict, cfg: dict) -> tuple[list, list]:
         tran_mua = gia * 1.02 if not ch.get("cach_ma20_toi_da") else min(gia * 1.02, r["ma20"] * (1 + ch["cach_ma20_toi_da"]))
         item = {
             "ma": r["ma"], "ten": r["ten"], "san": san, "nganh": r["nganh"], "gia": gia, "thay_doi": r["thay_doi"],
-            "diem_tong": r["diem_tong"], "diem_cb": r["diem_cb"], "diem_kt": r["diem_kt"],
+            "diem_tong": r["diem_tong"], "xep_loai": grade(r["diem_tong"]), "phan_nhom": r.get("phan_nhom"),
             "loai_mua": loai_mua, "chat_luong": cl, "diem_mua": kt, "so_truot": so_truot,
             "vung_mua": [gia, lam_tron_len(max(gia, tran_mua), san)],
             "cat_lo": cat_lo, "rui_ro_pct": (gia - cat_lo) / gia, "so_phien_giu": ch["so_phien_giu"],
@@ -749,19 +739,22 @@ def thong_ke(lst: list[dict]) -> dict:
 # ----------------------------------------------------------------------------
 NHAT_KY = ROOT / "nhat_ky" / "tin_hieu.csv"
 KIEM_DINH = ROOT / "nhat_ky" / "kiem_dinh.json"
-NHAT_KY_COT = ["ngay", "gio", "ma", "san", "loai_mua", "gia", "cat_lo", "so_phien_giu", "diem_tong", "diem_cb",
-               "diem_kt", "thi_truong", "diem_thi_truong", "trong_gioi_han"]
+NHAT_KY_COT = ["ngay", "gio", "ma", "san", "loai_mua", "gia", "cat_lo", "so_phien_giu", "diem_tong",
+               "thi_truong", "diem_thi_truong", "trong_gioi_han", "ngay_truoc", "dong_cua_truoc"]
 
 
-def ghi_nhat_ky(dat: list[dict], tt: dict, ngay_du_lieu: str) -> int:
-    """Thêm tín hiệu mới (mỗi mã tối đa 1 dòng mỗi phiên, giữ lần xuất hiện đầu tiên)."""
+def ghi_nhat_ky(dat: list[dict], tt: dict, ngay_du_lieu: str, frames: dict) -> int:
+    """Thêm tín hiệu mới (mỗi mã tối đa 1 dòng mỗi phiên, giữ lần xuất hiện đầu tiên).
+    Lưu kèm giá đóng cửa phiên liền trước làm mốc: khi nguồn dữ liệu điều chỉnh lùi lịch sử giá sau chia cổ tức /
+    thưởng cổ phiếu, so mốc này với chuỗi giá mới sẽ ra đúng hệ số điều chỉnh."""
     cu = pd.read_csv(NHAT_KY, dtype=str) if NHAT_KY.exists() else pd.DataFrame(columns=NHAT_KY_COT)
     da_co = set(zip(cu["ngay"], cu["ma"]))
     moi = [{
         "ngay": ngay_du_lieu, "gio": now_vn().strftime("%H:%M"), "ma": x["ma"], "san": x["san"],
         "loai_mua": x["loai_mua"], "gia": x["gia"], "cat_lo": x["cat_lo"], "so_phien_giu": x["so_phien_giu"],
-        "diem_tong": x["diem_tong"], "diem_cb": x["diem_cb"], "diem_kt": x["diem_kt"],
+        "diem_tong": x["diem_tong"],
         "thi_truong": tt["nhan"], "diem_thi_truong": tt["diem"], "trong_gioi_han": x["trong_gioi_han"],
+        "ngay_truoc": frames[x["ma"]].index[-2].strftime("%Y-%m-%d"), "dong_cua_truoc": float(frames[x["ma"]]["close"].iloc[-2]),
     } for x in dat if (ngay_du_lieu, x["ma"]) not in da_co]
     if moi:
         NHAT_KY.parent.mkdir(exist_ok=True)
@@ -785,6 +778,19 @@ def danh_gia_nhat_ky(frames: dict, vni_df: pd.DataFrame | None) -> dict:
             out.append({**x, "trang_thai": "Chưa có giá"})
             continue
         i = int(np.where(ngay == r["ngay"])[0][0])
+        # Quy đổi giá ghi nhận theo điều chỉnh lịch sử giá (chia cổ tức bằng cổ phiếu, thưởng, phát hành quyền…)
+        k = 1.0
+        try:
+            if r.get("ngay_truoc") in ngay and float(r.get("dong_cua_truoc") or 0) > 0:
+                k = float(df["close"].iloc[int(np.where(ngay == r["ngay_truoc"])[0][0])]) / float(r["dong_cua_truoc"])
+            elif abs(df["close"].iat[i] / x["gia"] - 1) > 0.08:  # dòng cũ chưa có mốc: lệch quá biên độ ngày → do sự kiện quyền
+                k = float(df["close"].iat[i]) / x["gia"]
+        except (TypeError, ValueError):
+            k = 1.0
+        if abs(k - 1) > 0.005:
+            x["dieu_chinh"] = round(k, 4)
+            x["gia_goc"] = x["gia"]
+            x["gia"], x["cat_lo"] = x["gia"] * k, x["cat_lo"] * k
         kq = mo_phong(df, i, x["gia"], x["cat_lo"], float("inf"), toi_da=x["so_phien_giu"])
         x.update(kq)
         x["ngay_ra"] = ngay[kq["i_ra"]]
@@ -829,79 +835,70 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
             print("   Không tìm thấy mã:", ", ".join(missing))
         symbols = [s for s in symbols if s in info.index]
         tickers = sorted(set(tickers) | set(symbols))
-    screen = set(tickers)  # các mã được chấm điểm / lọc cơ hội
-    # Các sàn chỉ tải giá để đánh giá danh mục (VD: UPCOM), không đưa vào bảng lọc
-    them = sorted(set(info.index[co_phieu & info["san"].isin(cfg.get("san_danh_muc", []))]) - screen)
-    print(f"   {len(tickers)} mã cần xét" + (f" (+{len(them)} mã chỉ dùng cho danh mục)" if them else ""))
+    print(f"   {len(tickers)} mã cần xét")
 
     print("2) Tải giá lịch sử...")
     px = parallel(lambda s: cached(f"gia/{today}/{s}", ttl["gia"], lambda: fetch_ohlc(s), refresh),
-                  tickers + them, workers, "giá")
+                  tickers, workers, "giá")
     vnindex = cached(f"gia/{today}/VNINDEX", ttl["gia"], lambda: fetch_ohlc("VNINDEX"), refresh)
-    print(f"   {sum(1 for s in tickers if px.get(s))}/{len(tickers)} mã có giá"
-          + (f", {sum(1 for s in them if px.get(s))}/{len(them)} mã danh mục" if them else ""))
+    print(f"   {sum(1 for s in tickers if px.get(s))}/{len(tickers)} mã có giá")
     bao_loi_nguon("giá")
 
     lk = cfg["loc_thanh_khoan"]
-    tech, frames = {}, {}
-    for s in tickers + them:
+    tech_all, frames = {}, {}  # mọi mã có giá (≥ 30 phiên): dùng cho danh mục, độ rộng thị trường, mã đang tăng
+    for s in tickers:
         if not px.get(s):
             continue
         df = to_frame(px[s])
-        if len(df) < (60 if s in screen else 30):
+        if len(df) < 30:
             continue
         frames[s] = df
-        tech[s] = technical(df)
-    tech_all = dict(tech)  # mọi mã có giá (kể cả UPCOM): dùng để đánh giá danh mục
-    # Mã chỉ định qua --ma luôn được giữ lại; các mã khác phải đạt thanh khoản (dùng làm mặt bằng so sánh RS, P/E ngành)
-    tech = {s: t for s, t in tech.items()
-            if (symbols and s in symbols)
-            or (s in screen and t["gtgd_tb20"] >= lk["gtgd_tb20_toi_thieu_ty"] * 1e9
-                and t["gia"] >= lk["gia_toi_thieu"] and t["so_phien"] >= lk["so_phien_toi_thieu"])}
-    print(f"   {len(tech)} mã đạt thanh khoản (GTGD TB20 ≥ {lk['gtgd_tb20_toi_thieu_ty']} tỷ, giá ≥ {lk['gia_toi_thieu']:,}đ)")
-    if not tech:
-        sys.exit("Không có mã nào đủ dữ liệu.")
-    if not symbols and len(tech) < 30:
-        sys.exit(f"Chỉ {len(tech)} mã có dữ liệu – nguồn giá có thể đang lỗi hoặc chặn truy cập; dừng để không ghi đè kết quả cũ.")
+        tech_all[s] = technical(df)
 
-    # RS rating (kiểu IBD): 40% hiệu suất 3T + 20% 6T + 20% 9T + 20% 12T, xếp hạng phần trăm 1–99
-    t = pd.DataFrame(tech).T
-    perf = 0.4 * t["r3t"].astype(float).fillna(0) + 0.2 * t["r6t"].astype(float).fillna(0) \
-        + 0.2 * t["r9t"].astype(float).fillna(0) + 0.2 * t["r12t"].astype(float).fillna(0)
-    rs_rank = (perf.rank(pct=True) * 98 + 1).round()
+    def du_thanh_khoan(t: dict) -> bool:
+        """GTGD TB 20 phiên đủ lớn, HOẶC dòng tiền 5 phiên gần nhất đủ lớn (bắt mã vừa có dòng tiền vào)."""
+        if t["gia"] < lk["gia_toi_thieu"]:
+            return False
+        if t["gtgd_tb20"] >= lk["gtgd_tb20_toi_thieu_ty"] * 1e9 and t["so_phien"] >= lk["so_phien_toi_thieu"]:
+            return True
+        return (nz(t.get("gtgd_tb5")) and t["gtgd_tb5"] >= lk["gtgd_tb5_toi_thieu_ty"] * 1e9
+                and t["so_phien"] >= lk["so_phien_toi_thieu_tb5"])
+
+    lien_quan = set(symbols or [])
+    L_ = {s for s, t in tech_all.items() if du_thanh_khoan(t) and t["so_phien"] >= 60}
+    dt = cfg["dang_tang"]
+    tang = {s for s, t in tech_all.items() if t["so_phien"] >= 60 and nz(t.get("r1w")) and t["r1w"] >= dt["tang_5_phien"]
+            and nz(t.get("gtgd_tb5")) and t["gtgd_tb5"] >= dt["gtgd_tb5_ty"] * 1e9}
+    print(f"   {len(L_)} mã đủ thanh khoản (GTGD TB20 ≥ {lk['gtgd_tb20_toi_thieu_ty']} tỷ hoặc TB5 ≥ {lk['gtgd_tb5_toi_thieu_ty']} tỷ, "
+          f"giá ≥ {lk['gia_toi_thieu']:,}đ), {len(tang)} mã tăng ≥ {dt['tang_5_phien']:.0%} trong 5 phiên")
+    if len(L_) < 30:
+        sys.exit(f"Chỉ {len(L_)} mã có dữ liệu – nguồn giá có thể đang lỗi hoặc chặn truy cập; dừng để không ghi đè kết quả cũ.")
+    names = sorted(L_ | tang | {s for s in lien_quan if s in tech_all})
+
+    # RS rating (kiểu IBD): 40% hiệu suất 3T + 20% 6T + 20% 9T + 20% 12T, xếp hạng phần trăm 1–99 trong các mã đủ thanh khoản
+    t = pd.DataFrame({s: tech_all[s] for s in names}).T
+    perf = (0.4 * t["r3t"].astype(float).fillna(0) + 0.2 * t["r6t"].astype(float).fillna(0)
+            + 0.2 * t["r9t"].astype(float).fillna(0) + 0.2 * t["r12t"].astype(float).fillna(0))
+    rs_rank = (_pct_trong(perf, perf[perf.index.isin(L_)]) * 98 + 1).round()
     vni3m, vni = np.nan, None
     if vnindex:
         vni = to_frame(vnindex)["close"]
         vni3m = ret(vni, 63)
 
     print("3) Tải dữ liệu tài chính...")
-    names = sorted(tech)
-    targets = [s for s in symbols if s in tech] if symbols else names
-    fund_raw = parallel(lambda s: cached(f"co_ban_v3/{s}",ttl["co_ban"], lambda: fetch_fundamental(s), refresh),
-                        targets, workers, "BCTC")
+    fund_raw = parallel(lambda s: cached(f"co_ban_v3/{s}", ttl["co_ban"], lambda: fetch_fundamental(s), refresh),
+                        names, workers, "BCTC")
     key = hashlib.md5(",".join(names).encode()).hexdigest()[:10]
     vnd = cached(f"vnd/{today}_{key}", ttl["gia"], lambda: fetch_vnd_ratios(names), refresh) or {}
-    print(f"   {sum(1 for v in fund_raw.values() if v)}/{len(targets)} mã có BCTC, {len(vnd)} mã có định giá VNDirect")
+    print(f"   {sum(1 for v in fund_raw.values() if v)}/{len(names)} mã có BCTC, {len(vnd)} mã có định giá VNDirect")
     bao_loi_nguon("tài chính")
 
-    # P/E trung vị theo ngành tính trên toàn bộ mã đạt thanh khoản (cần ≥ 3 mã, nếu không dùng trung vị thị trường).
-    # Nếu VNDirect lỗi thì dùng P/E cuối quý từ Vietcap của các mã đã có BCTC.
-    def pe_of(s):
-        v = vnd.get(s, {}).get("PRICE_TO_EARNINGS")
-        if v is None and fund_raw.get(s):
-            v = (fund_raw[s].get("ratio") or {}).get("pe")
-        return v
-    pe_all = pd.DataFrame([{"nganh": info.at[s, "nganh"], "pe": pe_of(s)} for s in names])
-    pe_all["pe"] = pd.to_numeric(pe_all["pe"], errors="coerce")
-    pe_all = pe_all[(pe_all["pe"] > 0) & (pe_all["pe"] < 100)]
-    med_all = pe_all["pe"].median()
-    med = pe_all.groupby("nganh")["pe"].agg(["median", "count"])
-
     rows = []
-    for s in targets:
+    for s in names:
         loai = info.at[s, "loai"]
-        r = {"ma": s, "ten": info.at[s, "ten"], "san": info.at[s, "san"], "nganh": info.at[s, "nganh"], "loai": loai}
-        r.update(tech[s])
+        r = {"ma": s, "ten": info.at[s, "ten"], "san": info.at[s, "san"], "nganh": info.at[s, "nganh"], "loai": loai,
+             "du_thanh_khoan": s in L_}
+        r.update(tech_all[s])
         r["rs"] = float(rs_rank.get(s, np.nan))
         r["vuot_vnindex_3t"] = r["r3t"] - vni3m if nz(r["r3t"]) and nz(vni3m) else np.nan
         r.update(fundamental(fund_raw.get(s) or {}, loai))
@@ -909,48 +906,64 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
         r["pe"] = v.get("PRICE_TO_EARNINGS", r.get("pe_quy", np.nan))
         r["pb"] = v.get("PRICE_TO_BOOK", r.get("pb_quy", np.nan))
         r["co_tuc"] = v.get("DIVIDEND_YIELD", np.nan)
-        r["von_hoa_ty"] = v.get("MARKETCAP", np.nan) / 1e9 if v.get("MARKETCAP") else np.nan
+        r["von_hoa_ty"] = (v["MARKETCAP"] / 1e9 if v.get("MARKETCAP")
+                           else r["gia"] * r["so_cp"] / 1e9 if r.get("so_cp") else np.nan)
         r["beta"] = v.get("BETA", np.nan)
         rows.append(r)
     df = pd.DataFrame(rows)
+    # P/E trung vị theo ngành trên các mã đủ thanh khoản (cần ≥ 3 mã, nếu không dùng trung vị thị trường)
+    pe = pd.to_numeric(df["pe"], errors="coerce")
+    hop_le = df["du_thanh_khoan"] & (pe > 0) & (pe < 100)
+    med_all = pe[hop_le].median()
+    med = pe[hop_le].groupby(df.loc[hop_le, "nganh"]).agg(["median", "count"])
     df["pe_nganh"] = df["nganh"].map(lambda n: med.at[n, "median"] if n in med.index and med.at[n, "count"] >= 3 else med_all)
     # Tăng trưởng dùng cho PEG giới hạn 50% để tránh PEG ảo do LN tăng đột biến từ nền thấp
     g = df["tt_ln_ttm"].clip(upper=0.5)
     df["peg"] = np.where((df["pe"] > 0) & (g > 0), df["pe"] / (g * 100), np.nan)
 
-    w = cfg["trong_so"]
+    # Chấm điểm: mặt bằng so sánh là các mã đủ thanh khoản
+    df = cham_diem(them_yeu_to(df), ref=df["du_thanh_khoan"])
     out = []
     for r in df.to_dict("records"):
-        f, fg, fw, fp = score_fundamental(r)
-        k, kg, kw, kp = score_technical(r)
-        r["phan_cb"], r["phan_kt"] = fp, kp
-        r["diem_cb"], r["diem_kt"] = round(f, 1), round(k, 1)
-        r["diem_tong"] = round(w["co_ban"] * f + w["ky_thuat"] * k, 1)
         r["xep_loai"] = grade(r["diem_tong"])
-        r["diem_manh"] = "; ".join(fg + kg)
-        r["luu_y"] = "; ".join(fw + kw)
+        r["phan_nhom"] = [[ten, r["d_" + k], 100] for k, ten, _ in NHOM_DIEM]
+        tot, xau = dien_giai(r)
+        r["diem_manh"], r["luu_y"] = "; ".join(tot), "; ".join(xau)
         out.append(r)
-    df = pd.DataFrame(out).sort_values("diem_tong", ascending=False).reset_index(drop=True)
+    df_all = pd.DataFrame(out).sort_values("diem_tong", ascending=False).reset_index(drop=True)
+    df = df_all[df_all["du_thanh_khoan"] | df_all["ma"].isin(lien_quan)].reset_index(drop=True)
 
     top_cfg = cfg["loc_top"]
-    m = (df["diem_cb"] >= top_cfg["diem_co_ban_toi_thieu"]) & (df["diem_kt"] >= top_cfg["diem_ky_thuat_toi_thieu"])
-    if top_cfg.get("yeu_cau_gia_tren_ma50"):
-        m &= df["gia"] > df["ma50"]
-    if top_cfg.get("yeu_cau_lai_ttm_duong"):
-        m &= df["ln_ttm"].fillna(-1) > 0
+    m = df["du_thanh_khoan"] & (df["diem_tong"] >= top_cfg["diem_toi_thieu"])
+    if top_cfg.get("yeu_cau_xu_huong_tang"):
+        m &= df["xu_huong_tang"] == 1
     top = df[m].head(top_cfg["so_ma_hien_thi"])
+
+    # Mã đang tăng mạnh 5 phiên, phân loại theo điểm nền tảng
+    # (nghiên cứu 10/2026: trong nhóm vừa tăng mạnh, điểm ≥ 60 tiếp tục vượt TB thị trường, điểm < 45 thường đảo chiều)
+    dang_tang = []
+    for r in df_all[df_all["ma"].isin(tang)].sort_values("r1w", ascending=False).to_dict("records"):
+        dang_tang.append({
+            "ma": r["ma"], "ten": r["ten"], "san": r["san"], "nganh": r["nganh"], "gia": r["gia"], "thay_doi": r["thay_doi"],
+            "r1w": r["r1w"], "gtgd_tb5": r["gtgd_tb5"], "gtgd_tb20": r["gtgd_tb20"], "diem_tong": r["diem_tong"],
+            "xep_loai": r["xep_loai"], "phan_nhom": r["phan_nhom"], "du_thanh_khoan": bool(r["du_thanh_khoan"]),
+            "rsi14": r["rsi14"], "diem_manh": r["diem_manh"], "luu_y": r["luu_y"],
+            "nhom": ("nen_tang" if r["diem_tong"] >= dt["diem_nen_tang"]
+                     else "dau_co" if r["diem_tong"] < dt["diem_dau_co"] else "trung_binh"),
+        })
 
     print("4) Bối cảnh thị trường Việt Nam và thế giới...")
     world = the_gioi(today, ttl["gia"], refresh)
     bao_loi_nguon("thế giới")
     # Độ rộng thị trường chỉ tính trên các sàn được lọc (HOSE, HNX) để khớp với VN-Index
-    tt = thi_truong(to_frame(vnindex) if vnindex else None, {s: t for s, t in tech_all.items() if s in screen}, world)
+    tt = thi_truong(to_frame(vnindex) if vnindex else None,
+                    {s: t for s, t in tech_all.items() if info.at[s, "san"] in ("HOSE", "HNX") and t["so_phien"] >= 60}, world)
     dat, gan_dat = co_hoi(df, tt, cfg)
     print(f"   Thị trường: {tt['nhan']} ({tt['diem']}/100). Cơ hội đạt đủ tiêu chí: "
           f"{', '.join(x['ma'] for x in dat) or 'không có'}")
     vni_df = to_frame(vnindex) if vnindex else None
     if ghi_nk and vni_df is not None and not symbols:
-        n_moi = ghi_nhat_ky(dat, tt, vni_df.index[-1].strftime("%Y-%m-%d"))
+        n_moi = ghi_nhat_ky(dat, tt, vni_df.index[-1].strftime("%Y-%m-%d"), frames)
         print(f"   Nhật ký tín hiệu: thêm {n_moi} tín hiệu mới")
     nhat_ky = danh_gia_nhat_ky(frames, vni_df)
 
@@ -969,7 +982,7 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
     # Chuỗi giá 200 phiên (căn theo ngày giao dịch của VN-Index) để vẽ biểu đồ trên trang web
     axis = vni.index[-200:] if vni is not None else frames[df["ma"].iloc[0]].index[-200:]
     closes = {s: [None if math.isnan(x) else round(x) for x in frames[s]["close"].reindex(axis).ffill()]
-              for s in df["ma"]}
+              for s in df_all["ma"]}
     ctx = {
         "vni3m": vni3m,
         "vnindex": [round(x, 2) for x in vni.reindex(axis).ffill()] if vni is not None else [],
@@ -978,10 +991,11 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
                         "c": [round(x, 2) for x in vni.iloc[-450:]]} if vni is not None else None,
         "ngay": [d.strftime("%Y-%m-%d") for d in axis],
         "gia_200": closes,
-        "so_ma_xet": len(tickers), "so_ma_thanh_khoan": len(names), "so_ma_top": len(top),
+        "so_ma_xet": len(tickers), "so_ma_thanh_khoan": len(L_), "so_ma_top": len(top), "dang_tang": dang_tang,
         "cfg": cfg,
         "thi_truong": tt, "the_gioi": world, "co_hoi": dat, "gan_dat": gan_dat, "tat_ca": tat_ca,
         "nhat_ky": nhat_ky,
+        "df_all": df_all,  # gồm cả mã đang tăng mạnh chưa đủ thanh khoản (cho trang web)
     }
     return df, top, ctx
 
@@ -992,7 +1006,8 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
 COLUMNS = [
     ("ma", "Mã", None), ("ten", "Tên", None), ("san", "Sàn", None), ("nganh", "Ngành", None),
     ("gia", "Giá", "#,##0"), ("diem_tong", "Điểm tổng", "0.0"), ("xep_loai", "Hạng", None),
-    ("diem_cb", "Điểm PTCB", "0.0"), ("diem_kt", "Điểm PTKT", "0.0"),
+    ("d_on_dinh", "Ổn định giá", "0"), ("d_gia_tri", "Định giá", "0"), ("d_chat_luong", "Chất lượng", "0"),
+    ("d_quy_mo", "Quy mô", "0"), ("d_xu_huong", "Xu hướng giá", "0"),
     ("gtgd_tb20_ty", "GTGD TB20 (tỷ)", "#,##0.0"), ("von_hoa_ty", "Vốn hoá (tỷ)", "#,##0"),
     ("pe", "P/E", "0.0"), ("pe_nganh", "P/E ngành", "0.0"), ("pb", "P/B", "0.00"), ("peg", "PEG", "0.00"),
     ("roe", "ROE", "0.0%"), ("roa", "ROA", "0.0%"),
@@ -1007,26 +1022,30 @@ COLUMNS = [
 ]
 
 GIAI_THICH = [
-    ("PHÂN TÍCH CƠ BẢN (100 điểm)", ""),
-    ("ROE (TTM) – 20đ", "≥20%: 20 | ≥15%: 15 | ≥10%: 8"),
-    ("Tăng trưởng LNST cty mẹ 4 quý gần nhất so với 4 quý trước – 20đ", "≥30%: 20 | ≥15%: 15 | ≥5%: 8 | >0: 4"),
-    ("Tăng trưởng LNST quý gần nhất so với cùng kỳ – 15đ", "≥30%: 15 | ≥15%: 10 | >0: 5  (tiêu chí C của CANSLIM)"),
-    ("Tăng trưởng doanh thu 4 quý – 10đ", "≥20%: 10 | ≥10%: 7 | >0: 3  (NH: tổng thu nhập HĐ; BH: DT thuần KD bảo hiểm)"),
-    ("P/E so với trung vị ngành (ICB cấp 2) – 10đ", "≤0.8x: 10 | ≤1x: 6 | ≤1.2x: 3"),
-    ("PEG = P/E ÷ tăng trưởng LN 4 quý (%, tối đa 50%) – 10đ", "≤0.7: 10 | ≤1: 7 | ≤1.5: 3"),
-    ("Sức khoẻ tài chính – 15đ", "DN thường: Nợ vay/VCSH ≤0.5: 8, ≤1: 5, ≤1.5: 2; Thanh toán hiện hành ≥1.2: 4; Lãi 4 quý liên tiếp: 3\n"
-                                 "Ngân hàng: Nợ xấu ≤1.5%: 8, ≤2.5%: 4; NIM ≥3%: 4, ≥2.5%: 2; Lãi 4 quý: 3\n"
-                                 "CK/Bảo hiểm: Nợ vay/VCSH ≤1: 8, ≤1.5: 5, ≤2: 2; +4; Lãi 4 quý: 3"),
+    ("CÁCH TÍNH ĐIỂM (0–100)", ""),
+    ("Nguyên tắc", "Mỗi yếu tố được xếp hạng phần trăm so với tất cả mã đủ thanh khoản trong cùng phiên (100 = tốt nhất). "
+                   "Điểm nhóm = trung bình các yếu tố trong nhóm; Điểm tổng = trung bình 5 nhóm. Thiếu dữ liệu → tính mức trung bình (50)."),
+    ("Ổn định giá", "ATR14 (% giá) càng thấp càng tốt; biên độ dao động 10 phiên càng hẹp càng tốt"),
+    ("Định giá", "Lợi suất lợi nhuận 1/PE càng cao càng tốt (doanh nghiệp lỗ = kém nhất); P/E so với trung vị ngành càng thấp càng tốt"),
+    ("Chất lượng", "ROE thấp nhất trong 4 quý gần nhất (độ ổn định); ROE hiện tại; số quý trong 4 quý gần nhất có LN tăng so với cùng kỳ"),
+    ("Quy mô", "Vốn hoá càng lớn càng tốt"),
+    ("Xu hướng giá", "Khoảng cách tới đỉnh 52 tuần càng gần càng tốt; giá > MA50 > MA200"),
+    ("Hạng", "A ≥ 70 · B ≥ 60 · C ≥ 45 · D < 45"),
     ("", ""),
-    ("PHÂN TÍCH KỸ THUẬT (100 điểm)", ""),
-    ("Xu hướng – 35đ", "Giá>MA20: 5 | Giá>MA50: 10 | Giá>MA200: 5 | MA50>MA200: 10 | MA200 đi lên (so với 20 phiên trước): 5"),
-    ("Động lượng – 25đ", "RSI14 50–70: 10 (70–80: 5, 40–50: 3) | MACD>Signal: 8 | MACD>0: 7"),
-    ("Sức mạnh giá tương đối RS – 25đ", "RS 1–99 = xếp hạng phần trăm của (40%·HS 3T + 20%·6T + 20%·9T + 20%·12T) trong các mã được lọc; điểm = RS × 0.25"),
-    ("Vị trí so với đỉnh 52 tuần – 10đ", "Cách đỉnh ≤10%: 10 | ≤20%: 6 | ≤30%: 3"),
-    ("Dòng tiền – 5đ", "KL TB 20 phiên > KL TB 50 phiên: 5"),
+    ("VÌ SAO CHỌN CÁC YẾU TỐ NÀY", ""),
+    ("Nghiên cứu 10/2026", "146 thời điểm × ~200 mã đủ thanh khoản (10/2023–10/2026), đo tương quan thứ hạng (IC) giữa từng yếu tố và "
+                           "lợi nhuận 20 phiên sau đó so với trung bình thị trường; chỉ giữ yếu tố có IC dương ở cả hai nửa giai đoạn."),
+    ("Kết quả", "Điểm mới: IC +0,11 (nửa đầu +0,107, nửa sau +0,113); 20 mã điểm cao nhất vượt TB thị trường +1,2%/20 phiên.\n"
+                "Điểm cũ (PTCB 50% + PTKT 50%): IC +0,03, nửa sau −0,01 (mất tác dụng)."),
+    ("Đã bỏ khỏi điểm", "Tăng trưởng LN/doanh thu, MACD, RS 3–12 tháng, RSI, các mốc MA chi tiết: không có sức dự báo ổn định "
+                        "(vẫn hiển thị để tham khảo)."),
     ("", ""),
-    ("ĐIỂM TỔNG", "= 50% PTCB + 50% PTKT (chỉnh trong cau_hinh.json). Hạng A ≥75, B ≥60, C ≥45, D <45"),
-    ("DANH SÁCH TOP", "Điểm PTCB ≥55, PTKT ≥55, giá trên MA50, LN 4 quý dương (chỉnh trong cau_hinh.json)"),
+    ("DANH SÁCH TOP", "Đủ thanh khoản, điểm tổng ≥ 65 và giá > MA50 > MA200 (chỉnh trong cau_hinh.json, mục loc_top). "
+                      "Trong nghiên cứu nhóm này vượt TB thị trường +1,4%/20 phiên, ổn định cả hai nửa giai đoạn."),
+    ("ĐỦ THANH KHOẢN", "GTGD TB 20 phiên ≥ 5 tỷ (≥ 200 phiên dữ liệu) HOẶC GTGD TB 5 phiên ≥ 10 tỷ (≥ 120 phiên); giá ≥ 5.000đ; "
+                       "gồm HOSE, HNX, UPCOM."),
+    ("ĐANG TĂNG MẠNH", "Tăng ≥ 8% trong 5 phiên, GTGD TB 5 phiên ≥ 1 tỷ. Có nền tảng: điểm ≥ 60 (trong nghiên cứu tiếp tục vượt TB "
+                       "+2,2%/20 phiên); đầu cơ: điểm < 45 (thường kém TB −2,3%/20 phiên)."),
     ("", ""),
     ("LƯU Ý", "Kết quả là bộ lọc định lượng dựa trên dữ liệu công khai, có thể chậm hoặc sai sót. "
               "Đây không phải khuyến nghị mua/bán. Hãy tự kiểm tra BCTC, tin tức, quản trị doanh nghiệp và quản lý rủi ro trước khi đầu tư."),
@@ -1065,7 +1084,7 @@ def export(df: pd.DataFrame, top: pd.DataFrame):
                 if fmt:
                     for c in ws[col][1:]:
                         c.number_format = fmt
-                if label in ("Điểm tổng", "Điểm PTCB", "Điểm PTKT", "RS (1-99)"):
+                if label in ("Điểm tổng", "Ổn định giá", "Định giá", "Chất lượng", "Quy mô", "Xu hướng giá", "RS (1-99)"):
                     ws.conditional_formatting.add(f"{col}2:{col}{ws.max_row}", ColorScaleRule(
                         start_type="num", start_value=20, start_color="F8696B",
                         mid_type="num", mid_value=55, mid_color="FFEB84",
@@ -1083,11 +1102,12 @@ def export(df: pd.DataFrame, top: pd.DataFrame):
 
 
 WEB_FIELDS = [
-    "ma", "ten", "san", "nganh", "loai", "gia", "thay_doi", "diem_tong", "diem_cb", "diem_kt", "xep_loai",
+    "ma", "ten", "san", "nganh", "loai", "gia", "thay_doi", "diem_tong", "d_on_dinh", "d_gia_tri", "d_chat_luong",
+    "d_quy_mo", "d_xu_huong", "xep_loai", "r1w", "gtgd_tb5", "xu_huong_tang", "du_thanh_khoan",
     "gtgd_tb20", "von_hoa_ty", "pe", "pe_nganh", "pb", "peg", "roe", "roa", "tt_ln_ttm", "tt_ln_quy",
     "tt_dt_ttm", "tt_dt_quy", "no_vay_vcsh", "npl", "nim", "co_tuc", "rs", "rsi14", "pct_ma50", "pct_ma200",
     "cach_dinh_52t", "r1t", "r3t", "r6t", "vuot_vnindex_3t", "atr_pct", "beta", "diem_manh", "luu_y",
-    "ky_bctc", "phan_cb", "phan_kt", "breakout_20p", "golden_cross_20p",
+    "ky_bctc", "phan_nhom", "breakout_20p", "golden_cross_20p", "nen_chat", "roe_min_4q", "so_quy_tang_truong",
 ]
 
 
@@ -1108,7 +1128,7 @@ def web_data(df: pd.DataFrame, top: pd.DataFrame, ctx: dict) -> dict:
 
     top_set = set(top["ma"])
     rows = []
-    for r in df[WEB_FIELDS].to_dict("records"):
+    for r in ctx.get("df_all", df)[WEB_FIELDS].to_dict("records"):
         r = {k: clean(v) for k, v in r.items()}
         r["top"] = r["ma"] in top_set
         rows.append(r)
@@ -1120,7 +1140,8 @@ def web_data(df: pd.DataFrame, top: pd.DataFrame, ctx: dict) -> dict:
         "ngay": ctx["ngay"], "vnindex": ctx["vnindex"], "vni3m": clean(ctx["vni3m"]),
         "gia_200": ctx["gia_200"],
         "dem": {"xet": ctx["so_ma_xet"], "thanh_khoan": ctx["so_ma_thanh_khoan"], "top": ctx["so_ma_top"]},
-        "san": cfg["san"], "loc": cfg["loc_thanh_khoan"], "loc_top": cfg["loc_top"], "trong_so": cfg["trong_so"],
+        "san": cfg["san"], "loc": cfg["loc_thanh_khoan"], "loc_top": cfg["loc_top"], "cfg_dang_tang": cfg["dang_tang"],
+        "nhom_diem": [[k, ten] for k, ten, _ in NHOM_DIEM], "dang_tang": clean(ctx["dang_tang"]),
         "giai_thich": GIAI_THICH,
         "rows": rows,
         "thi_truong": clean(ctx["thi_truong"]), "the_gioi": clean(ctx["the_gioi"]), "vnindex_dai": ctx["vnindex_dai"],
@@ -1165,17 +1186,18 @@ def print_table(d: pd.DataFrame, n=30):
         print("  (không có mã nào thoả toàn bộ điều kiện)")
         return
     f = lambda x, p="{:.0%}": p.format(x) if nz(x) else "-"
-    print(f"{'#':>3} {'Mã':<4} {'Giá':>8} {'Tổng':>5} {'CB':>5} {'KT':>5} {'P/E':>5} {'ROE':>5} {'LN4Q':>6} {'LNQ':>6} {'RS':>3} {'RSI':>4}  Điểm mạnh")
+    print(f"{'#':>3} {'Mã':<4} {'Sàn':<5} {'Giá':>8} {'Tổng':>5} {'ÔĐ':>4} {'GT':>4} {'CL':>4} {'QM':>4} {'XH':>4} {'P/E':>5} {'ROE':>5} {'5P':>6}  Điểm mạnh")
     for i, r in enumerate(d.head(n).itertuples(), 1):
-        print(f"{i:>3} {r.ma:<4} {r.gia:>8,.0f} {r.diem_tong:>5.1f} {r.diem_cb:>5.0f} {r.diem_kt:>5.0f} "
-              f"{f(r.pe, '{:.1f}'):>5} {f(r.roe):>5} {f(r.tt_ln_ttm, '{:+.0%}'):>6} {f(r.tt_ln_quy, '{:+.0%}'):>6} "
-              f"{r.rs:>3.0f} {r.rsi14:>4.0f}  {r.diem_manh[:70]}")
+        print(f"{i:>3} {r.ma:<4} {r.san:<5} {r.gia:>8,.0f} {r.diem_tong:>5.1f} {r.d_on_dinh:>4.0f} {r.d_gia_tri:>4.0f} "
+              f"{r.d_chat_luong:>4.0f} {r.d_quy_mo:>4.0f} {r.d_xu_huong:>4.0f} {f(r.pe, '{:.1f}'):>5} {f(r.roe):>5} "
+              f"{f(r.r1w, '{:+.1%}'):>6}  {r.diem_manh[:70]}")
 
 
 def print_detail(r: dict):
     p = lambda x, fmt="{:.1%}": fmt.format(x) if nz(x) else "-"
     print(f"\n=== {r['ma']} – {r['ten']} ({r['san']}, {r['nganh']}) | Kỳ BCTC: {r.get('ky_bctc')} ===")
-    print(f"Giá {r['gia']:,.0f} | Điểm tổng {r['diem_tong']} (hạng {r['xep_loai']}) | PTCB {r['diem_cb']} | PTKT {r['diem_kt']}")
+    print(f"Giá {r['gia']:,.0f} | Điểm tổng {r['diem_tong']} (hạng {r['xep_loai']}) | "
+          + " | ".join(f"{ten} {r['d_' + k]:.0f}" for k, ten, _ in NHOM_DIEM))
     print(f"P/E {p(r['pe'], '{:.1f}')} (ngành {p(r['pe_nganh'], '{:.1f}')}) | P/B {p(r['pb'], '{:.2f}')} | PEG {p(r['peg'], '{:.2f}')} "
           f"| ROE {p(r['roe'])} | ROA {p(r['roa'])} | Cổ tức {p(r['co_tuc'])}")
     print(f"Tăng trưởng LN: 4 quý {p(r.get('tt_ln_ttm'))}, quý {p(r.get('tt_ln_quy'))} | DT: 4 quý {p(r.get('tt_dt_ttm'))}, quý {p(r.get('tt_dt_quy'))}")

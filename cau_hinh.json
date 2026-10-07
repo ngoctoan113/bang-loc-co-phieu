@@ -1,28 +1,32 @@
 {
-  "san": ["HOSE", "HNX"],
-  "san_danh_muc": ["UPCOM"],
+  "san": ["HOSE", "HNX", "UPCOM"],
   "loai_doanh_nghiep": ["CT", "NH", "CK", "BH"],
 
   "loc_thanh_khoan": {
+    "_ghi_chu": "Đủ thanh khoản nếu GTGD TB20 ≥ gtgd_tb20 (và ≥ so_phien_toi_thieu phiên) HOẶC GTGD TB5 ≥ gtgd_tb5 (và ≥ so_phien_toi_thieu_tb5 phiên)",
     "gtgd_tb20_toi_thieu_ty": 5,
+    "gtgd_tb5_toi_thieu_ty": 10,
     "gia_toi_thieu": 5000,
-    "so_phien_toi_thieu": 200
+    "so_phien_toi_thieu": 200,
+    "so_phien_toi_thieu_tb5": 120
   },
 
-  "trong_so": { "co_ban": 0.5, "ky_thuat": 0.5 },
-
   "loc_top": {
-    "diem_co_ban_toi_thieu": 55,
-    "diem_ky_thuat_toi_thieu": 55,
-    "yeu_cau_gia_tren_ma50": true,
-    "yeu_cau_lai_ttm_duong": true,
+    "diem_toi_thieu": 65,
+    "yeu_cau_xu_huong_tang": true,
     "so_ma_hien_thi": 30
   },
 
+  "dang_tang": {
+    "tang_5_phien": 0.08,
+    "gtgd_tb5_ty": 1,
+    "diem_nen_tang": 60,
+    "diem_dau_co": 45
+  },
+
   "co_hoi": {
-    "_ghi_chu": "Ngưỡng = null là tiêu chí đã bỏ sau kiểm định quá khứ 10/2026 (xem tab Kiểm định). Đặt lại số để bật.",
-    "diem_cb": 65,
-    "diem_kt": 65,
+    "_ghi_chu": "Ngưỡng = null là tiêu chí đã bỏ sau kiểm định quá khứ (xem tab Kiểm định). Đặt lại số để bật.",
+    "diem_tong": 60,
     "roe": null,
     "roe_min_4q": 0.12,
     "tt_ln_ttm": null,
@@ -46,6 +50,6 @@
     "ty_trong_toi_da": 0.30
   },
 
-  "cache_gio":{ "gia": 1, "co_ban": 72, "danh_sach": 24 },
+  "cache_gio": { "gia": 1, "co_ban": 72, "danh_sach": 24 },
   "so_luong_tai_song_song": 8
 }

@@ -73,17 +73,23 @@ def chuoi_thi_truong(vni: pd.DataFrame, gia: pd.DataFrame, ma50: pd.DataFrame) -
 # ----------------------------------------------------------------------------
 # Dựng sự kiện (mỗi điểm mua kỹ thuật của một mã đủ thanh khoản)
 # ----------------------------------------------------------------------------
-def dung_su_kien(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame):
+def chuan_bi(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame) -> dict:
+    """Ma trận (phiên × mã) dùng chung cho kiểm định quy tắc và nghiên cứu điểm số: chỉ báo, thanh khoản,
+    chỉ số cơ bản tại từng thời điểm, yếu tố và điểm theo nhóm (cùng định nghĩa với loc_co_phieu)."""
     dates = vni.index
     print("2) Tính chỉ báo kỹ thuật theo từng phiên...")
     T = {s: L.technical_series(df).reindex(dates) for s, df in frames.items()}
     M = lambda k: pd.DataFrame({s: t[k] for s, t in T.items()})
-    gia, gtgd, so_phien, ma50 = M("gia"), M("gtgd_tb20"), M("so_phien"), M("ma50")
+    gia, gtgd, gtgd5, so_phien, ma50 = M("gia"), M("gtgd_tb20"), M("gtgd_tb5"), M("so_phien"), M("ma50")
     lk = cfg["loc_thanh_khoan"]
-    thanh_khoan = (gtgd >= lk["gtgd_tb20_toi_thieu_ty"] * 1e9) & (gia >= lk["gia_toi_thieu"]) & (so_phien >= lk["so_phien_toi_thieu"])
+    # Cùng quy tắc thanh khoản với bảng lọc hằng ngày (loc_co_phieu.run)
+    thanh_khoan = (gia >= lk["gia_toi_thieu"]) & (so_phien >= 60) & (
+        ((gtgd >= lk["gtgd_tb20_toi_thieu_ty"] * 1e9) & (so_phien >= lk["so_phien_toi_thieu"]))
+        | ((gtgd5 >= lk["gtgd_tb5_toi_thieu_ty"] * 1e9) & (so_phien >= lk["so_phien_toi_thieu_tb5"])))
     perf = 0.4 * M("r3t").fillna(0) + 0.2 * M("r6t").fillna(0) + 0.2 * M("r9t").fillna(0) + 0.2 * M("r12t").fillna(0)
     rs = (perf.where(thanh_khoan).rank(axis=1, pct=True) * 98 + 1).round()
-    thi_truong = chuoi_thi_truong(vni, gia, ma50)
+    hose_hnx = [c for c in gia.columns if info.at[c, "san"] in ("HOSE", "HNX")]
+    thi_truong = chuoi_thi_truong(vni, gia[hose_hnx], ma50[hose_hnx])
 
     bat_dau = dates[252]
     ever = [s for s in gia.columns if thanh_khoan.loc[bat_dau:, s].any()]
@@ -93,18 +99,22 @@ def dung_su_kien(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame)
     L.bao_loi_nguon("tài chính")
 
     # Dòng thời gian chỉ số cơ bản của mỗi mã: thay đổi tại mỗi ngày công bố BCTC
-    moc, eps = {}, {}
+    moc, buoc = {}, {k: {} for k in ("eps", "roe", "roe_min_4q", "so_quy_tang_truong", "so_cp")}
     for s in ever:
         raw = fund_raw.get(s) or {}
         qk = {(q["yearReport"], q["lengthReport"]): q for q in raw.get("quarters", [])}
         ngay = sorted({L.ngay_cong_bo(*k, qk) for k in qk})
         tl = [(d, L.fundamental(raw, info.at[s, "loai"], as_of=d)) for d in ngay]
         moc[s] = ([d for d, _ in tl], [f for _, f in tl])
-        e = pd.Series({pd.Timestamp(d): (f["ln_ttm"] / f["so_cp"] if L.nz(f.get("ln_ttm")) and f.get("so_cp") else np.nan)
-                       for d, f in tl}, dtype=float)
-        eps[s] = e.reindex(dates.union(e.index)).ffill().reindex(dates) if len(e) else pd.Series(np.nan, index=dates)
-    EPS = pd.DataFrame(eps).reindex(columns=gia.columns)
-    PE = (gia / EPS).where(EPS > 0)
+        for k in buoc:
+            if k == "eps":
+                val = lambda f: f["ln_ttm"] / f["so_cp"] if L.nz(f.get("ln_ttm")) and f.get("so_cp") else np.nan
+            else:
+                val = lambda f, k=k: f.get(k) if L.nz(f.get(k)) else np.nan
+            e = pd.Series({pd.Timestamp(d): val(f) for d, f in tl}, dtype=float)
+            buoc[k][s] = e.reindex(dates.union(e.index)).ffill().reindex(dates) if len(e) else pd.Series(np.nan, index=dates)
+    B = {k: pd.DataFrame(v).reindex(columns=gia.columns) for k, v in buoc.items()}
+    PE = (gia / B["eps"]).where(B["eps"] > 0)
     pe_hop_le = PE.where(thanh_khoan & (PE > 0) & (PE < 100))
     med_tt = pe_hop_le.median(axis=1)
     PE_NGANH = pd.DataFrame(index=dates, columns=gia.columns, dtype=float)
@@ -115,15 +125,39 @@ def dung_su_kien(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame)
         for c_ in cols:
             PE_NGANH[c_] = v
 
-    print("4) Dựng sự kiện điểm mua và mô phỏng giao dịch...")
+    # Điểm theo yếu tố cho mọi mã đủ thanh khoản ở mọi phiên – cùng định nghĩa với L.NHOM_DIEM / L.cham_diem
+    print("4) Chấm điểm theo yếu tố cho từng phiên...")
+    YT = {
+        "atr_pct": M("atr_pct"), "bien_do_10p": M("bien_do_10p"), "cach_dinh_52t": M("cach_dinh_52t"),
+        "ep": (1 / PE).fillna(0.0).where(gia.notna()),
+        "pe_rel": (PE / PE_NGANH).where((PE > 0) & (PE_NGANH > 0)).fillna(5.0).where(gia.notna()),
+        "xu_huong_tang": ((gia > ma50) & (ma50 > M("ma200"))).astype(float).where(gia.notna()),
+        "roe": B["roe"], "roe_min_4q": B["roe_min_4q"], "so_quy_tang_truong": B["so_quy_tang_truong"],
+        "von_hoa_ty": gia * B["so_cp"] / 1e9,
+    }
+    DIEM = {}
+    for key, _, yeu_to in L.NHOM_DIEM:
+        parts = [(YT[col] * chieu).where(thanh_khoan).rank(axis=1, pct=True).where(thanh_khoan).fillna(0.5) for col, chieu in yeu_to]
+        DIEM[key] = 100 * sum(parts) / len(parts)
+    DIEM_TONG = sum(DIEM.values()) / len(DIEM)
+    return {"dates": dates, "T": T, "M": M, "gia": gia, "thanh_khoan": thanh_khoan, "rs": rs, "thi_truong": thi_truong,
+            "bat_dau": bat_dau, "ever": ever, "moc": moc, "PE": PE, "PE_NGANH": PE_NGANH, "YT": YT, "DIEM": DIEM,
+            "DIEM_TONG": DIEM_TONG}
+
+
+def dung_su_kien(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame, Q: dict | None = None):
+    Q = Q or chuan_bi(cfg, info, frames, vni)
+    dates, T, gia, thanh_khoan, rs, thi_truong = Q["dates"], Q["T"], Q["gia"], Q["thanh_khoan"], Q["rs"], Q["thi_truong"]
+    bat_dau, ever, moc, PE, PE_NGANH, DIEM, DIEM_TONG = (Q[k] for k in ("bat_dau", "ever", "moc", "PE", "PE_NGANH", "DIEM", "DIEM_TONG"))
+    print("5) Dựng sự kiện điểm mua và mô phỏng giao dịch...")
     ch = cfg["co_hoi"]
-    w = cfg["trong_so"]
     vc = vni["close"]
     su_kien = []
     ngay_str = dates.strftime("%Y-%m-%d")
     i0 = dates.get_loc(bat_dau)
     for s in ever:
         t = T[s]
+        j_s = gia.columns.get_loc(s)
         co_diem_mua = (t["breakout_20p"] == True) | (t["pullback_ma20"] == True) | (t["nen_chat"] == True)  # noqa: E712
         idx = np.where(co_diem_mua.to_numpy() & thanh_khoan[s].to_numpy())[0]
         idx = idx[(idx >= i0) & (idx < len(dates) - 1)]
@@ -140,18 +174,17 @@ def dung_su_kien(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame)
             if k < 0:
                 continue
             r = {**recs[i], **moc_f[k], "ma": s, "san": san, "loai": loai, "nganh": info.at[s, "nganh"]}
-            for b in L.TECH_BOOL:
-                r[b] = bool(r[b]) if r[b] == r[b] else False
-            r["rs"] = float(rs.iat[i, rs.columns.get_loc(s)])
-            r["pe"] = PE.iat[i, PE.columns.get_loc(s)]
-            r["pe_nganh"] = PE_NGANH.iat[i, PE_NGANH.columns.get_loc(s)]
+            for b_ in L.TECH_BOOL:
+                r[b_] = bool(r[b_]) if r[b_] == r[b_] else False
+            r["rs"] = float(rs.iat[i, j_s])
+            r["pe"] = PE.iat[i, j_s]
+            r["pe_nganh"] = PE_NGANH.iat[i, j_s]
             g = min(r["tt_ln_ttm"], 0.5) if L.nz(r.get("tt_ln_ttm")) else np.nan
             r["peg"] = r["pe"] / (g * 100) if L.nz(r["pe"]) and r["pe"] > 0 and L.nz(g) and g > 0 else np.nan
             r["von_hoa_ty"] = r["gia"] * r["so_cp"] / 1e9 if r.get("so_cp") else np.nan
-            f_, *_ = L.score_fundamental(r)
-            k_, *_ = L.score_technical(r)
-            r["diem_cb"], r["diem_kt"] = round(f_, 1), round(k_, 1)
-            r["diem_tong"] = round(w["co_ban"] * f_ + w["ky_thuat"] * k_, 1)
+            for key in DIEM:
+                r["d_" + key] = float(DIEM[key].iat[i, j_s])
+            r["diem_tong"] = round(float(DIEM_TONG.iat[i, j_s]), 1)
             r["thi_truong"] = float(thi_truong.iat[i])
             # Mô phỏng: mua giá mở cửa phiên kế tiếp
             gia_vao = df["open"].iat[i + 1]
@@ -322,6 +355,64 @@ def phan_tich(su_kien: list, cfg: dict, tu: str, den: str, vc: pd.Series) -> dic
     }
 
 
+# ----------------------------------------------------------------------------
+# Sức dự báo của điểm số (chạy lại hằng tuần để phát hiện khi điểm số mất tác dụng)
+# ----------------------------------------------------------------------------
+TEN_YEU_TO = {
+    "atr_pct": "Biến động ATR thấp", "bien_do_10p": "Biên độ 10 phiên hẹp", "ep": "Lợi suất lợi nhuận (1/PE) cao",
+    "pe_rel": "P/E thấp so với ngành", "roe_min_4q": "ROE thấp nhất 4 quý cao", "roe": "ROE cao",
+    "so_quy_tang_truong": "Nhiều quý LN tăng", "von_hoa_ty": "Vốn hoá lớn", "cach_dinh_52t": "Gần đỉnh 52 tuần",
+    "xu_huong_tang": "Giá > MA50 > MA200",
+}
+
+
+def _ic_theo_phien(X: pd.DataFrame, Y: pd.DataFrame, mask: pd.DataFrame) -> pd.Series:
+    """Tương quan thứ hạng (Spearman) giữa X và Y trong từng phiên, chỉ trên các ô mask; bỏ phiên có < 30 mã."""
+    m = mask & X.notna() & Y.notna()
+    rx, ry = X.where(m).rank(axis=1), Y.where(m).rank(axis=1)
+    rx, ry = rx.sub(rx.mean(axis=1), axis=0), ry.sub(ry.mean(axis=1), axis=0)
+    ic = (rx * ry).sum(axis=1) / np.sqrt((rx ** 2).sum(axis=1) * (ry ** 2).sum(axis=1))
+    return ic[m.sum(axis=1) >= 30].dropna()
+
+
+def nghien_cuu_diem(Q: dict, frames: dict, cfg: dict, buoc: int = 5) -> dict:
+    """Mỗi `buoc` phiên: tương quan thứ hạng giữa từng yếu tố/nhóm/điểm tổng và lợi nhuận 20 phiên sau đó
+    (mua giá mở cửa phiên kế tiếp) vượt trung bình các mã đủ thanh khoản."""
+    dates, gia, lk_ = Q["dates"], Q["gia"], Q["thanh_khoan"]
+    mo = pd.DataFrame({s: frames[s]["open"] for s in gia.columns}).reindex(dates)
+    f20 = gia.ffill().shift(-20) / mo.shift(-1) - 1
+    x20 = f20.sub(f20.where(lk_).mean(axis=1), axis=0)
+    chon = dates[252:len(dates) - 21:buoc]
+    giua = chon[len(chon) // 2]
+    X, Y, K = (lambda A: A.loc[chon]), x20.loc[chon], lk_.loc[chon]
+
+    def do(ten, A, nhom):
+        ic = _ic_theo_phien(X(A), Y, K)
+        a, b = ic[ic.index < giua], ic[ic.index >= giua]
+        return {"ten": ten, "nhom": nhom, "ic": float(ic.mean()), "t": float(ic.mean() / (ic.std() / np.sqrt(len(ic)))),
+                "ic_nua_dau": float(a.mean()), "ic_nua_sau": float(b.mean()), "so_phien": int(len(ic))}
+
+    ket = [do("Điểm tổng", Q["DIEM_TONG"], "Điểm")]
+    ket += [do(ten, Q["DIEM"][k], "Nhóm") for k, ten, _ in L.NHOM_DIEM]
+    for _, _, yeu_to in L.NHOM_DIEM:
+        ket += [do(TEN_YEU_TO[c], Q["YT"][c] * chieu, "Yếu tố") for c, chieu in yeu_to]
+    # Tham khảo: các yếu tố KHÔNG dùng trong điểm
+    M = Q["M"]
+    ket += [do("Tăng mạnh 5 phiên gần nhất", M("r1w"), "Tham khảo"), do("Hiệu suất 3 tháng (RS)", M("r3t"), "Tham khảo"),
+            do("RSI14 cao", M("rsi14"), "Tham khảo")]
+
+    # Kết quả thực tế: 20 mã điểm cao nhất và Danh sách Top mỗi phiên, so với TB thị trường
+    diem = Q["DIEM_TONG"].where(lk_).loc[chon]
+    top20 = [Y.loc[d][diem.loc[d].nlargest(20).index].mean() for d in chon if diem.loc[d].notna().sum() >= 30]
+    lt = cfg["loc_top"]
+    top_m = (diem >= lt["diem_toi_thieu"]) & ((Q["YT"]["xu_huong_tang"].loc[chon] == 1) if lt.get("yeu_cau_xu_huong_tang") else True)
+    ds_top = Y.where(top_m).mean(axis=1).dropna()
+    return {"giua": giua.strftime("%Y-%m-%d"), "so_phien": len(chon), "yeu_to": ket,
+            "top20_vuot_tb": float(np.nanmean(top20)),
+            "danh_sach_top_vuot_tb": float(ds_top.mean()), "danh_sach_top_ty_le_thang": float((ds_top > 0).mean()),
+            "danh_sach_top_so_ma_tb": float(top_m.sum(axis=1).mean())}
+
+
 def sach(o):
     """NaN/inf → null để JSON hợp lệ cho trình duyệt."""
     if isinstance(o, dict):
@@ -341,8 +432,16 @@ def main():
     t0 = time.time()
     cfg = json.loads((L.ROOT / "cau_hinh.json").read_text(encoding="utf-8"))
     info, frames, vni = tai_du_lieu(cfg)
-    su_kien, tu, den, vc = dung_su_kien(cfg, info, frames, vni)
+    Q = chuan_bi(cfg, info, frames, vni)
+    su_kien, tu, den, vc = dung_su_kien(cfg, info, frames, vni, Q)
     kq = phan_tich(su_kien, cfg, tu, den, vc)
+    print("6) Sức dự báo của điểm số...")
+    kq["nghien_cuu_diem"] = nghien_cuu_diem(Q, frames, cfg)
+    for x in kq["nghien_cuu_diem"]["yeu_to"]:
+        print(f"  {x['nhom']:<9} {x['ten']:<34} IC {x['ic']:+.3f} (t {x['t']:+.1f})  nửa đầu {x['ic_nua_dau']:+.3f}  nửa sau {x['ic_nua_sau']:+.3f}")
+    nc = kq["nghien_cuu_diem"]
+    print(f"  Top 20 điểm cao nhất vượt TB {nc['top20_vuot_tb']:+.2%}/20 phiên; Danh sách Top vượt TB {nc['danh_sach_top_vuot_tb']:+.2%}"
+          f" (~{nc['danh_sach_top_so_ma_tb']:.0f} mã/phiên, {nc['danh_sach_top_ty_le_thang']:.0%} số phiên thắng)")
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(sach(kq), ensure_ascii=False, allow_nan=False), encoding="utf-8")
     f = lambda s: (f"n={s['n']:>4}  thắng {s['thang']:.0%}  LN TB {s['ln_tb']:+.2%}  R TB {s['r_tb']:+.2f}  vượt VNI {s['vuot_vni']:+.2%}"
