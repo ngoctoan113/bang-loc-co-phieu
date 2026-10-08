@@ -1229,7 +1229,7 @@ def main():
 
     df, top, ctx = run(cfg, symbols, a.lam_moi, a.ghi_nhat_ky)
     if symbols:
-        for r in df.to_dict("records"):
+        for r in df[df["ma"].isin(symbols)].to_dict("records"):
             print_detail(r)
         return
     print(f"\n===== TOP {len(top)} MÃ THOẢ ĐIỀU KIỆN (PTCB + PTKT) =====")
