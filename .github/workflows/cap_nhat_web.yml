@@ -2,10 +2,15 @@ name: Cập nhật bảng lọc cổ phiếu
 
 on:
   schedule:
-    # Giờ máy chủ là UTC (= giờ VN − 7). Thứ 2–6:
-    - cron: "*/20 2-7 * * 1-5"   # mỗi 20 phút từ 9:00 đến 14:40 giờ VN
-    - cron: "20 8 * * 1-5"       # 15:20 giờ VN, sau khi đóng cửa
-    - cron: "0 1 * * 6"          # 8:00 sáng thứ Bảy: chạy thêm kiểm định quá khứ
+    # Giờ máy chủ là UTC (= giờ VN − 7). GitHub hay trễ hoặc bỏ các lần chạy đặt vào phút tròn lúc đông máy
+    # (10/2026: chỉ 2–3 lần/ngày được chạy), nên dùng phút lẻ và đặt dư mốc sau giờ đóng cửa:
+    # chỉ cần một mốc chạy được là nhật ký của phiên đó được ghi.
+    - cron: "7,27,47 2-7 * * 1-5"   # trong phiên, khoảng 9:07–14:47 giờ VN, thứ 2–6 (chỉ cập nhật trang)
+    - cron: "13 8 * * 1-5"          # 15:13 sau khi đóng cửa: ghi nhật ký tín hiệu và bảng điểm
+    - cron: "43 9 * * 1-5"          # 16:43 dự phòng
+    - cron: "17 12 * * 1-5"         # 19:17 dự phòng
+    - cron: "37 0 * * 2-6"          # 7:37 sáng hôm sau, trước giờ mở cửa: bù nếu các mốc trên đều bị bỏ
+    - cron: "11 1 * * 6"            # 8:11 sáng thứ Bảy: chạy thêm kiểm định quá khứ
   workflow_dispatch:              # nút "Run workflow" để chạy tay
     inputs:
       kiem_dinh:
@@ -46,7 +51,7 @@ jobs:
           restore-keys: du-lieu-
 
       - name: Kiểm định quá khứ (thứ Bảy hoặc khi chọn chạy tay)
-        if: github.event.schedule == '0 1 * * 6' || inputs.kiem_dinh == true || hashFiles('nhat_ky/kiem_dinh.json') == ''
+        if: github.event.schedule == '11 1 * * 6' || inputs.kiem_dinh == true || hashFiles('nhat_ky/kiem_dinh.json') == ''
         run: python kiem_dinh.py
 
       # Nguồn dữ liệu đôi khi từ chối máy chủ GitHub: thử lại tối đa 3 lần, cách nhau 90 giây
@@ -59,13 +64,13 @@ jobs:
           done
           exit 1
 
-      - name: Lưu nhật ký tín hiệu và kết quả kiểm định vào kho
+      - name: Lưu nhật ký (tín hiệu, bảng điểm) và kết quả kiểm định vào kho
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git add nhat_ky
           if ! git diff --cached --quiet; then
-            git commit -m "Cập nhật nhật ký tín hiệu $(TZ=Asia/Ho_Chi_Minh date '+%Y-%m-%d %H:%M')"
+            git commit -m "Cập nhật nhật ký $(TZ=Asia/Ho_Chi_Minh date '+%Y-%m-%d %H:%M')"
             git pull --rebase origin main && git push
           fi
 

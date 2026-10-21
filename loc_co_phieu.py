@@ -738,9 +738,18 @@ def thong_ke(lst: list[dict]) -> dict:
 # Nhật ký tín hiệu thực tế: ghi lại mã đưa ra ở "Cơ hội hôm nay" và theo dõi kết quả
 # ----------------------------------------------------------------------------
 NHAT_KY = ROOT / "nhat_ky" / "tin_hieu.csv"
+NHAT_KY_DIEM = ROOT / "nhat_ky" / "diem"  # bảng điểm mỗi phiên, một file mỗi tháng
 KIEM_DINH = ROOT / "nhat_ky" / "kiem_dinh.json"
 NHAT_KY_COT = ["ngay", "gio", "ma", "san", "loai_mua", "gia", "cat_lo", "so_phien_giu", "diem_tong",
                "thi_truong", "diem_thi_truong", "trong_gioi_han", "ngay_truoc", "dong_cua_truoc"]
+GIO_DONG_CUA = "15:00"  # sau giờ này phiên đã kết thúc ở cả ba sàn
+
+
+def phien_da_dong(ngay_du_lieu: str) -> bool:
+    """Nến ngày của phiên `ngay_du_lieu` đã hoàn chỉnh. Nhật ký chỉ ghi khi đó, giống kiểm định quá khứ
+    (tín hiệu tính trên nến ngày đầy đủ, mua giá mở cửa phiên sau)."""
+    now = now_vn()
+    return ngay_du_lieu < now.strftime("%Y-%m-%d") or now.strftime("%H:%M") >= GIO_DONG_CUA
 
 
 def ghi_nhat_ky(dat: list[dict], tt: dict, ngay_du_lieu: str, frames: dict) -> int:
@@ -763,19 +772,28 @@ def ghi_nhat_ky(dat: list[dict], tt: dict, ngay_du_lieu: str, frames: dict) -> i
 
 
 def danh_gia_nhat_ky(frames: dict, vni_df: pd.DataFrame | None) -> dict:
-    """Theo dõi từng tín hiệu đã ghi: vào lệnh tại giá ghi nhận, thoát khi chạm cắt lỗ khẩn cấp hoặc hết số phiên giữ."""
+    """Theo dõi tín hiệu đã ghi theo đúng giả định của kiểm định quá khứ: mua giá mở cửa phiên sau tín hiệu, chỉ bán
+    từ T+2, thoát khi chạm cắt lỗ khẩn cấp hoặc hết số phiên giữ.
+    Mỗi mã chỉ một vị thế: tín hiệu xuất hiện lại khi vị thế trước chưa đóng là "Lặp lại", không tính thêm giao dịch.
+    Hai cách đếm: theo trang (chỉ mã nằm trong giới hạn số mã của ngày đó) và mọi tín hiệu đạt đủ tiêu chí."""
     if not NHAT_KY.exists():
-        return {"tin_hieu": [], "tong_ket": {"n": 0}}
+        return {"tin_hieu": [], "tong_ket": {"n": 0}, "tong_ket_tat_ca": {"n": 0}}
+    vc = vni_df["close"] if vni_df is not None else None
+    vt, vt_trang = {}, {}  # mã -> (ngày tín hiệu, ngày đóng vị thế); "9999" = chưa đóng
     out = []
-    for r in pd.read_csv(NHAT_KY, dtype=str).to_dict("records"):
-        df = frames.get(r["ma"])
-        x = {**r, **{k: float(r[k]) for k in ("gia", "cat_lo", "diem_tong")}, "so_phien_giu": int(float(r["so_phien_giu"]))}
-        if df is None:
-            out.append({**x, "trang_thai": "Chưa có giá"})
-            continue
-        ngay = df.index.strftime("%Y-%m-%d")
+    for r in sorted(pd.read_csv(NHAT_KY, dtype=str).to_dict("records"), key=lambda r: (r["ngay"], r["gio"])):
+        ma = r["ma"]
+        x = {**r, **{k: float(r[k]) for k in ("gia", "cat_lo", "diem_tong")}, "so_phien_giu": int(float(r["so_phien_giu"])),
+             "trong_gioi_han": str(r.get("trong_gioi_han")) == "True"}
+        df = frames.get(ma)
+        ngay = df.index.strftime("%Y-%m-%d") if df is not None else []
         if r["ngay"] not in ngay:
             out.append({**x, "trang_thai": "Chưa có giá"})
+            continue
+        moi = r["ngay"] > vt.get(ma, ("", ""))[1]
+        moi_trang = x["trong_gioi_han"] and r["ngay"] > vt_trang.get(ma, ("", ""))[1]
+        if not (moi or moi_trang):
+            out.append({**x, "trang_thai": "Lặp lại", "lap_tu": vt[ma][0]})
             continue
         i = int(np.where(ngay == r["ngay"])[0][0])
         # Quy đổi giá ghi nhận theo điều chỉnh lịch sử giá (chia cổ tức bằng cổ phiếu, thưởng, phát hành quyền…)
@@ -787,21 +805,97 @@ def danh_gia_nhat_ky(frames: dict, vni_df: pd.DataFrame | None) -> dict:
                 k = float(df["close"].iat[i]) / x["gia"]
         except (TypeError, ValueError):
             k = 1.0
+        ty_le_cl = x["cat_lo"] / x["gia"]  # cắt lỗ khẩn cấp so với giá vào, theo quy tắc lúc ghi
         if abs(k - 1) > 0.005:
             x["dieu_chinh"] = round(k, 4)
             x["gia_goc"] = x["gia"]
-            x["gia"], x["cat_lo"] = x["gia"] * k, x["cat_lo"] * k
-        kq = mo_phong(df, i, x["gia"], x["cat_lo"], float("inf"), toi_da=x["so_phien_giu"])
-        x.update(kq)
-        x["ngay_ra"] = ngay[kq["i_ra"]]
-        if vni_df is not None and r["ngay"] in vni_df.index.strftime("%Y-%m-%d"):
-            vc = vni_df["close"]
-            a = vc.loc[r["ngay"]].iloc[-1] if isinstance(vc.loc[r["ngay"]], pd.Series) else vc.loc[r["ngay"]]
-            x["ln_vni"] = float(vc.asof(pd.Timestamp(x["ngay_ra"])) / a - 1)
-        x.pop("i_ra", None)
+            x["gia"] = x["gia"] * k
+        if i + 1 >= len(df):
+            x.update({"trang_thai": "Chờ mở cửa", "cat_lo": x["gia"] * ty_le_cl})
+            dong = "9999"
+        else:
+            o = float(df["open"].iat[i + 1])
+            gia_vao = o if o > 0 else float(df["close"].iat[i + 1])
+            x.update({"gia_vao": gia_vao, "cat_lo": gia_vao * ty_le_cl})
+            kq = mo_phong(df, i + 1, gia_vao, x["cat_lo"], float("inf"), toi_da=x["so_phien_giu"])
+            x.update(kq)
+            x["ngay_ra"] = ngay[kq["i_ra"]]
+            x.pop("i_ra", None)
+            if vc is not None:
+                x["ln_vni"] = float(vc.asof(pd.Timestamp(x["ngay_ra"])) / vc.asof(pd.Timestamp(r["ngay"])) - 1)
+            dong = "9999" if kq["trang_thai"] == "Đang mở" else x["ngay_ra"]
+        if moi:
+            vt[ma], x["vi_the"] = (r["ngay"], dong), True
+        if moi_trang:
+            vt_trang[ma], x["vi_the_trang"] = (r["ngay"], dong), True
         out.append(x)
-    out.sort(key=lambda x: x["ngay"], reverse=True)
-    return {"tin_hieu": out, "tong_ket": thong_ke([x for x in out if "ln" in x])}
+    out.reverse()  # mới nhất lên đầu
+    xong = lambda key: [x for x in out if x.get(key) and "ln" in x]
+    return {"tin_hieu": out, "tong_ket": thong_ke(xong("vi_the_trang")), "tong_ket_tat_ca": thong_ke(xong("vi_the"))}
+
+
+DIEM_COT = ["d_" + k for k, _, _ in NHOM_DIEM]
+
+
+def ghi_nhat_ky_diem(df: pd.DataFrame, top: pd.DataFrame, ngay_du_lieu: str) -> int:
+    """Lưu bảng điểm các mã đủ thanh khoản của một phiên đã kết thúc (mỗi phiên một lần) để đo sức dự báo ngoài mẫu
+    của bảng xếp hạng. Giá chỉ để tham khảo: khi đánh giá, lợi nhuận lấy từ chuỗi giá đã điều chỉnh sự kiện quyền."""
+    path = NHAT_KY_DIEM / f"{ngay_du_lieu[:7]}.csv"
+    if path.exists() and ngay_du_lieu in set(pd.read_csv(path, usecols=["ngay"], dtype=str)["ngay"]):
+        return 0
+    d = df[df["du_thanh_khoan"]]
+    moi = pd.DataFrame({"ngay": ngay_du_lieu, "ma": d["ma"], "san": d["san"], "gia": d["gia"].round().astype(int),
+                        "diem_tong": d["diem_tong"].round(1), **{c: d[c].round().astype(int) for c in DIEM_COT},
+                        "xu_huong_tang": d["xu_huong_tang"].astype(int), "top": d["ma"].isin(top["ma"]).astype(int)})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    moi.to_csv(path, mode="a", header=not path.exists(), index=False, encoding="utf-8")
+    return len(moi)
+
+
+def danh_gia_diem(frames: dict, vni_df: pd.DataFrame | None, ky=(5, 10, 20)) -> dict | None:
+    """Sức dự báo NGOÀI MẪU của bảng xếp hạng: với mỗi bảng điểm đã lưu, lợi nhuận h phiên sau đó (đóng cửa → đóng cửa)
+    của từng mã: tương quan thứ hạng với điểm (IC) và kết quả của Hạng A, Hạng D, Danh sách Top so với VN-Index."""
+    files = sorted(NHAT_KY_DIEM.glob("*.csv"))
+    if not files or vni_df is None:
+        return None
+    bang = pd.concat([pd.read_csv(f, dtype={"ngay": str, "ma": str}) for f in files], ignore_index=True)
+    vc = vni_df["close"]
+    mas = sorted(set(bang["ma"]) & set(frames))
+    C = pd.DataFrame({m: frames[m]["close"] for m in mas}).sort_index().ffill().reindex(vc.index)
+    vi_tri = {d: i for i, d in enumerate(vc.index.strftime("%Y-%m-%d"))}
+    hang = []
+    for ngay, g in bang.groupby("ngay"):
+        i0 = vi_tri.get(ngay)
+        if i0 is None:
+            continue
+        g = g[g["ma"].isin(C.columns)].set_index("ma")
+        for h in ky:
+            if i0 + h >= len(vc):
+                continue
+            r = C.iloc[i0 + h][g.index] / C.iloc[i0][g.index] - 1
+            ok = r.notna()
+            if ok.sum() < 30:
+                continue
+            x, r = g[ok], r[ok]
+            ic = lambda c: float(x[c].rank().corr(r.rank()))
+            vni = float(vc.iat[i0 + h] / vc.iat[i0] - 1)
+            hon_vni = lambda m: float(r[m].mean()) - vni if m.any() else np.nan
+            hang.append({"ngay": ngay, "h": h, "i0": i0, "ic": ic("diem_tong"), **{"ic_" + c: ic(c) for c in DIEM_COT},
+                         "a": hon_vni(x["diem_tong"] >= 70), "d": hon_vni(x["diem_tong"] < 45), "top": hon_vni(x["top"] == 1),
+                         "tb": hon_vni(pd.Series(True, index=x.index)), "vni": vni})
+    if not hang:
+        return {"tu": bang["ngay"].min(), "den": bang["ngay"].max(), "so_bang": int(bang["ngay"].nunique()), "ky": []}
+    H = pd.DataFrame(hang)
+    out = []
+    for h, g in H.groupby("h"):
+        doc_lap, cuoi = 0, -10 ** 9  # số kỳ không chồng lấn
+        for i0 in sorted(g["i0"]):
+            if i0 >= cuoi + h:
+                doc_lap, cuoi = doc_lap + 1, i0
+        out.append({"h": int(h), "so_ky": len(g), "so_ky_doc_lap": doc_lap, "ic": float(g["ic"].mean()),
+                    "ic_duong": float((g["ic"] > 0).mean()), "nhom": {c: float(g["ic_" + c].mean()) for c in DIEM_COT},
+                    **{k: float(g[k].mean()) if g[k].notna().any() else None for k in ("a", "d", "top", "tb", "vni")}})
+    return {"tu": bang["ngay"].min(), "den": bang["ngay"].max(), "so_bang": int(bang["ngay"].nunique()), "ky": out}
 
 
 # ----------------------------------------------------------------------------
@@ -963,9 +1057,14 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
           f"{', '.join(x['ma'] for x in dat) or 'không có'}")
     vni_df = to_frame(vnindex) if vnindex else None
     if ghi_nk and vni_df is not None and not symbols:
-        n_moi = ghi_nhat_ky(dat, tt, vni_df.index[-1].strftime("%Y-%m-%d"), frames)
-        print(f"   Nhật ký tín hiệu: thêm {n_moi} tín hiệu mới")
+        ngay_dl = vni_df.index[-1].strftime("%Y-%m-%d")
+        if phien_da_dong(ngay_dl):
+            n_moi, n_diem = ghi_nhat_ky(dat, tt, ngay_dl, frames), ghi_nhat_ky_diem(df, top, ngay_dl)
+            print(f"   Nhật ký phiên {ngay_dl}: thêm {n_moi} tín hiệu mới, {n_diem} dòng bảng điểm")
+        else:
+            print(f"   Nhật ký: phiên {ngay_dl} chưa kết thúc, chỉ ghi sau {GIO_DONG_CUA}")
     nhat_ky = danh_gia_nhat_ky(frames, vni_df)
+    diem_ngoai_mau = danh_gia_diem(frames, vni_df)
 
     # Dữ liệu kỹ thuật gọn cho mọi mã có giá (để đánh giá danh mục kể cả mã thanh khoản thấp)
     tat_ca = {
@@ -994,7 +1093,7 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
         "so_ma_xet": len(tickers), "so_ma_thanh_khoan": len(L_), "so_ma_top": len(top), "dang_tang": dang_tang,
         "cfg": cfg,
         "thi_truong": tt, "the_gioi": world, "co_hoi": dat, "gan_dat": gan_dat, "tat_ca": tat_ca,
-        "nhat_ky": nhat_ky,
+        "nhat_ky": nhat_ky, "diem_ngoai_mau": diem_ngoai_mau,
         "df_all": df_all,  # gồm cả mã đang tăng mạnh chưa đủ thanh khoản (cho trang web)
     }
     return df, top, ctx
@@ -1147,7 +1246,7 @@ def web_data(df: pd.DataFrame, top: pd.DataFrame, ctx: dict) -> dict:
         "thi_truong": clean(ctx["thi_truong"]), "the_gioi": clean(ctx["the_gioi"]), "vnindex_dai": ctx["vnindex_dai"],
         "co_hoi": clean(ctx["co_hoi"]), "gan_dat": clean(ctx["gan_dat"]), "tat_ca": clean(ctx["tat_ca"]),
         "cfg_co_hoi": cfg["co_hoi"], "cfg_danh_muc": cfg["danh_muc"],
-        "nhat_ky": clean(ctx["nhat_ky"]),
+        "nhat_ky": clean(ctx["nhat_ky"]), "diem_ngoai_mau": clean(ctx["diem_ngoai_mau"]),
         # Kết quả kiểm định quá khứ do kiem_dinh.py tạo (chạy hằng tuần)
         "kiem_dinh": json.loads(KIEM_DINH.read_text(encoding="utf-8")) if KIEM_DINH.exists() else None,
     }

@@ -39,12 +39,18 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
 - **Thị trường**: điểm bối cảnh 0–100 từ xu hướng VN-Index (MA20/50/200), độ rộng thị trường, ngày phân phối,
   và thế giới (S&P 500, Nasdaq, Shanghai, EEM, DXY, USD/VND, lợi suất TPCP Mỹ 10 năm, dầu Brent, vàng – nguồn Yahoo Finance).
 
-- **Kiểm định**: hai cách kiểm tra bộ tiêu chí có thực sự hiệu quả không.
-  - *Nhật ký tín hiệu thực tế* (`nhat_ky/tin_hieu.csv`): mỗi mã xuất hiện ở "Cơ hội hôm nay" được ghi lại và theo dõi
-    theo đúng quy tắc (T+2, giữ 20 phiên, cắt lỗ khẩn cấp), so với VN-Index cùng kỳ. Máy chủ GitHub tự ghi và lưu vào kho.
+- **Kiểm định**: các cách kiểm tra công cụ có thực sự hiệu quả không.
+  - *Nhật ký tín hiệu thực tế* (`nhat_ky/tin_hieu.csv`): mã đạt đủ tiêu chí ở "Cơ hội hôm nay" **khi phiên đã đóng cửa**
+    được ghi lại và theo dõi đúng như kiểm định quá khứ: mua giá mở cửa phiên sau, T+2, giữ 20 phiên, cắt lỗ khẩn cấp,
+    so với VN-Index cùng kỳ. Mỗi mã chỉ tính một vị thế (tín hiệu lặp lại khi đang giữ không tính thêm); thống kê tách
+    "theo trang" (trong giới hạn số mã) và "mọi tín hiệu". Máy chủ GitHub tự ghi và lưu vào kho.
+  - *Nhật ký bảng điểm* (`nhat_ky/diem/YYYY-MM.csv`): bảng điểm các mã đủ thanh khoản sau mỗi phiên. Sau 5/10/20 phiên,
+    trang đối chiếu điểm với diễn biến thực tế (IC) và so Hạng A, Hạng D, Danh sách Top với VN-Index — phép thử ngoài
+    mẫu cho Bảng xếp hạng. Dữ liệu bắt đầu từ 07/10/2026 (bảng điểm 07/10 chạy trên máy cá nhân, 21/10 lấy từ trang web).
   - *Kiểm định quá khứ* (`python kiem_dinh.py` → `nhat_ky/kiem_dinh.json`, máy chủ chạy sáng thứ Bảy hằng tuần):
     dựng lại tiêu chí trên ~3 năm dữ liệu (BCTC tính từ ngày công bố, thanh khoản tại từng thời điểm),
-    so sánh khi đạt / không đạt / khi bỏ từng tiêu chí và khi thêm tiêu chí đề xuất, tách hai nửa giai đoạn.
+    so sánh khi đạt / không đạt / khi bỏ từng tiêu chí và khi thêm tiêu chí đề xuất, tách hai nửa giai đoạn;
+    kèm sức dự báo của điểm số, theo bối cảnh thị trường và **so với VN-Index**.
 
 Các ngưỡng nằm trong `cau_hinh.json` (mục `co_hoi`, `danh_muc`). Ngưỡng `null` = tiêu chí đang tắt.
 
@@ -66,10 +72,17 @@ Giai đoạn 10/2023–10/2026, 50.838 điểm mua kỹ thuật của 300 mã:
 
 ## Bản trực tuyến tự cập nhật (GitHub Pages)
 
-Kho này có sẵn workflow `.github/workflows/cap_nhat_web.yml`. Máy chủ GitHub tự chạy bộ lọc
-**mỗi 20 phút từ 9:00 đến 14:40 và lúc 15:20 (thứ 2–6, giờ VN)**, rồi đăng kết quả lên địa chỉ
-`https://<tài-khoản>.github.io/<tên-kho>/`. Mở được trên mọi máy và điện thoại, không cần bật máy tính này.
-Trang đang mở tự kiểm tra dữ liệu mới mỗi 3 phút (nhãn **Tự cập nhật** màu xanh).
+Kho này có sẵn workflow `.github/workflows/cap_nhat_web.yml`. Máy chủ GitHub tự chạy bộ lọc theo lịch
+(thứ 2–6, giờ VN): mỗi 20 phút trong phiên (9:07–14:47), sau giờ đóng cửa lúc 15:13, 16:43, 19:17 và 7:37 sáng hôm sau,
+rồi đăng kết quả lên địa chỉ `https://<tài-khoản>.github.io/<tên-kho>/`. Mở được trên mọi máy và điện thoại,
+không cần bật máy tính này. Trang đang mở tự kiểm tra dữ liệu mới mỗi 3 phút (nhãn **Tự cập nhật** màu xanh).
+
+**Thực tế GitHub bỏ phần lớn các lần chạy theo lịch** (10/2026: chỉ 2–3 lần mỗi ngày, khoảng 13:40, 19:30, 20:40,
+buổi sáng không có lần nào). Vì vậy nhật ký chỉ ghi khi phiên đã đóng cửa, và có nhiều mốc dự phòng sau giờ đóng cửa:
+chỉ cần một mốc chạy được là đủ. Dòng chữ dưới tiêu đề trang cho biết dữ liệu đến phiên nào, cập nhật lúc mấy giờ.
+Muốn cập nhật đúng giờ trong phiên thì cần một dịch vụ hẹn giờ bên ngoài (ví dụ cron-job.org) gọi
+`POST https://api.github.com/repos/<tài-khoản>/<tên-kho>/actions/workflows/cap_nhat_web.yml/dispatches`
+với nội dung `{"ref":"main"}` và một token GitHub chỉ có quyền Actions (đọc/ghi) trên kho này.
 
 Thiết lập một lần:
 1. Tạo kho **Public** trên GitHub (GitHub Pages miễn phí chỉ áp dụng cho kho công khai), không tick tạo README.
@@ -82,8 +95,8 @@ Thiết lập một lần:
 4. Tab **Actions → Cập nhật bảng lọc cổ phiếu → Run workflow** để chạy lần đầu.
 
 Lưu ý:
-- Lịch chạy của GitHub có thể trễ 5–15 phút vào giờ cao điểm.
 - GitHub tự tắt lịch chạy nếu kho không có commit nào trong 60 ngày; khi đó bấm bật lại trong tab Actions.
+- Muốn tính lại kiểm định quá khứ ngay: tab Actions → Run workflow → tick "Chạy lại kiểm định quá khứ".
 - Muốn đổi tiêu chí lọc cho bản trực tuyến: sửa `cau_hinh.json`, commit và push. Workflow chạy lại ngay khi có push.
 
 ## Nguồn dữ liệu
@@ -91,7 +104,7 @@ Lưu ý:
 - **VNDirect**: P/E, P/B, tỷ suất cổ tức, vốn hoá, beta theo giá hiện tại.
 - **DNSE**: nguồn giá dự phòng.
 
-Dữ liệu được lưu cache trong `cache/` (giá: 1 giờ, BCTC: 72 giờ).
+Dữ liệu được lưu cache trong `cache/` (giá: 1 giờ, BCTC: 24 giờ để kịp số liệu mới trong mùa báo cáo).
 
 ## Cách chấm điểm (từ 10/2026)
 
@@ -119,6 +132,20 @@ lợi nhuận 20 phiên sau đó so với trung bình thị trường):
   mã điểm < 45 kém −2,3% → tab "Đang tăng mạnh" gắn nhãn theo điểm.
 - Danh sách Top mới vượt TB +1,4%/20 phiên ở cả hai nửa giai đoạn (cũ: +0,7%, nửa sau chỉ +0,3%).
 - Nghiên cứu được chạy lại mỗi sáng thứ Bảy (tab Kiểm định → "Điểm số có dự báo được không?").
+
+**Rà soát 21/10/2026 – so với VN-Index** (mốc trên là so với cổ phiếu trung bình, mà cổ phiếu trung bình kém VN-Index
+khoảng 1%/20 phiên trong 3 năm qua). Mua cả nhóm, giữ 20 phiên, 37 kỳ không chồng lấn, chưa trừ phí:
+
+| Nhóm | Hơn VN-Index /20 phiên | Độ tin cậy (t) |
+|---|---|---|
+| Hạng A | +0,17% | 0,4 (ngang VN-Index) |
+| Danh sách Top | +0,47% | 0,9 |
+| Hạng D | −2,06% | −3,1 (kém rõ rệt) |
+
+- Điểm số tách mã yếu (Hạng D) rất tốt nhưng chưa chứng minh được việc chọn mã thắng VN-Index.
+- Sức dự báo phụ thuộc bối cảnh: IC +0,15 khi thị trường Thuận lợi, chỉ +0,03 khi Rủi ro cao.
+- Hai tuần đầu ngoài mẫu (07/10 → 21/10) IC −0,27: nhóm trụ giảm, mã bị bán mạnh hồi lên (điểm cũ cũng âm). Chưa đủ
+  để kết luận; nhật ký bảng điểm sẽ cho câu trả lời sau vài tháng. Không chỉnh tiêu chí trên cùng dữ liệu 3 năm này nữa.
 
 **Đủ thanh khoản**: GTGD TB 20 phiên ≥ 5 tỷ (≥ 200 phiên dữ liệu) **hoặc** GTGD TB 5 phiên ≥ 10 tỷ (≥ 120 phiên),
 giá ≥ 5.000đ — để không bỏ sót mã vừa có dòng tiền vào.

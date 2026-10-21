@@ -142,7 +142,7 @@ def chuan_bi(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame) -> 
     DIEM_TONG = sum(DIEM.values()) / len(DIEM)
     return {"dates": dates, "T": T, "M": M, "gia": gia, "thanh_khoan": thanh_khoan, "rs": rs, "thi_truong": thi_truong,
             "bat_dau": bat_dau, "ever": ever, "moc": moc, "PE": PE, "PE_NGANH": PE_NGANH, "YT": YT, "DIEM": DIEM,
-            "DIEM_TONG": DIEM_TONG}
+            "DIEM_TONG": DIEM_TONG, "vc": vni["close"]}
 
 
 def dung_su_kien(cfg: dict, info: pd.DataFrame, frames: dict, vni: pd.DataFrame, Q: dict | None = None):
@@ -405,12 +405,49 @@ def nghien_cuu_diem(Q: dict, frames: dict, cfg: dict, buoc: int = 5) -> dict:
     diem = Q["DIEM_TONG"].where(lk_).loc[chon]
     top20 = [Y.loc[d][diem.loc[d].nlargest(20).index].mean() for d in chon if diem.loc[d].notna().sum() >= 30]
     lt = cfg["loc_top"]
-    top_m = (diem >= lt["diem_toi_thieu"]) & ((Q["YT"]["xu_huong_tang"].loc[chon] == 1) if lt.get("yeu_cau_xu_huong_tang") else True)
+    xh = Q["YT"]["xu_huong_tang"] == 1
+    top_m = (diem >= lt["diem_toi_thieu"]) & (xh.loc[chon] if lt.get("yeu_cau_xu_huong_tang") else True)
     ds_top = Y.where(top_m).mean(axis=1).dropna()
+
+    # IC theo bối cảnh thị trường lúc chấm điểm (cùng ngưỡng với tab Thị trường, không gồm yếu tố thế giới)
+    tt = Q["thi_truong"]
+    nhan_bc = lambda v: "Thuận lợi" if v >= 65 else "Trung tính" if v >= 45 else "Rủi ro cao"
+    ic_bc = []
+    for ten, A in [("Điểm tổng", Q["DIEM_TONG"])] + [("Nhóm " + ten, Q["DIEM"][k]) for k, ten, _ in L.NHOM_DIEM]:
+        ic = _ic_theo_phien(X(A), Y, K)
+        bc = ic.index.map(lambda d: nhan_bc(tt.loc[d]))
+        ic_bc.append({"ten": ten, **{b: {"ic": float(ic[bc == b].mean()) if (bc == b).any() else None, "so_phien": int((bc == b).sum())}
+                                     for b in ("Thuận lợi", "Trung tính", "Rủi ro cao")}})
+
+    # So với VN-Index (thứ nhà đầu tư mua được qua quỹ chỉ số): các kỳ 20 phiên không chồng lấn, chưa trừ phí.
+    # Mốc "vượt TB" ở trên là so với cổ phiếu trung bình – nhóm này nhiều năm kém VN-Index nên không đủ để kết luận.
+    vc = Q["vc"]
+    v20 = vc.shift(-20) / vc - 1
+    D_ = Q["DIEM_TONG"].where(lk_)
+    nhom = [("Hạng A (≥ 70)", lambda s, d: s >= 70), ("Hạng B (60–70)", lambda s, d: (s >= 60) & (s < 70)),
+            ("Hạng C (45–60)", lambda s, d: (s >= 45) & (s < 60)), ("Hạng D (< 45)", lambda s, d: s < 45),
+            ("Danh sách Top", lambda s, d: (s >= lt["diem_toi_thieu"]) & (xh.loc[d, s.index] if lt.get("yeu_cau_xu_huong_tang") else True)),
+            ("Mọi mã đủ thanh khoản", lambda s, d: s.notna())]
+    ky = dates[252:len(dates) - 21:20]
+    so_vni = []
+    for ten, chon_ma in nhom:
+        ln, so_ma, vni = [], [], []
+        for d in ky:
+            s = D_.loc[d].dropna()
+            m = s.index[chon_ma(s, d).to_numpy(dtype=bool)]
+            r = f20.loc[d, m].dropna()
+            if len(r):
+                ln.append(float(r.mean())); so_ma.append(len(r)); vni.append(float(v20.loc[d]))
+        ex = np.array(ln) - np.array(vni)
+        so_vni.append({"ten": ten, "so_ky": len(ln), "so_ma_tb": float(np.mean(so_ma)) if so_ma else 0,
+                       "ln_tb": float(np.mean(ln)) if ln else None, "vuot_vni": float(ex.mean()) if len(ex) else None,
+                       "t": float(ex.mean() / (ex.std(ddof=1) / np.sqrt(len(ex)))) if len(ex) > 2 else None,
+                       "thang_vni": float((ex > 0).mean()) if len(ex) else None})
     return {"giua": giua.strftime("%Y-%m-%d"), "so_phien": len(chon), "yeu_to": ket,
             "top20_vuot_tb": float(np.nanmean(top20)),
             "danh_sach_top_vuot_tb": float(ds_top.mean()), "danh_sach_top_ty_le_thang": float((ds_top > 0).mean()),
-            "danh_sach_top_so_ma_tb": float(top_m.sum(axis=1).mean())}
+            "danh_sach_top_so_ma_tb": float(top_m.sum(axis=1).mean()),
+            "ic_boi_canh": ic_bc, "so_vni": so_vni, "vni_20_tb": float(v20.loc[ky].mean())}
 
 
 def sach(o):
@@ -442,6 +479,12 @@ def main():
     nc = kq["nghien_cuu_diem"]
     print(f"  Top 20 điểm cao nhất vượt TB {nc['top20_vuot_tb']:+.2%}/20 phiên; Danh sách Top vượt TB {nc['danh_sach_top_vuot_tb']:+.2%}"
           f" (~{nc['danh_sach_top_so_ma_tb']:.0f} mã/phiên, {nc['danh_sach_top_ty_le_thang']:.0%} số phiên thắng)")
+    for x in nc["ic_boi_canh"]:
+        print(f"  IC {x['ten']:<20} " + "  ".join(f"{b} {x[b]['ic']:+.3f} ({x[b]['so_phien']})" for b in ("Thuận lợi", "Trung tính", "Rủi ro cao")
+                                                  if x[b]["ic"] is not None))
+    print(f"  So với VN-Index (kỳ 20 phiên không chồng lấn, VN-Index TB {nc['vni_20_tb']:+.2%}):")
+    for x in nc["so_vni"]:
+        print(f"    {x['ten']:<24} ~{x['so_ma_tb']:>4.0f} mã  LN {x['ln_tb']:+.2%}  vượt VNI {x['vuot_vni']:+.2%} (t {x['t']:+.1f}, thắng {x['thang_vni']:.0%} số kỳ)")
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(sach(kq), ensure_ascii=False, allow_nan=False), encoding="utf-8")
     f = lambda s: (f"n={s['n']:>4}  thắng {s['thang']:.0%}  LN TB {s['ln_tb']:+.2%}  R TB {s['r_tb']:+.2f}  vượt VNI {s['vuot_vni']:+.2%}"

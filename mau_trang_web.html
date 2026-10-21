@@ -192,6 +192,7 @@ td.gs.lo { color: var(--down); }
 .chip.good { background: var(--up-soft); color: var(--up); }
 .chip.warn { background: var(--ref-soft); color: var(--ref); }
 .chip.bad { background: var(--down-soft); color: var(--down); }
+.chip.mute { background: var(--surface-2); color: var(--muted); }
 .chips .none { color: var(--muted); font-size: 12px; }
 
 /* Cơ hội hôm nay */
@@ -424,14 +425,25 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
   <section class="view" id="view-kiem-dinh" hidden>
     <div>
       <h2 class="sec">Nhật ký tín hiệu thực tế</h2>
-      <p class="hint">Mỗi mã xuất hiện ở "Cơ hội hôm nay" được ghi lại với giá lúc xuất hiện, rồi theo dõi theo đúng quy tắc: chỉ bán từ T+2, giữ tối đa 20 phiên, thoát sớm nếu chạm cắt lỗ khẩn cấp, đã trừ phí và thuế khoảng 0,4%. Đây là phép thử thật trên dữ liệu chưa từng dùng để chọn tiêu chí.</p>
+      <p class="hint">Mã đạt đủ tiêu chí ở "Cơ hội hôm nay" khi phiên đã đóng cửa được ghi lại, rồi theo dõi đúng như kiểm định quá khứ: mua giá mở cửa phiên sau, chỉ bán từ T+2, giữ tối đa 20 phiên, thoát sớm nếu chạm cắt lỗ khẩn cấp, đã trừ phí và thuế khoảng 0,4%. Mỗi mã chỉ tính một vị thế: tín hiệu xuất hiện lại khi đang giữ ghi là "Lặp lại", không tính thêm. "Theo trang" chỉ gồm mã nằm trong giới hạn số mã của ngày đó. Đây là phép thử thật trên dữ liệu chưa từng dùng để chọn tiêu chí.</p>
     </div>
     <dl class="tiles panel" id="nk-tiles" style="margin:0"></dl>
+    <p class="hint" id="nk-tat-ca"></p>
     <div class="panel"><div class="table-wrap" style="max-height:480px"><table><thead><tr>
       <th class="l"><span>Ngày</span></th><th class="l"><span>Mã</span></th><th class="l"><span>Điểm mua</span></th><th><span>Giá vào</span></th>
       <th><span>Cắt lỗ</span></th><th><span>Giữ tối đa</span></th><th class="l"><span>Trạng thái</span></th><th><span>Giá ra / hiện tại</span></th>
       <th><span>Lãi/lỗ</span></th><th><span>Số phiên</span></th><th><span>VN-Index cùng kỳ</span></th>
     </tr></thead><tbody id="nk-body"></tbody></table></div></div>
+
+    <div>
+      <h2 class="sec">Bảng xếp hạng có hiệu quả thật không?</h2>
+      <p class="hint" id="dn-intro"></p>
+    </div>
+    <div class="panel"><div class="table-wrap" style="max-height:none"><table><thead><tr>
+      <th class="l"><span>Sau khi chấm điểm</span></th><th><span>Số bảng điểm</span></th><th><span>Hệ số dự báo (IC)</span></th>
+      <th><span>Hạng A so VN-Index</span></th><th><span>Hạng D so VN-Index</span></th><th><span>Danh sách Top so VN-Index</span></th>
+      <th><span>TB thị trường so VN-Index</span></th>
+    </tr></thead><tbody id="dn-body"></tbody></table></div></div>
 
     <div>
       <h2 class="sec">Điểm số có dự báo được không?</h2>
@@ -442,6 +454,17 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
       <th class="l"><span>Điểm / nhóm / yếu tố</span></th><th><span>Hệ số dự báo (IC)</span></th><th><span>Độ tin cậy (t)</span></th>
       <th><span>Nửa đầu</span></th><th><span>Nửa sau</span></th><th class="l"><span>Đánh giá</span></th>
     </tr></thead><tbody id="nc-body"></tbody></table></div></div>
+    <div class="panel">
+      <div class="d-sec"><h4>So với VN-Index</h4><p class="hint" id="nc-vni-intro"></p></div>
+      <div class="table-wrap" style="max-height:none"><table><thead><tr>
+        <th class="l"><span>Nhóm mã</span></th><th><span>Số mã TB</span></th><th><span>LN TB/20 phiên</span></th><th><span>Hơn VN-Index</span></th>
+        <th><span>Độ tin cậy (t)</span></th><th><span>Số kỳ thắng VN-Index</span></th>
+      </tr></thead><tbody id="nc-vni"></tbody></table></div>
+    </div>
+    <div class="panel">
+      <div class="d-sec"><h4>Hệ số dự báo theo bối cảnh thị trường</h4><p class="hint" id="nc-bc-intro"></p></div>
+      <div class="table-wrap" style="max-height:none"><table><thead id="nc-bc-head"></thead><tbody id="nc-bc"></tbody></table></div>
+    </div>
 
     <div>
       <h2 class="sec">Kiểm định quy tắc "Cơ hội hôm nay" trên dữ liệu quá khứ</h2>
@@ -1072,8 +1095,9 @@ function renderThiTruong() {
 }
 
 // ---------- Tab: Kiểm định ----------
-const TT_CLS = { "Chạm mục tiêu": "good", "Chạm cắt lỗ": "bad", "Hết thời gian": "good", "Đang mở": "warn", "Chưa có giá": "warn" };
-const TT_TEN = { "Hết thời gian": "Đủ thời hạn giữ" };
+const TT_CLS = { "Chạm mục tiêu": "good", "Chạm cắt lỗ": "bad", "Hết thời gian": "good", "Đang mở": "warn", "Chưa có giá": "warn",
+  "Chờ mở cửa": "warn", "Lặp lại": "mute" };
+const TT_TEN = { "Hết thời gian": "Đủ thời hạn giữ", "Chờ mở cửa": "Chờ phiên sau" };
 const tkCell = s => !s || !s.n ? `<td class="muted">–</td>`
   : `<td>${s.n} GD · ${pct(s.thang)} thắng<br><b class="${cls(s.ln_tb)}">${pct(s.ln_tb, 2, true)}</b>/GD</td>`;
 const nuaCell = s => !s || !s.n ? `<td class="muted">–</td>` : `<td class="${cls(s.ln_tb)}">${pct(s.ln_tb, 2, true)}<br><small class="muted">${s.n} GD</small></td>`;
@@ -1102,30 +1126,68 @@ function cumSVG(gd) {
 
 function renderKiemDinh() {
   // Nhật ký thực tế
-  const nk = D.nhat_ky || { tin_hieu: [], tong_ket: { n: 0 } }, tk = nk.tong_ket || { n: 0 };
+  const nk = D.nhat_ky || { tin_hieu: [], tong_ket: { n: 0 } }, tk = nk.tong_ket || { n: 0 }, tka = nk.tong_ket_tat_ca || { n: 0 };
+  const ds = nk.tin_hieu, nViThe = ds.filter(x => x.vi_the || x.vi_the_trang).length, nLap = ds.filter(x => x.trang_thai === "Lặp lại").length;
   $("nk-tiles").innerHTML = `
-    <div><dt>Tín hiệu đã ghi</dt><dd>${nk.tin_hieu.length}<small>${nk.tin_hieu.filter(x => x.trang_thai === "Đang mở").length} đang mở</small></dd></div>
-    <div><dt>Đã kết thúc · tỷ lệ thắng</dt><dd>${tk.n || 0}<small>${tk.n ? pct(tk.thang) + " thắng" : "chưa có"}</small></dd></div>
+    <div><dt>Tín hiệu đã ghi</dt><dd>${ds.length}<small>${nViThe} vị thế · ${nLap} lặp lại</small></dd></div>
+    <div><dt>Theo trang · đã kết thúc</dt><dd>${tk.n || 0}<small>${tk.n ? pct(tk.thang) + " thắng" : "chưa có"}</small></dd></div>
     <div><dt>Lãi/lỗ TB mỗi giao dịch</dt><dd class="${cls(tk.ln_tb)}">${tk.n ? pct(tk.ln_tb, 2, true) : "–"}</dd></div>
     <div><dt>Hơn VN-Index cùng kỳ (TB)</dt><dd class="${cls(tk.vuot_vni)}">${tk.n && tk.vuot_vni != null ? pct(tk.vuot_vni, 2, true) : "–"}</dd></div>`;
-  $("nk-body").innerHTML = nk.tin_hieu.map(x => `<tr>
-    <td class="l">${dmy(x.ngay)}</td><td class="l tk"><b>${esc(x.ma)}</b></td><td class="l" style="font-family:var(--f-ui)">${esc(x.loai_mua)}</td>
-    <td>${fmt(x.gia)}${x.dieu_chinh ? `<br><small class="muted" title="Nguồn dữ liệu đã điều chỉnh lịch sử giá do sự kiện quyền">quy đổi ×${fmt(x.dieu_chinh, 3)} (gốc ${fmt(x.gia_goc)})</small>` : ""}</td><td class="down">${fmt(x.cat_lo)}</td><td>${x.so_phien_giu} phiên</td>
-    <td class="l"><span class="chip ${TT_CLS[x.trang_thai] || "warn"}">${esc(TT_TEN[x.trang_thai] || x.trang_thai)}</span></td>
+  $("nk-tat-ca").innerHTML = (tka.n ? `Mọi tín hiệu đạt, kể cả ngoài giới hạn số mã: ${tka.n} giao dịch đã kết thúc, ${pct(tka.thang)} thắng, `
+    + `lãi/lỗ TB <b class="${cls(tka.ln_tb)}">${pct(tka.ln_tb, 2, true)}</b>, hơn VN-Index <b class="${cls(tka.vuot_vni)}">${pct(tka.vuot_vni, 2, true)}</b>. ` : "")
+    + "Cần vài chục giao dịch đã kết thúc trở lên mới đủ để kết luận.";
+  $("nk-body").innerHTML = ds.map(x => {
+    const lap = x.trang_thai === "Lặp lại";
+    const tinHieu = `tín hiệu ${fmt(x.gia)}` + (x.dieu_chinh ? ` · quy đổi ×${fmt(x.dieu_chinh, 3)} (gốc ${fmt(x.gia_goc)})` : "");
+    return `<tr${lap ? ' class="muted"' : ""}>
+    <td class="l">${dmy(x.ngay)}</td><td class="l tk"><b>${esc(x.ma)}</b>${x.trong_gioi_han ? "" : "<small>ngoài giới hạn số mã</small>"}</td>
+    <td class="l" style="font-family:var(--f-ui)">${esc(x.loai_mua)}</td>
+    <td>${fmt(x.gia_vao)}<br><small class="muted" title="Giá đóng cửa phiên có tín hiệu; nếu nguồn dữ liệu đã điều chỉnh lịch sử giá do sự kiện quyền thì quy đổi theo">${tinHieu}</small></td>
+    <td class="down">${lap ? "–" : fmt(x.cat_lo)}</td><td>${x.so_phien_giu} phiên</td>
+    <td class="l"><span class="chip ${TT_CLS[x.trang_thai] || "warn"}">${esc(TT_TEN[x.trang_thai] || x.trang_thai)}</span>${lap ? `<br><small>đang giữ từ ${dmy(x.lap_tu)}</small>` : ""}</td>
     <td>${fmt(x.gia_ra)}</td><td class="${cls(x.ln)}">${x.ln == null ? "–" : pct(x.ln, 1, true)}</td>
-    <td>${x.so_phien ?? "–"}</td><td class="${cls(x.ln_vni)}">${x.ln_vni == null ? "–" : pct(x.ln_vni, 1, true)}</td></tr>`).join("")
-    || `<tr><td colspan="11" class="empty">Chưa có tín hiệu nào được ghi. Nhật ký tự động ghi khi trang được cập nhật trong các phiên giao dịch.</td></tr>`;
+    <td>${x.so_phien ?? "–"}</td><td class="${cls(x.ln_vni)}">${x.ln_vni == null ? "–" : pct(x.ln_vni, 1, true)}</td></tr>`;
+  }).join("") || `<tr><td colspan="11" class="empty">Chưa có tín hiệu nào được ghi. Nhật ký tự động ghi sau mỗi phiên giao dịch.</td></tr>`;
+
+  // Bảng xếp hạng ngoài mẫu: bảng điểm lưu mỗi phiên, so với diễn biến thực tế sau đó
+  const dn = D.diem_ngoai_mau;
+  $("dn-intro").innerHTML = dn ? `Sau mỗi phiên, bảng điểm các mã đủ thanh khoản được lưu lại (đã có ${dn.so_bang} bảng điểm, ${dmy(dn.tu)} → ${dmy(dn.den)}). `
+    + `Sau 5, 10, 20 phiên, đối chiếu điểm đã chấm với lợi nhuận thực tế của từng mã (IC; 3 năm qua khoảng +0,11 ở 20 phiên) `
+    + `và so lợi nhuận trung bình của từng nhóm với VN-Index cùng kỳ (chưa trừ phí). Bảng điểm của các phiên liền nhau có kỳ theo dõi chồng lên nhau, `
+    + `nên số mẫu thật là số "kỳ độc lập"; cần khoảng 10 kỳ độc lập trở lên mới nên kết luận.` : "Chưa có bảng điểm nào được lưu.";
+  $("dn-body").innerHTML = dn && dn.ky.length ? dn.ky.map(k => `<tr><td class="l">${k.h} phiên</td>
+    <td>${k.so_ky}<br><small class="muted">${k.so_ky_doc_lap} kỳ độc lập</small></td>
+    <td class="${cls(k.ic)}"><b>${fmt(k.ic, 3)}</b><br><small class="muted">${pct(k.ic_duong)} số kỳ dương</small></td>
+    <td class="${cls(k.a)}">${pct(k.a, 2, true)}</td><td class="${cls(k.d)}">${pct(k.d, 2, true)}</td>
+    <td class="${cls(k.top)}">${pct(k.top, 2, true)}</td><td class="${cls(k.tb)}">${pct(k.tb, 2, true)}</td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty">Chưa đủ số phiên sau bảng điểm đầu tiên để đánh giá.</td></tr>`;
 
   // Sức dự báo của điểm số
   const nc = D.kiem_dinh && D.kiem_dinh.nghien_cuu_diem;
   $("nc-intro").innerHTML = nc ? `Mỗi 5 phiên trong 3 năm, xếp hạng các mã đủ thanh khoản theo từng yếu tố rồi đo tương quan với lợi nhuận 20 phiên sau đó `
     + `<b>so với trung bình thị trường</b> (IC: 0 = không dự báo được; > 0,05 là tốt với dữ liệu chứng khoán). Một yếu tố đáng tin khi dương ở cả hai nửa giai đoạn `
-    + `(chia tại ${dmy(nc.giua)}). Chạy lại mỗi sáng thứ Bảy để phát hiện khi điểm số mất tác dụng.` : "Chưa có kết quả.";
-  $("nc-tiles").innerHTML = nc ? `
-    <div><dt>Hệ số dự báo của Điểm tổng</dt><dd class="${nc.yeu_to[0].ic > 0.03 ? "up" : "down"}">${fmt(nc.yeu_to[0].ic, 3)}<small>t = ${fmt(nc.yeu_to[0].t, 1)}</small></dd></div>
+    + `(chia tại ${dmy(nc.giua)}). Chạy lại mỗi sáng thứ Bảy để phát hiện khi điểm số mất tác dụng. `
+    + `IC đo khả năng xếp hạng so với cổ phiếu trung bình; có thắng được VN-Index hay không xem bảng "So với VN-Index" bên dưới.` : "Chưa có kết quả.";
+  const sv = nc && nc.so_vni, svTim = t => sv && sv.find(x => x.ten.startsWith(t));
+  const svTile = (ten, x) => x ? `<div><dt>${ten}</dt><dd class="${cls(x.vuot_vni)}">${pct(x.vuot_vni, 2, true)}<small>/20 phiên · t = ${fmt(x.t, 1)}</small></dd></div>` : "";
+  $("nc-tiles").innerHTML = !nc ? "" : `
+    <div><dt>Hệ số dự báo của Điểm tổng</dt><dd class="${nc.yeu_to[0].ic > 0.03 ? "up" : "down"}">${fmt(nc.yeu_to[0].ic, 3)}<small>t = ${fmt(nc.yeu_to[0].t, 1)}</small></dd></div>`
+    + (sv ? svTile("Hạng A so với VN-Index", svTim("Hạng A")) + svTile("Hạng D so với VN-Index", svTim("Hạng D")) + svTile("Danh sách Top so với VN-Index", svTim("Danh sách Top")) : `
     <div><dt>20 mã điểm cao nhất · vượt TB</dt><dd class="${cls(nc.top20_vuot_tb)}">${pct(nc.top20_vuot_tb, 2, true)}<small>/20 phiên</small></dd></div>
     <div><dt>Danh sách Top · vượt TB</dt><dd class="${cls(nc.danh_sach_top_vuot_tb)}">${pct(nc.danh_sach_top_vuot_tb, 2, true)}<small>~${fmt(nc.danh_sach_top_so_ma_tb)} mã/phiên</small></dd></div>
-    <div><dt>Danh sách Top · số phiên thắng</dt><dd>${pct(nc.danh_sach_top_ty_le_thang)}</dd></div>` : "";
+    <div><dt>Danh sách Top · số phiên thắng</dt><dd>${pct(nc.danh_sach_top_ty_le_thang)}</dd></div>`);
+  $("nc-vni-intro").innerHTML = sv ? `Mua cả nhóm, giữ 20 phiên rồi chấm lại (${sv[0].so_ky} kỳ không chồng lấn, chưa trừ phí); VN-Index trung bình ${pct(nc.vni_20_tb, 2, true)} mỗi kỳ. `
+    + `So với cổ phiếu trung bình, Danh sách Top vượt ${pct(nc.danh_sach_top_vuot_tb, 2, true)}, nhưng chính cổ phiếu trung bình lại kém VN-Index, nên mốc đúng để biết có đáng công chọn mã hay không là VN-Index. `
+    + `Độ tin cậy |t| từ 2 trở lên mới đáng tin.` : "Chưa có: kiểm định quá khứ sẽ tính lại vào sáng thứ Bảy.";
+  $("nc-vni").innerHTML = sv ? sv.map(x => `<tr><td class="l" style="font-family:var(--f-ui)">${esc(x.ten)}</td><td>${fmt(x.so_ma_tb)}</td>
+    <td class="${cls(x.ln_tb)}">${pct(x.ln_tb, 2, true)}</td><td class="${cls(x.vuot_vni)}"><b>${pct(x.vuot_vni, 2, true)}</b></td>
+    <td>${fmt(x.t, 1)}</td><td>${pct(x.thang_vni)}</td></tr>`).join("") : "";
+  const BC = ["Thuận lợi", "Trung tính", "Rủi ro cao"], ib = nc && nc.ic_boi_canh;
+  $("nc-bc-intro").innerHTML = ib ? `IC của điểm theo bối cảnh thị trường lúc chấm (cùng ngưỡng với tab Thị trường, không tính yếu tố thế giới). `
+    + `Bối cảnh hiện tại: <b>${esc(D.thi_truong ? D.thi_truong.nhan : "–")}</b>.` : "Chưa có: kiểm định quá khứ sẽ tính lại vào sáng thứ Bảy.";
+  $("nc-bc-head").innerHTML = ib ? `<tr><th class="l"><span>Điểm / nhóm</span></th>${BC.map(b => `<th><span>${b} (${ib[0][b].so_phien} phiên)</span></th>`).join("")}</tr>` : "";
+  $("nc-bc").innerHTML = ib ? ib.map(x => `<tr><td class="l" style="font-family:var(--f-ui)${x.ten === "Điểm tổng" ? "; font-weight:700" : ""}">${esc(x.ten)}</td>
+    ${BC.map(b => `<td class="${cls(x[b].ic)}">${fmt(x[b].ic, 3)}</td>`).join("")}</tr>`).join("") : "";
   $("nc-body").innerHTML = nc ? nc.yeu_to.map(x => {
     const tot = x.ic > 0.03 && x.ic_nua_dau > 0 && x.ic_nua_sau > 0, xau = x.ic_nua_dau < 0 && x.ic_nua_sau < 0;
     const nx = tot ? ["good", "Dự báo tốt, ổn định"] : xau ? ["bad", "Ngược chiều"] : ["warn", x.nhom === "Tham khảo" ? "Không dự báo được (không dùng)" : "Yếu / chưa ổn định"];
