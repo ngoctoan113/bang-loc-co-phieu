@@ -33,8 +33,11 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
 - **Bảng xếp hạng**: mọi mã HOSE/HNX/UPCOM đủ thanh khoản, chấm điểm theo 5 nhóm yếu tố (xem "Cách chấm điểm").
   Ba tab con: *Danh sách Top* (điểm ≥ 65 và giá > MA50 > MA200) · *Tất cả* · *Đang tăng mạnh* (tăng ≥ 8% trong 5 phiên,
   gắn nhãn "Tăng có nền tảng" / "Trung bình" / "Tăng đầu cơ" theo điểm).
-- **Danh mục của tôi**: nhập mã, giá vốn, khối lượng, ngày mua. Trang áp quy tắc để báo Cắt lỗ / Bán (chạm điểm dừng lãi)
-  / Giảm tỷ trọng / Chốt lời một phần / Thận trọng / Giữ, kèm ngưỡng dừng và lý do. Danh mục chỉ lưu trên trình duyệt;
+  Khi thị trường Rủi ro cao, tab hiện cảnh báo: kiểm định 3 năm cho thấy điểm số gần như không dự báo được trong bối cảnh đó.
+- **Danh mục của tôi**: nhập mã, giá vốn, khối lượng, ngày mua. Trang áp **cùng quy tắc đã kiểm định với Cơ hội hôm nay**:
+  Cắt lỗ khẩn cấp (giá vốn −10%) / Hết thời hạn giữ: bán (đủ 20 phiên kể từ ngày mua, trừ khi mã đang có lại tín hiệu) / Giữ.
+  Dừng lãi theo ATR, giá dưới MA50/MA200, chốt lời khi giá nóng, tỷ trọng quá lớn… chỉ hiện là **lưu ý**, không phải
+  lệnh bán (kiểm định cho thấy thoát lệnh theo các tín hiệu kiểu này cho kết quả kém hơn). Danh mục chỉ lưu trên trình duyệt;
   dùng nút "Tạo link" để mở cùng danh mục trên máy khác (dữ liệu nằm trong link, không gửi lên máy chủ).
 - **Thị trường**: điểm bối cảnh 0–100 từ xu hướng VN-Index (MA20/50/200), độ rộng thị trường, ngày phân phối,
   và thế giới (S&P 500, Nasdaq, Shanghai, EEM, DXY, USD/VND, lợi suất TPCP Mỹ 10 năm, dầu Brent, vàng – nguồn Yahoo Finance).
@@ -66,7 +69,7 @@ Giai đoạn 10/2023–10/2026, 50.838 điểm mua kỹ thuật của 300 mã:
 - Thêm **biến động thấp: ATR ≤ 3%** (tiêu chí có tác dụng rõ và ổn định nhất).
 - Bỏ ROE ≥ 15%, LN 4 quý ≥ 10%, nợ vay/VCSH ≤ 1, trần RSI 72 (không giúp hoặc làm kém đi); nới "không mua đuổi" lên MA20 + 15%.
 - Đổi cách thoát lệnh: **giữ 20 phiên, cắt lỗ khẩn cấp 10%** thay cho cắt lỗ 7%/2ATR + chốt lời 2R
-  (cắt lỗ chặt làm bị "rũ" khỏi mã tốt). Quy tắc danh mục (`danh_muc`) chưa thay đổi.
+  (cắt lỗ chặt làm bị "rũ" khỏi mã tốt). Từ 22/10/2026 tab Danh mục cũng dùng quy tắc này.
 - Các tiêu chí đã bỏ vẫn được kiểm định hằng tuần trong nhóm "đề xuất" để xem có nên đưa lại.
 - Giới hạn: chỉ có mã còn niêm yết (thiên lệch sống sót), mẫu ~140 GD nên kết quả còn dao động; nhật ký thực tế là phép thử quyết định.
 
@@ -161,7 +164,8 @@ giá ghi nhận; tab Danh mục báo "Cần cập nhật giá vốn" khi giá v�
 | `loc_thanh_khoan` | GTGD TB 20 phiên / 5 phiên tối thiểu (tỷ đồng), giá tối thiểu, số phiên tối thiểu |
 | `loc_top` | Điều kiện vào danh sách Top (điểm tối thiểu, yêu cầu xu hướng tăng) |
 | `dang_tang` | Ngưỡng tăng 5 phiên, GTGD tối thiểu, ngưỡng điểm "có nền tảng" / "đầu cơ" |
-| `co_hoi`, `danh_muc` | Quy tắc tab Cơ hội hôm nay và Danh mục |
+| `co_hoi` | Tiêu chí tab Cơ hội hôm nay; cắt lỗ khẩn cấp và thời hạn giữ dùng chung cho cả tab Danh mục |
+| `danh_muc` | Ngưỡng các lưu ý trong tab Danh mục (dừng lãi ATR, chốt lời khi giá nóng, tỷ trọng tối đa) |
 
 ## Hạn chế cần biết
 - Dữ liệu từ API công khai, có thể chậm cập nhật hoặc sai lệch; BCTC chỉ có sau khi doanh nghiệp công bố.

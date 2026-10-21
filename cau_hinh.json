@@ -44,7 +44,7 @@
   },
 
   "danh_muc": {
-    "cat_lo_pct": 0.07,
+    "_ghi_chu": "Cắt lỗ khẩn cấp và thời hạn giữ dùng chung quy tắc co_hoi (cat_lo_pct, so_phien_giu). Các ngưỡng dưới đây chỉ tạo lưu ý, không phải lệnh bán.",
     "atr_dung_lai": 2.5,
     "chot_loi_pct": 0.20,
     "ty_trong_toi_da": 0.30

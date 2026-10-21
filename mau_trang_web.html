@@ -229,15 +229,16 @@ td.gs.lo { color: var(--down); }
 .tiles dd { margin: 2px 0 0; font: 600 20px var(--f-num); }
 .tiles dd small { font: 500 12px var(--f-num); margin-left: 6px; }
 .sig { display: inline-block; font: 700 12px var(--f-ui); padding: 3px 9px; border-radius: 6px; white-space: nowrap; }
-.sig-CAT_LO, .sig-BAN { background: var(--down-soft); color: var(--down); }
-.sig-GIAM, .sig-THAN_TRONG { background: var(--ref-soft); color: var(--ref); }
-.sig-CHOT { background: var(--ceil-soft); color: var(--ceil); }
+.sig-CAT_LO { background: var(--down-soft); color: var(--down); }
+.sig-HET_HAN { background: var(--ceil-soft); color: var(--ceil); }
 .sig-GIU { background: var(--up-soft); color: var(--up); }
 .sig-NA { background: var(--surface-2); color: var(--muted); }
 .sig-CAP_NHAT { background: var(--accent-soft); color: var(--accent); }
 .share { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
 .share input { flex: 1; min-width: 0; font: 12px var(--f-num); }
 .banner { padding: 12px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--accent-soft); border-color: var(--accent); }
+.banner.canh-bao { background: var(--down-soft); border-color: var(--down); }
+.banner.canh-bao span { flex: 1; min-width: 240px; }
 
 /* Thị trường */
 .mk-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; }
@@ -331,6 +332,7 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
 
   <!-- BẢNG XẾP HẠNG -->
   <section class="view" id="view-bang-xep-hang" hidden>
+    <div class="banner canh-bao panel" id="bang-canh-bao" role="note" hidden></div>
     <section class="funnel panel" aria-label="Phễu lọc">
       <div class="step"><b id="f1">–</b><span id="f1t">mã được quét</span></div>
       <div class="step"><b id="f2">–</b><span id="f2t">đạt thanh khoản</span></div>
@@ -346,8 +348,8 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
       <select id="nganh" aria-label="Ngành"></select>
       <select id="san" aria-label="Sàn"></select>
       <div class="grades" id="grades" role="group" aria-label="Hạng">
-        <button data-g="A" aria-pressed="false" title="Hạng A: điểm tổng ≥ 75">A</button>
-        <button data-g="B" aria-pressed="false" title="Hạng B: 60–75">B</button>
+        <button data-g="A" aria-pressed="false" title="Hạng A: điểm tổng ≥ 70">A</button>
+        <button data-g="B" aria-pressed="false" title="Hạng B: 60–70">B</button>
         <button data-g="C" aria-pressed="false" title="Hạng C: 45–60">C</button>
         <button data-g="D" aria-pressed="false" title="Hạng D: dưới 45">D</button>
       </div>
@@ -386,7 +388,7 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
       <div class="table-wrap" style="max-height:none"><table><thead><tr>
         <th class="l"><span>Mã</span></th><th><span>KL</span></th><th><span>Giá vốn</span></th><th><span>Giá</span></th>
         <th><span>Lãi/lỗ</span></th><th><span>Tỷ trọng</span></th><th class="l"><span>Tín hiệu</span></th>
-        <th><span>Ngưỡng dừng</span></th><th class="l"><span>Lý do</span></th><th><span></span></th>
+        <th><span>Cắt lỗ khẩn cấp</span></th><th><span>Thời hạn giữ</span></th><th class="l"><span>Lý do · lưu ý</span></th><th><span></span></th>
       </tr></thead><tbody id="pf-body"></tbody></table></div>
       <p class="empty" id="pf-empty">Danh mục đang trống. Nhập mã, giá vốn và khối lượng ở trên để bắt đầu theo dõi.</p>
       <div class="share">
@@ -832,7 +834,24 @@ function renderDetail(r) {
     <div class="d-sec"><h4>Điểm mạnh</h4><div class="chips">${chips(r.diem_manh, "good")}</div></div>
     <div class="d-sec"><h4>Lưu ý</h4><div class="chips">${chips(r.luu_y, "warn")}</div></div>`;
 }
+// Cảnh báo khi thị trường Rủi ro cao: kiểm định 3 năm cho thấy điểm số gần như không dự báo được trong bối cảnh này
+function canhBaoBoiCanh() {
+  const el = $("bang-canh-bao"), t = D.thi_truong;
+  el.hidden = !t || t.trang_thai !== "rui_ro";
+  if (el.hidden) return;
+  const ib = D.kiem_dinh && D.kiem_dinh.nghien_cuu_diem && D.kiem_dinh.nghien_cuu_diem.ic_boi_canh;
+  const tong = ib && ib.find(x => x.ten === "Điểm tổng");
+  const nguoc = ib ? ib.filter(x => x.ten.startsWith("Nhóm ") && x["Rủi ro cao"].ic != null && x["Rủi ro cao"].ic < 0).map(x => x.ten.slice(5)) : [];
+  el.innerHTML = `<span><b class="down">Thị trường đang Rủi ro cao (${t.diem}/100): xếp hạng lúc này chỉ nên để tham khảo.</b> `
+    + (tong && tong["Rủi ro cao"].ic != null
+      ? `Kiểm định 3 năm: trong bối cảnh này điểm tổng gần như không dự báo được (IC ${fmt(tong["Rủi ro cao"].ic, 3)}, so với ${fmt(tong["Thuận lợi"].ic, 3)} khi Thuận lợi)`
+        + (nguoc.length ? `; nhóm ${nguoc.join(", ")} còn cho kết quả ngược chiều.` : ".")
+      : "Kiểm định quá khứ cho thấy điểm số dự báo kém hơn hẳn khi thị trường xấu.")
+    + `</span><button class="btn small" type="button" id="bang-xem-kd">Xem kiểm định</button>`;
+  $("bang-xem-kd").onclick = () => setView("kiem-dinh");
+}
 function renderBang() {
+  canhBaoBoiCanh();
   $("f1").textContent = fmt(D.dem.xet);
   $("f1t").textContent = `mã trên ${D.san.join(", ")} được quét`;
   $("f2").textContent = fmt(D.dem.thanh_khoan);
@@ -858,10 +877,9 @@ let DM = store.get("blcp.danhmuc", []);
 if (!Array.isArray(DM)) DM = [];
 let editing = null;
 const SIG = {
-  CAT_LO: "Cắt lỗ", BAN: "Bán: chạm điểm dừng lãi", GIAM: "Giảm tỷ trọng", CHOT: "Chốt lời một phần",
-  THAN_TRONG: "Thận trọng", GIU: "Giữ", NA: "Chưa có dữ liệu", CAP_NHAT: "Cần cập nhật giá vốn",
+  CAT_LO: "Cắt lỗ khẩn cấp", HET_HAN: "Hết thời hạn giữ: bán", GIU: "Giữ", NA: "Chưa có dữ liệu", CAP_NHAT: "Cần cập nhật giá vốn",
 };
-const SIG_ORDER = ["CAP_NHAT", "CAT_LO", "BAN", "GIAM", "CHOT", "THAN_TRONG", "GIU", "NA"];
+const SIG_ORDER = ["CAP_NHAT", "CAT_LO", "HET_HAN", "GIU", "NA"];
 
 function phienTu(ngay) {
   if (!ngay) return null;
@@ -871,12 +889,14 @@ function phienTu(ngay) {
   return n;
 }
 
-// Áp quy tắc cho một vị thế. Thứ tự ưu tiên: cắt lỗ → dừng lãi → xu hướng xấu → chốt lời → thận trọng → giữ.
+// Áp cùng quy tắc đã kiểm định với "Cơ hội hôm nay": cắt lỗ khẩn cấp → hết thời hạn giữ → giữ.
+// Dừng lãi theo ATR, xu hướng MA50/MA200, chốt lời khi giá nóng chỉ là lưu ý: kiểm định quá khứ cho thấy
+// thoát lệnh theo các tín hiệu kiểu này (cắt lỗ chặt, chốt lời sớm) cho kết quả kém hơn giữ đủ thời hạn.
 function danhGia(h, tongGiaTri) {
   const r = byMa[h.ma], k = (D.tat_ca || {})[h.ma];
   const x = r || k ? { ...(k || {}), ...(r || {}) } : null;
-  if (!x || x.gia == null) return { sig: "NA", ly_do: ["Chưa có dữ liệu giá: mã sai, mới niêm yết, tạm ngừng giao dịch hoặc có dưới 30 phiên giao dịch"], gia: null };
-  const c = D.cfg_danh_muc, gia = x.gia, lai = gia / h.gia_von - 1;
+  if (!x || x.gia == null) return { sig: "NA", ly_do: ["Chưa có dữ liệu giá: mã sai, mới niêm yết, tạm ngừng giao dịch hoặc có dưới 30 phiên giao dịch"], luu_y: [], gia: null };
+  const c = D.cfg_danh_muc, ch = D.cfg_co_hoi, gia = x.gia, lai = gia / h.gia_von - 1;
   // Nguồn dữ liệu điều chỉnh lùi lịch sử giá sau chia cổ tức bằng cổ phiếu / thưởng / phát hành quyền.
   // Nếu giá vốn cao hơn hẳn mọi mức giá (đã điều chỉnh) kể từ ngày mua thì giá vốn nhiều khả năng chưa được quy đổi.
   const cl = D.gia_200[h.ma];
@@ -889,12 +909,13 @@ function danhGia(h, tongGiaTri) {
     dinhKe = gia / (1 + x.cach_dinh_52t);
   }
   if (dinhKe && h.gia_von > dinhKe * 1.1) {
-    return { sig: "CAP_NHAT", gia, lai, nguong: null, gia_tri: gia * h.kl, thay_doi: x.thay_doi, san: x.san,
+    return { sig: "CAP_NHAT", gia, lai, nguong: null, gia_tri: gia * h.kl, thay_doi: x.thay_doi, san: x.san, luu_y: [],
       ly_do: [`Giá vốn ${fmt(h.gia_von)} cao hơn mọi mức giá kể từ ${h.ngay ? "ngày mua" : "200 phiên gần nhất"} (cao nhất ${fmt(dinhKe)} sau điều chỉnh). `
         + "Nhiều khả năng mã đã chia cổ tức bằng cổ phiếu/thưởng/quyền mua: hãy sửa giá vốn và khối lượng theo số cổ phiếu sau quyền."] };
   }
-  const catCung = h.gia_von * (1 - c.cat_lo_pct);
-  // Đỉnh để tính điểm dừng lãi: đỉnh đóng cửa kể từ ngày mua (nếu biết ngày mua và có chuỗi giá);
+  const catCung = h.gia_von * (1 - ch.cat_lo_pct);
+  const ph = phienTu(h.ngay);
+  // Đỉnh để tính điểm dừng lãi (chỉ để lưu ý): đỉnh đóng cửa kể từ ngày mua (nếu biết ngày mua và có chuỗi giá);
   // không có ngày mua thì dùng đỉnh 20 phiên nhưng chỉ khi đã lãi ≥ 10% (giả định đỉnh hình thành khi đang nắm giữ).
   let dinh = null;
   const closes = D.gia_200[h.ma];
@@ -902,39 +923,40 @@ function danhGia(h, tongGiaTri) {
     const i0 = D.ngay.findIndex(d => d >= h.ngay);
     if (i0 >= 0) dinh = Math.max(...closes.slice(i0).filter(v => v != null));
   } else if (h.ngay) {
-    const ph = phienTu(h.ngay);
     if (ph != null && ph >= 20) dinh = x.dinh_dong_cua_20p;
   } else if (lai >= 0.10) {
     dinh = x.dinh_dong_cua_20p;
   }
   let dungLai = dinh != null && x.atr != null ? dinh - c.atr_dung_lai * x.atr : null;
-  if (dungLai != null && dungLai <= h.gia_von) dungLai = null;  // chỉ dùng khi điểm dừng đã bảo vệ được lãi
-  const nguong = dungLai != null ? Math.max(catCung, dungLai) : catCung;
-  const ly_do = [];
+  if (dungLai != null && dungLai <= h.gia_von) dungLai = null;  // chỉ xét khi điểm dừng đã bảo vệ được lãi
+  const ly_do = [], luu_y = [];
   let sig = "GIU";
   const tt = D.thi_truong ? D.thi_truong.trang_thai : "trung_tinh";
   if (gia <= catCung) {
-    sig = "CAT_LO"; ly_do.push(`Lỗ ${pct(lai, 1)}, chạm ngưỡng cắt lỗ −${pct(c.cat_lo_pct)} so với giá vốn`);
-  } else if (dungLai != null && gia < dungLai) {
-    sig = "BAN"; ly_do.push(`Giá thủng điểm dừng lãi ${fmt(dungLai)} (đỉnh ${fmt(dinh)} − ${fmt(c.atr_dung_lai, 1)}×ATR), còn lãi ${pct(lai, 1)}`);
-  } else if (x.ma50 != null && gia < x.ma50 && !x.ma50_tang) {
-    sig = "GIAM"; ly_do.push("Giá dưới MA50 và MA50 đang đi xuống: xu hướng trung hạn xấu đi");
-  } else if (x.ma200 != null && gia < x.ma200 && lai < 0) {
-    sig = "GIAM"; ly_do.push("Đang lỗ và giá dưới MA200 (xu hướng dài hạn giảm)");
-  } else if (lai >= c.chot_loi_pct && ((x.rsi14 || 0) > 75 || (x.pct_ma50 || 0) > 0.2)) {
-    sig = "CHOT"; ly_do.push(`Lãi ${pct(lai, 1)} ≥ ${pct(c.chot_loi_pct)} và giá đã nóng (RSI ${fmt(x.rsi14)}, cao hơn MA50 ${pct(x.pct_ma50)})`);
-  } else if (tt === "rui_ro" && lai < 0 && x.ma20 != null && gia < x.ma20) {
-    sig = "THAN_TRONG"; ly_do.push("Thị trường rủi ro cao, vị thế đang lỗ và dưới MA20: không bình quân giá xuống");
+    sig = "CAT_LO"; ly_do.push(`Lỗ ${pct(lai, 1)}, chạm cắt lỗ khẩn cấp −${pct(ch.cat_lo_pct)} so với giá vốn`);
+  } else if (ph != null && ph >= ch.so_phien_giu) {
+    if ((D.co_hoi || []).some(o => o.ma === h.ma)) {
+      ly_do.push(`Đã giữ ${ph} phiên nhưng mã đang có lại tín hiệu ở Cơ hội hôm nay: giữ tiếp (như bán rồi mua lại), thời hạn tính lại từ phiên này`);
+    } else {
+      sig = "HET_HAN"; ly_do.push(`Đã giữ ${ph} phiên, đủ thời hạn ${ch.so_phien_giu} phiên: bán theo quy tắc`);
+    }
+  } else if (ph == null) {
+    ly_do.push("Chưa nhập ngày mua nên chưa tính được thời hạn giữ; hiện chỉ áp dụng cắt lỗ khẩn cấp");
   } else {
-    ly_do.push(lai >= 0 ? "Xu hướng còn giữ, chưa chạm ngưỡng dừng" : `Lỗ ${pct(lai, 1)} vẫn trong giới hạn cắt lỗ`);
+    ly_do.push(`Còn ${ch.so_phien_giu - ph} phiên là đủ thời hạn giữ` + (lai < 0 ? `; lỗ ${pct(lai, 1)} vẫn trong giới hạn cắt lỗ khẩn cấp` : ""));
   }
-  if (r && r.tt_ln_quy != null && r.tt_ln_quy < -0.2) ly_do.push(`LN quý gần nhất giảm ${pct(r.tt_ln_quy)} so với cùng kỳ`);
-  if (x.rsi14 != null && x.rsi14 > 80 && sig === "GIU") ly_do.push(`RSI ${fmt(x.rsi14)}: quá mua`);
-  const gt = gia * h.kl;
-  if (tongGiaTri > 0 && gt / tongGiaTri > c.ty_trong_toi_da) ly_do.push(`Tỷ trọng ${pct(gt / tongGiaTri)} vượt ${pct(c.ty_trong_toi_da)}: rủi ro tập trung`);
-  const ph = phienTu(h.ngay);
   if (ph != null && ph < 2) ly_do.push("Hàng mua chưa về tài khoản (T+2), chưa bán được");
-  return { sig, ly_do, gia, lai, nguong, gia_tri: gt, thay_doi: x.thay_doi, san: x.san };
+  // Lưu ý, không phải lệnh bán
+  if (dungLai != null && gia < dungLai) luu_y.push(`Giá dưới điểm dừng lãi ${fmt(dungLai)} (đỉnh ${fmt(dinh)} − ${fmt(c.atr_dung_lai, 1)}×ATR), còn lãi ${pct(lai, 1)}`);
+  if (x.ma50 != null && gia < x.ma50 && !x.ma50_tang) luu_y.push("Giá dưới MA50 và MA50 đang đi xuống");
+  else if (x.ma200 != null && gia < x.ma200 && lai < 0) luu_y.push("Đang lỗ và giá dưới MA200");
+  if (lai >= c.chot_loi_pct && ((x.rsi14 || 0) > 75 || (x.pct_ma50 || 0) > 0.2)) luu_y.push(`Lãi ${pct(lai, 1)} và giá đã nóng (RSI ${fmt(x.rsi14)}, cao hơn MA50 ${pct(x.pct_ma50)})`);
+  if (tt === "rui_ro" && lai < 0 && x.ma20 != null && gia < x.ma20) luu_y.push("Thị trường rủi ro cao, vị thế đang lỗ và dưới MA20: không bình quân giá xuống");
+  if (r && r.tt_ln_quy != null && r.tt_ln_quy < -0.2) luu_y.push(`LN quý gần nhất giảm ${pct(r.tt_ln_quy)} so với cùng kỳ`);
+  if (x.rsi14 != null && x.rsi14 > 80) luu_y.push(`RSI ${fmt(x.rsi14)}: quá mua`);
+  const gt = gia * h.kl;
+  if (tongGiaTri > 0 && gt / tongGiaTri > c.ty_trong_toi_da) luu_y.push(`Tỷ trọng ${pct(gt / tongGiaTri)} vượt ${pct(c.ty_trong_toi_da)}: rủi ro tập trung`);
+  return { sig, ly_do, luu_y, gia, lai, nguong: catCung, ph, gia_tri: gt, thay_doi: x.thay_doi, san: x.san };
 }
 
 function renderDanhMuc() {
@@ -944,7 +966,7 @@ function renderDanhMuc() {
   evals.sort((a, b) => SIG_ORDER.indexOf(a.e.sig) - SIG_ORDER.indexOf(b.e.sig));
   const von = DM.reduce((s, h) => s + h.gia_von * h.kl, 0);
   const lai = tong - von;
-  const canLam = evals.filter(({ e }) => ["CAT_LO", "BAN", "GIAM", "CHOT"].includes(e.sig)).length;
+  const canLam = evals.filter(({ e }) => ["CAT_LO", "HET_HAN"].includes(e.sig)).length;
   $("n-dm").textContent = DM.length;
   $("pf-empty").hidden = DM.length > 0;
   $("pf-tiles").hidden = !DM.length;
@@ -961,19 +983,19 @@ function renderDanhMuc() {
     <td>${e.gia_tri && tong ? pct(e.gia_tri / tong) : "–"}</td>
     <td class="l"><span class="sig sig-${e.sig}">${SIG[e.sig]}</span></td>
     <td>${e.nguong ? fmt(Math.round(e.nguong)) : "–"}</td>
-    <td class="wrap">${e.ly_do.map(esc).join("<br>")}</td>
+    <td>${e.ph == null ? "–" : e.ph >= D.cfg_co_hoi.so_phien_giu ? `đủ ${D.cfg_co_hoi.so_phien_giu} phiên` : `còn ${D.cfg_co_hoi.so_phien_giu - e.ph} phiên`}</td>
+    <td class="wrap">${e.ly_do.map(esc).join("<br>")}${e.luu_y && e.luu_y.length ? `<br><span class="ref">Lưu ý: ${e.luu_y.map(esc).join("; ")}</span>` : ""}</td>
     <td><button class="btn small" data-edit="${h.id}">Sửa</button> <button class="btn small danger" data-del="${h.id}">Xoá</button></td>
   </tr>`).join("");
-  const dm = D.cfg_danh_muc;
+  const dm = D.cfg_danh_muc, ch = D.cfg_co_hoi;
   $("dm-rules").innerHTML = [
-    ["Cắt lỗ", `Giá ≤ giá vốn − ${pct(dm.cat_lo_pct)}`],
-    ["Bán: chạm điểm dừng lãi", `Giá xuống dưới (đỉnh đóng cửa kể từ ngày mua − ${fmt(dm.atr_dung_lai, 1)} × ATR14), khi mức này đã cao hơn giá vốn. Không nhập ngày mua thì dùng đỉnh 20 phiên, chỉ áp dụng khi đã lãi ≥ 10%`],
-    ["Giảm tỷ trọng", "Giá dưới MA50 và MA50 đi xuống; hoặc đang lỗ và giá dưới MA200"],
-    ["Chốt lời một phần", `Lãi ≥ ${pct(dm.chot_loi_pct)} và giá nóng (RSI14 > 75 hoặc cao hơn MA50 trên 20%)`],
-    ["Thận trọng", "Bối cảnh thị trường Rủi ro cao, vị thế đang lỗ và giá dưới MA20"],
-    ["Giữ", "Không chạm điều kiện nào ở trên"],
-    ["Ngưỡng dừng", "Mức giá mà nếu thủng sẽ chuyển sang Cắt lỗ/Bán: đang lãi thì lấy mức cao hơn giữa cắt lỗ cứng và điểm dừng lãi"],
-    ["Cảnh báo thêm", `LN quý giảm > 20%; RSI > 80; tỷ trọng một mã > ${pct(dm.ty_trong_toi_da)}; hàng chưa về (T+2)`],
+    ["Cắt lỗ khẩn cấp", `Giá ≤ giá vốn − ${pct(ch.cat_lo_pct)}: bán. Chỉ để phòng biến cố, không phải để thoát khi giá dao động thông thường`],
+    ["Hết thời hạn giữ: bán", `Đã giữ đủ ${ch.so_phien_giu} phiên kể từ ngày mua thì bán, trừ khi mã đang có lại tín hiệu ở Cơ hội hôm nay (khi đó giữ tiếp, thời hạn tính lại). Cần nhập ngày mua`],
+    ["Giữ", "Chưa chạm hai điều kiện trên"],
+    ["Vì sao", "Cùng quy tắc với Cơ hội hôm nay. Kiểm định quá khứ cho thấy giữ đủ thời hạn kèm cắt lỗ khẩn cấp cho kết quả tốt hơn hẳn cắt lỗ chặt (7%, 2×ATR) kèm chốt lời sớm, vì cắt chặt hay bị rũ khỏi mã tốt"],
+    ["Lưu ý (không phải lệnh bán)", `Giá thủng điểm dừng lãi (đỉnh đóng cửa kể từ ngày mua − ${fmt(dm.atr_dung_lai, 1)}×ATR14, khi mức này đã cao hơn giá vốn); giá dưới MA50 và MA50 đi xuống; đang lỗ và dưới MA200; `
+      + `lãi ≥ ${pct(dm.chot_loi_pct)} khi giá nóng (RSI14 > 75 hoặc cao hơn MA50 trên 20%); thị trường Rủi ro cao và vị thế lỗ dưới MA20; LN quý giảm > 20%; RSI > 80; tỷ trọng một mã > ${pct(dm.ty_trong_toi_da)}`],
+    ["Cắt lỗ khẩn cấp (cột)", "Mức giá mà nếu thủng sẽ chuyển sang Cắt lỗ khẩn cấp"],
   ].map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
   const opts = Object.keys(D.tat_ca || {}).sort();
   if ($("dl-ma").childElementCount !== opts.length)
