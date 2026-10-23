@@ -450,6 +450,82 @@ def nghien_cuu_diem(Q: dict, frames: dict, cfg: dict, buoc: int = 5) -> dict:
             "ic_boi_canh": ic_bc, "so_vni": so_vni, "vni_20_tb": float(v20.loc[ky].mean())}
 
 
+# ----------------------------------------------------------------------------
+# Mẫu hình 2 đáy tuần (trên trang chỉ để theo dõi): chạy lại hằng tuần để biết có nên đưa thành điểm mua không
+# ----------------------------------------------------------------------------
+def _tk_ky(x: pd.DataFrame, giua) -> dict:
+    """Thống kê lợi nhuận vượt VN-Index (cột v). Độ tin cậy t dùng sai số chuẩn theo cụm tháng: các mã xác nhận
+    cùng lúc (theo nhịp chung của thị trường) không phải các quan sát độc lập."""
+    if len(x) < 5:
+        return {"n": int(len(x))}
+    tb = x["v"].mean()
+    cum = (x["v"] - tb).groupby(x["ngay"].dt.to_period("M")).sum()
+    g = len(cum)
+    sai_so = np.sqrt(g / (g - 1) * (cum ** 2).sum()) / len(x) if g > 2 else np.nan
+    a, b = x.loc[x["ngay"] < giua, "v"], x.loc[x["ngay"] >= giua, "v"]
+    return {"n": int(len(x)), "tb": float(tb), "trung_vi": float(x["v"].median()), "thang": float((x["v"] > 0).mean()),
+            "t": float(tb / sai_so) if sai_so > 0 else None,
+            "nua_dau": float(a.mean()) if len(a) else None, "nua_sau": float(b.mean()) if len(b) else None,
+            "n_nua_dau": int(len(a)), "n_nua_sau": int(len(b))}
+
+
+def nghien_cuu_hai_day(Q: dict, frames: dict, cfg: dict) -> dict:
+    """Mọi phiên xác nhận 2 đáy tuần (L.hai_day_su_kien) của mã đủ thanh khoản: lợi nhuận giữ 20 phiên (mua giá mở cửa
+    phiên sau, trừ phí) so với VN-Index; so với mọi phiên tăng đóng cửa cao nhất 15 phiên (điều kiện cần của phiên xác nhận)
+    và theo từng tiêu chí chất lượng, tách hai nửa giai đoạn."""
+    hd = cfg["hai_day_tuan"]
+    dates, gia, tk_, M = Q["dates"], Q["gia"], Q["thanh_khoan"], Q["M"]
+    i0 = dates.get_loc(Q["bat_dau"])
+    vc = Q["vc"].reindex(dates)
+    mo = pd.DataFrame({s: frames[s]["open"] for s in gia.columns}).reindex(dates)
+    v20 = (gia.ffill().shift(-21) / mo.shift(-1) - 1 - L.PHI_KHU_HOI).sub(vc.shift(-21) / vc - 1, axis=0)
+    v20.iloc[:i0] = np.nan
+    atr, kl_phien, diem, tt = M("atr_pct"), M("vol_hom_nay"), Q["DIEM_TONG"], Q["thi_truong"]
+    vi_tri = {d: i for i, d in enumerate(dates)}
+    ev = []
+    for s in Q["ever"]:
+        for e in L.hai_day_su_kien(frames[s], hd):
+            i = vi_tri.get(e["ngay"])
+            if i is None or not tk_[s].iat[i] or not np.isfinite(v20[s].iat[i]):
+                continue
+            ev.append({"ngay": e["ngay"], "ma": s, "v": float(v20[s].iat[i]), "kl": e["kl_day2_day1"], "lech": e["lech_day"],
+                       "atr": float(atr[s].iat[i]), "diem": float(diem[s].iat[i]), "kl_phien": float(kl_phien[s].iat[i]),
+                       "tt": float(tt.iat[i])})
+    if len(ev) < 20:
+        return {"so_su_kien": len(ev)}
+    E = pd.DataFrame(ev)
+    giua = E["ngay"].sort_values().iloc[len(E) // 2]
+    nen = (gia > gia.shift().rolling(15).max()) & (gia > gia.shift()) & tk_
+    N = v20.where(nen).stack().dropna().rename("v").reset_index().rename(columns={"level_0": "ngay"})
+    tc_ = {  # tiêu chí chất lượng giữ lại (cùng tieu_chi_hai_day trên trang) + tiêu chí trong sách không có tác dụng
+        "KL tuần đáy 2 thấp hơn tuần đáy 1 (lực bán cạn – Bulkowski)": E["kl"] < 1,
+        "Đáy 2 không thấp hơn đáy 1": E["lech"] >= 0,
+        f"Biến động thấp: ATR ≤ {hd['atr_toi_da']:.0%} giá": E["atr"] <= hd["atr_toi_da"],
+        f"Điểm tổng ≥ {hd['diem_toi_thieu']}": E["diem"] >= hd["diem_toi_thieu"],
+        "Tham khảo – KL phiên xác nhận ≥ 1,5 lần TB20 (O'Neil)": E["kl_phien"] >= 1.5,
+        "Tham khảo – thị trường không ở mức Rủi ro cao": E["tt"] >= 45,
+    }
+    so_dat = sum(m.astype(int) for m in list(tc_.values())[:4])
+    tieu_chi = []
+    for ten, m in tc_.items():
+        dat, khong = _tk_ky(E[m], giua), _tk_ky(E[~m], giua)
+        nx = "Chưa đủ mẫu"
+        if dat.get("n", 0) >= 20 and khong.get("n", 0) >= 20 and None not in (dat["nua_dau"], dat["nua_sau"], khong["nua_dau"], khong["nua_sau"]):
+            d1, d2 = dat["nua_dau"] - khong["nua_dau"], dat["nua_sau"] - khong["nua_sau"]
+            nx = ("Giúp ích ở cả hai nửa" if d1 > 0.002 and d2 > 0.002 else "Ngược chiều ở cả hai nửa" if d1 < -0.002 and d2 < -0.002
+                  else "Không ổn định")
+        tieu_chi.append({"ten": ten, "dat": dat, "khong_dat": khong, "nhan_xet": nx})
+    return {
+        "tu": E["ngay"].min().strftime("%Y-%m-%d"), "den": E["ngay"].max().strftime("%Y-%m-%d"), "giua": giua.strftime("%Y-%m-%d"),
+        "so_su_kien": len(E), "so_ma": int(E["ma"].nunique()),
+        "nhom": [{"ten": "Mọi phiên tăng đóng cửa cao nhất 15 phiên (mốc so sánh)", **_tk_ky(N, giua)},
+                 {"ten": "Xác nhận 2 đáy tuần", **_tk_ky(E, giua)},
+                 {"ten": "2 đáy tuần đạt ≥ 3/4 tiêu chí chất lượng", **_tk_ky(E[so_dat >= 3], giua)},
+                 {"ten": "2 đáy tuần đạt cả 4 tiêu chí chất lượng", **_tk_ky(E[so_dat == 4], giua)}],
+        "tieu_chi": tieu_chi,
+    }
+
+
 def sach(o):
     """NaN/inf → null để JSON hợp lệ cho trình duyệt."""
     if isinstance(o, dict):
@@ -485,6 +561,13 @@ def main():
     print(f"  So với VN-Index (kỳ 20 phiên không chồng lấn, VN-Index TB {nc['vni_20_tb']:+.2%}):")
     for x in nc["so_vni"]:
         print(f"    {x['ten']:<24} ~{x['so_ma_tb']:>4.0f} mã  LN {x['ln_tb']:+.2%}  vượt VNI {x['vuot_vni']:+.2%} (t {x['t']:+.1f}, thắng {x['thang_vni']:.0%} số kỳ)")
+    print("7) Mẫu hình 2 đáy tuần...")
+    hd = kq["hai_day_tuan"] = nghien_cuu_hai_day(Q, frames, cfg)
+    for x in hd.get("nhom", []) + [{**t["dat"], "ten": "  · đạt: " + t["ten"]} for t in hd.get("tieu_chi", [])]:
+        if x.get("n", 0) >= 5:
+            f2 = lambda v, p="{:+.2%}": p.format(v) if v is not None else "–"
+            print(f"  {x['ten'][:62]:<62} n={x['n']:>5}  vượt VNI {x['tb']:+.2%} (t {f2(x['t'], '{:+.1f}')}; "
+                  f"nửa đầu {f2(x['nua_dau'])}, nửa sau {f2(x['nua_sau'])})")
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(json.dumps(sach(kq), ensure_ascii=False, allow_nan=False), encoding="utf-8")
     f = lambda s: (f"n={s['n']:>4}  thắng {s['thang']:.0%}  LN TB {s['ln_tb']:+.2%}  R TB {s['r_tb']:+.2f}  vượt VNI {s['vuot_vni']:+.2%}"

@@ -43,6 +43,17 @@
     "so_ma_toi_da": { "thuan_loi": 5, "trung_tinh": 3, "rui_ro": 1 }
   },
 
+  "hai_day_tuan": {
+    "_ghi_chu": "Mẫu hình 2 đáy trên nến tuần (Bulkowski) – chỉ để theo dõi: kiểm định 2023–2026 chưa thấy lợi thế so với VN-Index nên chưa là điểm mua của Cơ hội hôm nay. atr_toi_da, diem_toi_thieu: tiêu chí chất lượng hiển thị kèm mẫu hình.",
+    "lech_day_toi_da": 0.06,
+    "cach_tuan_toi_thieu": 4,
+    "cach_tuan_toi_da": 40,
+    "cao_toi_thieu": 0.10,
+    "so_phien_sau_xac_nhan": 10,
+    "atr_toi_da": 0.03,
+    "diem_toi_thieu": 60
+  },
+
   "danh_muc": {
     "_ghi_chu": "Cắt lỗ khẩn cấp và thời hạn giữ dùng chung quy tắc co_hoi (cat_lo_pct, so_phien_giu). Các ngưỡng dưới đây chỉ tạo lưu ý, không phải lệnh bán.",
     "atr_dung_lai": 2.5,

@@ -214,6 +214,7 @@ td.gs.lo { color: var(--down); }
 .checks li.fail::before { content: "✕"; color: var(--down); }
 .checks li { justify-content: flex-start; }
 .checks li .v { margin-left: auto; }
+.checks.one { grid-template-columns: minmax(0, 1fr); }
 .setup { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px; background: var(--ceil-soft); color: var(--ceil); }
 
 /* Danh mục */
@@ -274,6 +275,7 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
   .market { width: 100%; justify-content: space-between; }
   .controls input { width: 100%; }
   .controls .note { margin-left: 0; }
+  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .part { grid-template-columns: minmax(0, 1fr) 70px 40px; }
   .pf-form input, .pf-form input#f-ma { width: 100%; }
@@ -343,6 +345,7 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
         <button id="tab-top" role="tab" aria-selected="true">Danh sách Top<span class="cnt" id="cnt-top"></span></button>
         <button id="tab-all" role="tab" aria-selected="false">Tất cả<span class="cnt" id="cnt-all"></span></button>
         <button id="tab-tang" role="tab" aria-selected="false">Đang tăng mạnh<span class="cnt" id="cnt-tang"></span></button>
+        <button id="tab-hdt" role="tab" aria-selected="false">2 đáy tuần<span class="cnt" id="cnt-hdt"></span></button>
       </div>
       <input id="q" type="search" placeholder="Tìm mã hoặc tên công ty" aria-label="Tìm mã hoặc tên công ty">
       <select id="nganh" aria-label="Ngành"></select>
@@ -356,6 +359,7 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
       <span class="note" id="shown"></span>
     </section>
     <p class="hint panel" id="tang-note" hidden style="padding:12px 16px; max-width:none"></p>
+    <p class="hint panel" id="hdt-note" hidden style="padding:12px 16px; max-width:none"></p>
     <main class="board">
       <div class="table-wrap panel">
         <table id="tbl"><thead></thead><tbody></tbody></table>
@@ -444,7 +448,7 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
     <div class="panel"><div class="table-wrap" style="max-height:none"><table><thead><tr>
       <th class="l"><span>Sau khi chấm điểm</span></th><th><span>Số bảng điểm</span></th><th><span>Hệ số dự báo (IC)</span></th>
       <th><span>Hạng A so VN-Index</span></th><th><span>Hạng D so VN-Index</span></th><th><span>Danh sách Top so VN-Index</span></th>
-      <th><span>TB thị trường so VN-Index</span></th>
+      <th><span>Vừa xác nhận 2 đáy tuần so VN-Index</span></th><th><span>TB thị trường so VN-Index</span></th>
     </tr></thead><tbody id="dn-body"></tbody></table></div></div>
 
     <div>
@@ -466,6 +470,23 @@ details.panel summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
     <div class="panel">
       <div class="d-sec"><h4>Hệ số dự báo theo bối cảnh thị trường</h4><p class="hint" id="nc-bc-intro"></p></div>
       <div class="table-wrap" style="max-height:none"><table><thead id="nc-bc-head"></thead><tbody id="nc-bc"></tbody></table></div>
+    </div>
+
+    <div>
+      <h2 class="sec">Mẫu hình 2 đáy tuần có hiệu quả không?</h2>
+      <p class="hint" id="hdt-kd-intro"></p>
+    </div>
+    <div class="panel"><div class="table-wrap" style="max-height:none"><table><thead><tr>
+      <th class="l"><span>Nhóm</span></th><th><span>Số lần</span></th><th><span>Hơn VN-Index /20 phiên</span></th><th><span>Trung vị</span></th>
+      <th><span>Số lần thắng VN-Index</span></th><th><span>Độ tin cậy (t)</span></th><th><span>Nửa đầu</span></th><th><span>Nửa sau</span></th>
+    </tr></thead><tbody id="hdt-kd-nhom"></tbody></table></div></div>
+    <div class="panel">
+      <div class="d-sec"><h4>Tiêu chí chất lượng của mẫu hình</h4>
+        <p class="hint">Mỗi lần xác nhận 2 đáy tuần tách theo tiêu chí: đạt / không đạt. Tiêu chí có ích khi nhóm đạt tốt hơn nhóm không đạt ở cả hai nửa giai đoạn.
+          Bốn tiêu chí đầu là tiêu chí chất lượng hiện trên tab "2 đáy tuần"; hai dòng "Tham khảo" là gợi ý trong sách nhưng không có tác dụng trên dữ liệu Việt Nam.</p></div>
+      <div class="table-wrap" style="max-height:none"><table><thead><tr>
+        <th class="l"><span>Tiêu chí</span></th><th><span>Đạt</span></th><th><span>Không đạt</span></th><th class="l"><span>Nhận xét</span></th>
+      </tr></thead><tbody id="hdt-kd-tc"></tbody></table></div>
     </div>
 
     <div>
@@ -536,7 +557,7 @@ function chgClass(r) {
 }
 
 let rows = [], byMa = {};
-let tang = [];
+let tang = [], hdt = [], hdtBy = {};
 function load(data) {
   D = data;
   // Bảng xếp hạng gồm các mã đủ thanh khoản; mã đang tăng mạnh nhưng chưa đủ thanh khoản vẫn có dữ liệu để xem chi tiết
@@ -544,11 +565,15 @@ function load(data) {
   const all = D.rows.map(r => r.du_thanh_khoan === false ? { ...r, rank: null } : { ...r, rank: ++i });
   rows = all.filter(r => r.rank != null);
   byMa = Object.fromEntries(all.map(r => [r.ma, r]));
-  tang = (D.dang_tang || []).map(x => ({ ...(byMa[x.ma] || {}), ...x }));
+  // Mẫu hình 2 đáy tuần: vừa xác nhận trước, rồi theo số tiêu chí chất lượng đạt, rồi điểm tổng
+  hdt = (D.hai_day_tuan || []).map(x => ({ ...(byMa[x.ma] || {}), ...x,
+    hdt_hang: (x.trang_thai === "xac_nhan" ? 10 : 0) + x.so_dat + (x.diem_tong || 0) / 1000 }));
+  hdtBy = Object.fromEntries(hdt.map(x => [x.ma, x]));
+  tang = (D.dang_tang || []).map(x => ({ ...(byMa[x.ma] || {}), ...x, hdt_hang: hdtBy[x.ma] ? hdtBy[x.ma].hdt_hang : -1 }));
 }
 const NHOM_TANG = { nen_tang: "Tăng có nền tảng", trung_binh: "Trung bình", dau_co: "Tăng đầu cơ" };
 const state = { view: "co-hoi", tab: "top", q: "", nganh: "", san: "", grades: new Set(), sort: "diem_tong", dir: -1, sel: null };
-state.tab = ["all", "tang"].includes(store.get("blcp.tab", "top")) ? store.get("blcp.tab", "top") : "top";
+state.tab = ["all", "tang", "hdt"].includes(store.get("blcp.tab", "top")) ? store.get("blcp.tab", "top") : "top";
 
 // ---------- Biểu đồ ----------
 function sma(a, n) {
@@ -716,10 +741,27 @@ const COLS = [
 const COLS_TANG = [
   { k: "ma", label: "Mã", left: true }, { k: "san", label: "Sàn", left: true }, { k: "gia", label: "Giá" }, { k: "thay_doi", label: "+/−" },
   { k: "r1w", label: "5 phiên" }, { k: "gtgd_tb5", label: "GTGD 5 phiên" }, { k: "diem_tong", label: "Điểm tổng", left: true },
-  { k: "nhom", label: "Đánh giá", left: true }, { k: "luu_y", label: "Lưu ý", left: true },
+  { k: "nhom", label: "Đánh giá", left: true }, { k: "hdt_hang", label: "2 đáy tuần", left: true }, { k: "luu_y", label: "Lưu ý", left: true },
 ];
+const COLS_HDT = [
+  { k: "ma", label: "Mã", left: true }, { k: "san", label: "Sàn", left: true }, { k: "gia", label: "Giá" }, { k: "thay_doi", label: "+/−" },
+  { k: "hdt_hang", label: "Trạng thái", left: true }, { k: "cach_dinh_giua", label: "So đỉnh giữa" }, { k: "ngay_day2", label: "Đáy 1 → đáy 2", left: true },
+  { k: "so_dat", label: "Chất lượng", left: true }, { k: "diem_tong", label: "Điểm tổng", left: true },
+];
+const colsOf = t => t === "tang" ? COLS_TANG : t === "hdt" ? COLS_HDT : COLS;
+const hdtTrangThai = x => x.trang_thai === "xac_nhan"
+  ? `<span class="chip good">Vừa xác nhận</span><small>${x.phien_tu_xac_nhan ? x.phien_tu_xac_nhan + " phiên trước" : "hôm nay"}</small>`
+  : `<span class="chip warn">Đang hình thành</span>`;
 function cell(r, k) {
   switch (k) {
+    case "hdt_hang": {
+      const x = hdtBy[r.ma];
+      if (!x) return `<td class="l muted">–</td>`;
+      return `<td class="l tk">${hdtTrangThai(x)}</td>`;
+    }
+    case "cach_dinh_giua": return `<td class="${cls(r.cach_dinh_giua)}">${pct(r.cach_dinh_giua, 1, true)}<br><small class="muted">đỉnh giữa ${fmt(r.dinh_giua)}</small></td>`;
+    case "ngay_day2": return `<td class="l" style="font-family:var(--f-num); font-size:12.5px">${fmt(r.day1)} → ${fmt(r.day2)} <span class="${cls(r.lech_day)}">(${pct(r.lech_day, 1, true)})</span><br><small class="muted">${dmy(r.ngay_day1)} → ${dmy(r.ngay_day2)} · ${r.cach_tuan} tuần</small></td>`;
+    case "so_dat": return `<td class="l wrap"><b>${r.so_dat}/${r.tieu_chi.length}</b> ${r.tieu_chi.filter(c => !c[1]).map(([n, , v, ngan]) => `<span class="chip warn" title="Chưa đạt: ${esc(n)}">${esc(ngan || n)} ${esc(v)}</span>`).join(" ")}</td>`;
     case "rank": return `<td class="rank">${r.rank ?? "–"}</td>`;
     case "san": return `<td class="l" style="font-family:var(--f-ui); font-size:12px">${esc(r.san)}</td>`;
     case "r1w": return `<td class="${cls(r.r1w)}">${pct(r.r1w, 1, true)}</td>`;
@@ -741,7 +783,7 @@ function cell(r, k) {
 }
 function filtered() {
   const q = state.q.trim().toLowerCase();
-  const src = state.tab === "tang" ? tang : rows;
+  const src = state.tab === "tang" ? tang : state.tab === "hdt" ? hdt : rows;
   const out = src.filter(r =>
     (state.tab !== "top" || r.top) &&
     (!q || r.ma.toLowerCase().includes(q) || (r.ten || "").toLowerCase().includes(q)) &&
@@ -758,7 +800,7 @@ function filtered() {
   return out;
 }
 function renderHead() {
-  const cols = state.tab === "tang" ? COLS_TANG : COLS;
+  const cols = colsOf(state.tab);
   document.querySelector("#tbl thead").innerHTML = "<tr>" + cols.map(c => {
     const s = state.sort === c.k ? ` aria-sort="${state.dir < 0 ? "descending" : "ascending"}"` : "";
     return `<th class="${c.left ? "l" : ""}"${s}><button data-k="${c.k}">${c.label}</button></th>`;
@@ -766,7 +808,7 @@ function renderHead() {
 }
 function renderTable() {
   const list = filtered();
-  const cols = state.tab === "tang" ? COLS_TANG : COLS;
+  const cols = colsOf(state.tab);
   document.querySelector("#tbl tbody").innerHTML = list.map(r =>
     `<tr class="click" tabindex="0" data-ma="${esc(r.ma)}" aria-selected="${r.ma === state.sel}">${cols.map(c => cell(r, c.k)).join("")}</tr>`).join("");
   const dt = D.cfg_dang_tang;
@@ -774,12 +816,45 @@ function renderTable() {
   if (dt) $("tang-note").innerHTML = `Mã tăng ≥ ${pct(dt.tang_5_phien)} trong 5 phiên, giá trị giao dịch 5 phiên ≥ ${fmt(dt.gtgd_tb5_ty)} tỷ/phiên. `
     + `Kiểm chứng 3 năm cho thấy đuổi theo mã vừa tăng mạnh nói chung <b>không có lợi</b> (−0,3% so với thị trường sau 20 phiên). `
     + `Nhưng trong nhóm này, mã <b class="up">có nền tảng (điểm ≥ ${dt.diem_nen_tang})</b> vẫn tiếp tục tốt hơn thị trường +2,2%, `
-    + `còn mã <b class="down">đầu cơ (điểm < ${dt.diem_dau_co})</b> thường kém −2,3%.`;
+    + `còn mã <b class="down">đầu cơ (điểm < ${dt.diem_dau_co})</b> thường kém −2,3%. `
+    + `Cột "2 đáy tuần": mã đang tăng nhờ vượt đỉnh giữa (vừa xác nhận) hoặc đang hồi từ đáy 2 của mẫu hình 2 đáy trên nến tuần, xem tab bên cạnh.`;
+  renderHdtNote();
   $("empty").hidden = list.length > 0;
   $("shown").textContent = `Đang hiện ${list.length} mã`;
   if (list.length && !list.some(r => r.ma === state.sel)) select(list[0].ma, false);
   else if (state.sel) renderDetail(byMa[state.sel]);
   if (!list.length) $("detail").innerHTML = "";
+}
+// Ghi chú tab "2 đáy tuần": định nghĩa và kết quả kiểm định quá khứ (kiem_dinh.json, tính lại mỗi sáng thứ Bảy)
+function renderHdtNote() {
+  const el = $("hdt-note");
+  el.hidden = state.tab !== "hdt";
+  if (el.hidden) return;
+  const c = D.cfg_hai_day || {}, kd = D.kiem_dinh && D.kiem_dinh.hai_day_tuan;
+  const nhom = t => kd && kd.nhom && kd.nhom.find(x => x.ten.startsWith(t));
+  const xn = nhom("Xác nhận"), moc = nhom("Mọi phiên"), tot = nhom("2 đáy tuần đạt ≥ 3/4");
+  el.innerHTML = `Mẫu hình 2 đáy trên nến tuần (Bulkowski): có nhịp giảm dẫn vào, hai đáy lệch nhau ≤ ${pct(c.lech_day_toi_da)}, `
+    + `cách nhau ${c.cach_tuan_toi_thieu}–${c.cach_tuan_toi_da} tuần, đỉnh giữa cao hơn đáy ≥ ${pct(c.cao_toi_thieu)}. `
+    + `<b>Vừa xác nhận</b>: đóng cửa vượt đỉnh giữa trong ${c.so_phien_sau_xac_nhan} phiên gần nhất. <b>Đang hình thành</b>: đã bật lên khỏi đáy 2 nhưng chưa vượt đỉnh giữa `
+    + `(theo Bulkowski, chưa xác nhận thì gần một nửa trường hợp giá giảm tiếp). `
+    + (xn && xn.n
+      ? `Kiểm định ${dmy(kd.tu)} → ${dmy(kd.den)}: ${fmt(xn.n)} lần xác nhận, sau 20 phiên <b class="${cls(xn.tb)}">${pct(xn.tb, 2, true)}</b> so với VN-Index`
+        + (moc && moc.n ? ` (một phiên vượt đỉnh 15 phiên bất kỳ: ${pct(moc.tb, 2, true)})` : "")
+        + (tot && tot.n ? `; đạt ≥ 3/4 tiêu chí chất lượng: ${pct(tot.tb, 2, true)} (nửa đầu ${pct(tot.nua_dau, 2, true)}, nửa sau ${pct(tot.nua_sau, 2, true)}).` : ".")
+      : `Kiểm định 06/2023–09/2026: 585 lần xác nhận, sau 20 phiên −1,19% so với VN-Index, ngang một phiên vượt đỉnh bất kỳ (−1,19%); `
+        + `đạt ≥ 3/4 tiêu chí chất lượng +0,79% nhưng chưa ổn định (nửa đầu −0,30%, nửa sau +2,20%).`)
+    + ` Vì vậy mẫu hình <b>chỉ để theo dõi</b>, chưa là điểm mua ở "Cơ hội hôm nay". Chi tiết ở tab Kiểm định.`;
+}
+function hdtSec(x) {
+  if (!x) return "";
+  const xn = x.trang_thai === "xac_nhan";
+  return `<div class="d-sec"><h4>Mẫu hình 2 đáy tuần <span class="num ${xn ? "up" : "ref"}">${xn ? "Vừa xác nhận" + (x.phien_tu_xac_nhan ? ` ${x.phien_tu_xac_nhan} phiên trước` : " hôm nay") : "Đang hình thành"}</span></h4>
+    ${metrics([["Đáy 1", `${fmt(x.day1)}<br><small class="muted">${dmy(x.ngay_day1)}</small>`],
+      ["Đỉnh giữa", `${fmt(x.dinh_giua)}<br><small class="muted">${dmy(x.ngay_dinh_giua)}</small>`],
+      ["Đáy 2", `${fmt(x.day2)}<br><small class="muted">${dmy(x.ngay_day2)}</small>`],
+      ["Giá so đỉnh giữa", pct(x.cach_dinh_giua, 1, true), cls(x.cach_dinh_giua)], ["Chiều cao mẫu hình", pct(x.cao)], ["Mục tiêu tham chiếu", fmt(x.muc_tieu)]])}
+    <ul class="checks one">${x.tieu_chi.map(([n, ok, v]) => `<li class="${ok ? "" : "fail"}"><span>${esc(n)}</span><span class="v">${esc(v)}</span></li>`).join("")}</ul>
+    <p class="hint">Mục tiêu tham chiếu = đỉnh giữa + 65% chiều cao mẫu hình (quy tắc đo của Bulkowski). Chỉ để theo dõi: kiểm định chưa cho thấy mẫu hình này thắng VN-Index.</p></div>`;
 }
 function select(ma, scroll) {
   state.sel = ma;
@@ -805,6 +880,8 @@ function renderDetail(r) {
   if (!r) { el.innerHTML = ""; return; }
   const bank = r.loai === "NH";
   const health = bank ? [["Nợ xấu", pct(r.npl, 2)], ["NIM", pct(r.nim, 2)]] : [["Nợ vay/VCSH", r.no_vay_vcsh == null ? "–" : fmt(r.no_vay_vcsh, 2)]];
+  const hd = hdtBy[r.ma];
+  const hdLv = hd ? [{ v: hd.dinh_giua, color: "var(--ref)", label: "Đỉnh giữa" }, { v: Math.min(hd.day1, hd.day2), color: "var(--down)", label: "Đáy" }] : [];
   el.innerHTML = `
     <div class="d-head">
       <div class="d-top"><h3>${esc(r.ma)}</h3><span class="badge g-${r.xep_loai}" title="Hạng">${r.xep_loai}</span>${r.top ? `<span class="tag">Top</span>` : ""}</div>
@@ -812,8 +889,9 @@ function renderDetail(r) {
       <p class="d-meta">${esc(r.nganh)} · ${esc(r.san)} · BCTC ${esc(r.ky_bctc || "–")} · ${r.rank ? `hạng ${r.rank}/${rows.length}` : `chưa đủ thanh khoản để xếp hạng (GTGD TB20 ${fmt((r.gtgd_tb20 || 0) / 1e9, 1)} tỷ)`}</p>
       <div class="d-price"><strong>${fmt(r.gia)}</strong><span class="${chgClass(r)}">${pct(r.thay_doi, 2, true)}</span></div>
     </div>
-    <div class="d-sec chart">${chartSVG(D.gia_200[r.ma] || [], D.ngay, { label: "Giá " + r.ma })}
-      <div class="legend"><span><i style="background:var(--accent)"></i>Giá (nghìn đồng)</span><span><i style="background:var(--ref)"></i>MA20</span><span><i style="background:var(--ceil)"></i>MA50</span><span>200 phiên</span></div></div>
+    <div class="d-sec chart">${chartSVG(D.gia_200[r.ma] || [], D.ngay, { label: "Giá " + r.ma, levels: hdLv })}
+      <div class="legend"><span><i style="background:var(--accent)"></i>Giá (nghìn đồng)</span><span><i style="background:var(--ref)"></i>MA20</span><span><i style="background:var(--ceil)"></i>MA50</span><span>200 phiên${hd ? " · nét đứt: đỉnh giữa và đáy của mẫu hình 2 đáy tuần" : ""}</span></div></div>
+    ${hdtSec(hd)}
     <div class="d-sec"><div class="total"><span class="big">${fmt(r.diem_tong, 1)}</span>
       <div class="split"><span>Điểm tổng = trung bình 5 nhóm; mỗi nhóm xếp hạng so với các mã đủ thanh khoản (100 = tốt nhất)</span>
       <span class="bar" style="width:100%"><i class="fill-${r.xep_loai}" style="width:${r.diem_tong}%"></i></span></div></div></div>
@@ -861,11 +939,12 @@ function renderBang() {
   $("cnt-top").textContent = rows.filter(r => r.top).length;
   $("cnt-all").textContent = rows.length;
   $("cnt-tang").textContent = tang.length;
+  $("cnt-hdt").textContent = hdt.length;
   const count = {};
   rows.forEach(r => { count[r.nganh] = (count[r.nganh] || 0) + 1; });
   $("nganh").innerHTML = `<option value="">Tất cả ngành</option>` +
     Object.keys(count).sort((a, b) => a.localeCompare(b, "vi")).map(n => `<option value="${esc(n)}">${esc(n)} (${count[n]})</option>`).join("");
-  $("san").innerHTML = `<option value="">Tất cả sàn</option>` + [...new Set(rows.concat(tang).map(r => r.san))].sort().map(s => `<option>${esc(s)}</option>`).join("");
+  $("san").innerHTML = `<option value="">Tất cả sàn</option>` + [...new Set(rows.concat(tang, hdt).map(r => r.san))].sort().map(s => `<option>${esc(s)}</option>`).join("");
   $("nganh").value = state.nganh; $("san").value = state.san;
   $("method").innerHTML = D.giai_thich.filter(([a, b]) => a || b).map(([a, b]) =>
     b ? `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>` : `<tr class="h"><td colspan="2">${esc(a)}</td></tr>`).join("");
@@ -1176,13 +1255,16 @@ function renderKiemDinh() {
   $("dn-intro").innerHTML = dn ? `Sau mỗi phiên, bảng điểm các mã đủ thanh khoản được lưu lại (đã có ${dn.so_bang} bảng điểm, ${dmy(dn.tu)} → ${dmy(dn.den)}). `
     + `Sau 5, 10, 20 phiên, đối chiếu điểm đã chấm với lợi nhuận thực tế của từng mã (IC; 3 năm qua khoảng +0,11 ở 20 phiên) `
     + `và so lợi nhuận trung bình của từng nhóm với VN-Index cùng kỳ (chưa trừ phí). Bảng điểm của các phiên liền nhau có kỳ theo dõi chồng lên nhau, `
-    + `nên số mẫu thật là số "kỳ độc lập"; cần khoảng 10 kỳ độc lập trở lên mới nên kết luận.` : "Chưa có bảng điểm nào được lưu.";
+    + `nên số mẫu thật là số "kỳ độc lập"; cần khoảng 10 kỳ độc lập trở lên mới nên kết luận. `
+    + `Cột "Vừa xác nhận 2 đáy tuần" (ghi từ cuối 10/2026) là phép thử ngoài mẫu cho mẫu hình này, để biết sau vài tháng có nên đưa thành điểm mua không.` : "Chưa có bảng điểm nào được lưu.";
   $("dn-body").innerHTML = dn && dn.ky.length ? dn.ky.map(k => `<tr><td class="l">${k.h} phiên</td>
     <td>${k.so_ky}<br><small class="muted">${k.so_ky_doc_lap} kỳ độc lập</small></td>
     <td class="${cls(k.ic)}"><b>${fmt(k.ic, 3)}</b><br><small class="muted">${pct(k.ic_duong)} số kỳ dương</small></td>
     <td class="${cls(k.a)}">${pct(k.a, 2, true)}</td><td class="${cls(k.d)}">${pct(k.d, 2, true)}</td>
-    <td class="${cls(k.top)}">${pct(k.top, 2, true)}</td><td class="${cls(k.tb)}">${pct(k.tb, 2, true)}</td></tr>`).join("")
-    : `<tr><td colspan="7" class="empty">Chưa đủ số phiên sau bảng điểm đầu tiên để đánh giá.</td></tr>`;
+    <td class="${cls(k.top)}">${pct(k.top, 2, true)}</td>
+    <td class="${cls(k.hdt)}">${k.hdt == null ? "–" : pct(k.hdt, 2, true)}${k.so_ky_hdt ? `<br><small class="muted">${k.so_ky_hdt} bảng điểm</small>` : ""}</td>
+    <td class="${cls(k.tb)}">${pct(k.tb, 2, true)}</td></tr>`).join("")
+    : `<tr><td colspan="8" class="empty">Chưa đủ số phiên sau bảng điểm đầu tiên để đánh giá.</td></tr>`;
 
   // Sức dự báo của điểm số
   const nc = D.kiem_dinh && D.kiem_dinh.nghien_cuu_diem;
@@ -1218,6 +1300,23 @@ function renderKiemDinh() {
       <td class="${cls(x.ic)}">${fmt(x.ic, 3)}</td><td>${fmt(x.t, 1)}</td><td class="${cls(x.ic_nua_dau)}">${fmt(x.ic_nua_dau, 3)}</td>
       <td class="${cls(x.ic_nua_sau)}">${fmt(x.ic_nua_sau, 3)}</td><td class="l"><span class="chip ${nx[0]}">${nx[1]}</span></td></tr>`;
   }).join("") : "";
+
+  // Mẫu hình 2 đáy tuần
+  const hk = D.kiem_dinh && D.kiem_dinh.hai_day_tuan;
+  const vCell = s => !s || !s.n ? `<td class="muted">–</td>`
+    : `<td>${fmt(s.n)} lần · ${pct(s.thang)} thắng VNI<br><b class="${cls(s.tb)}">${pct(s.tb, 2, true)}</b>`
+      + `<br><small class="muted">nửa đầu ${pct(s.nua_dau, 2, true)} · nửa sau ${pct(s.nua_sau, 2, true)}</small></td>`;
+  $("hdt-kd-intro").innerHTML = hk && hk.nhom
+    ? `Mọi lần một mã đủ thanh khoản xác nhận 2 đáy tuần (đóng cửa vượt đỉnh giữa, định nghĩa ở tab Bảng xếp hạng → 2 đáy tuần) từ ${dmy(hk.tu)} đến ${dmy(hk.den)}: `
+      + `${fmt(hk.so_su_kien)} lần, ${hk.so_ma} mã, chia hai nửa tại ${dmy(hk.giua)}. Mua giá mở cửa phiên sau, giữ 20 phiên, đã trừ phí ~0,4%, so với VN-Index cùng kỳ. `
+      + `Độ tin cậy t đã tính đến việc nhiều mã thường xác nhận cùng tháng theo nhịp chung của thị trường (sai số theo cụm tháng); |t| từ 2 trở lên mới đáng tin.`
+    : "Chưa có: kiểm định quá khứ sẽ tính lại vào sáng thứ Bảy.";
+  $("hdt-kd-nhom").innerHTML = hk && hk.nhom ? hk.nhom.map(x => `<tr><td class="l" style="font-family:var(--f-ui); white-space:normal; min-width:220px">${esc(x.ten)}</td>
+    <td>${fmt(x.n)}</td><td class="${cls(x.tb)}"><b>${pct(x.tb, 2, true)}</b></td><td class="${cls(x.trung_vi)}">${pct(x.trung_vi, 2, true)}</td>
+    <td>${pct(x.thang)}</td><td>${fmt(x.t, 1)}</td><td class="${cls(x.nua_dau)}">${pct(x.nua_dau, 2, true)}</td><td class="${cls(x.nua_sau)}">${pct(x.nua_sau, 2, true)}</td></tr>`).join("") : "";
+  $("hdt-kd-tc").innerHTML = hk && hk.tieu_chi ? hk.tieu_chi.map(t => `<tr><td class="l" style="font-family:var(--f-ui); white-space:normal; min-width:220px">${esc(t.ten)}</td>
+    ${vCell(t.dat)}${vCell(t.khong_dat)}
+    <td class="l"><span class="chip ${t.nhan_xet.startsWith("Giúp ích") ? "good" : t.nhan_xet.startsWith("Ngược") ? "bad" : "warn"}">${esc(t.nhan_xet)}</span></td></tr>`).join("") : "";
 
   // Kiểm định quá khứ
   const kd = D.kiem_dinh;
@@ -1272,20 +1371,21 @@ $("ch-watch").addEventListener("click", e => {
 $("ch-watch").addEventListener("keydown", e => { if (e.key === "Enter") e.target.closest("tr[data-ma]")?.click(); });
 
 function setTab(t, render = true) {
-  if (state.tab === "tang" && t !== "tang") { state.sort = "diem_tong"; state.dir = -1; }
+  const truoc = state.tab;
   state.tab = t; store.set("blcp.tab", t);
-  // Tab "Đang tăng mạnh" mặc định sắp theo mức tăng 5 phiên; hai tab còn lại theo điểm tổng
-  if (t === "tang" && state.sort !== "r1w") { state.sort = "r1w"; state.dir = -1; }
-  else if (t !== "tang" && !COLS.some(c => c.k === state.sort)) { state.sort = "diem_tong"; state.dir = -1; }
-  $("tab-top").setAttribute("aria-selected", t === "top");
-  $("tab-all").setAttribute("aria-selected", t === "all");
-  $("tab-tang").setAttribute("aria-selected", t === "tang");
+  // "Đang tăng mạnh" mặc định sắp theo mức tăng 5 phiên, "2 đáy tuần" theo trạng thái rồi chất lượng; hai tab còn lại theo điểm tổng
+  const rieng = x => x === "tang" || x === "hdt";
+  if (rieng(t) || rieng(truoc) || !colsOf(t).some(c => c.k === state.sort)) {
+    state.sort = { tang: "r1w", hdt: "hdt_hang" }[t] || "diem_tong"; state.dir = -1;
+  }
+  ["top", "all", "tang", "hdt"].forEach(x => $("tab-" + x).setAttribute("aria-selected", t === x));
   if (render) renderHead();
   if (render) renderTable();
 }
 $("tab-top").onclick = () => setTab("top");
 $("tab-all").onclick = () => setTab("all");
 $("tab-tang").onclick = () => setTab("tang");
+$("tab-hdt").onclick = () => setTab("hdt");
 $("q").oninput = e => { state.q = e.target.value; renderTable(); };
 $("nganh").onchange = e => { state.nganh = e.target.value; renderTable(); };
 $("san").onchange = e => { state.san = e.target.value; renderTable(); };

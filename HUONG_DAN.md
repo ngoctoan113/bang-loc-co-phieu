@@ -31,8 +31,10 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
   Số mã tối đa phụ thuộc bối cảnh thị trường (Thuận lợi 5 · Trung tính 3 · Rủi ro cao 1).
   Bên dưới là danh sách theo dõi các mã chỉ thiếu 1–2 tiêu chí.
 - **Bảng xếp hạng**: mọi mã HOSE/HNX/UPCOM đủ thanh khoản, chấm điểm theo 5 nhóm yếu tố (xem "Cách chấm điểm").
-  Ba tab con: *Danh sách Top* (điểm ≥ 65 và giá > MA50 > MA200) · *Tất cả* · *Đang tăng mạnh* (tăng ≥ 8% trong 5 phiên,
-  gắn nhãn "Tăng có nền tảng" / "Trung bình" / "Tăng đầu cơ" theo điểm).
+  Bốn tab con: *Danh sách Top* (điểm ≥ 65 và giá > MA50 > MA200) · *Tất cả* · *Đang tăng mạnh* (tăng ≥ 8% trong 5 phiên,
+  gắn nhãn "Tăng có nền tảng" / "Trung bình" / "Tăng đầu cơ" theo điểm, kèm cột mẫu hình 2 đáy tuần) ·
+  *2 đáy tuần* (mã vừa xác nhận hoặc đang hình thành mẫu hình 2 đáy trên nến tuần, chấm 4 tiêu chí chất lượng; chỉ để theo dõi,
+  xem mục "Mẫu hình 2 đáy tuần"). Bấm một mã để xem chi tiết; mã có mẫu hình được vẽ thêm đỉnh giữa và đáy trên biểu đồ.
   Khi thị trường Rủi ro cao, tab hiện cảnh báo: kiểm định 3 năm cho thấy điểm số gần như không dự báo được trong bối cảnh đó.
 - **Danh mục của tôi**: nhập mã, giá vốn, khối lượng, ngày mua. Trang áp **cùng quy tắc đã kiểm định với Cơ hội hôm nay**:
   Cắt lỗ khẩn cấp (giá vốn −10%) / Hết thời hạn giữ: bán (đủ 20 phiên kể từ ngày mua, trừ khi mã đang có lại tín hiệu) / Giữ.
@@ -53,7 +55,8 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
   - *Kiểm định quá khứ* (`python kiem_dinh.py` → `nhat_ky/kiem_dinh.json`, máy chủ chạy sáng thứ Bảy hằng tuần):
     dựng lại tiêu chí trên ~3 năm dữ liệu (BCTC tính từ ngày công bố, thanh khoản tại từng thời điểm),
     so sánh khi đạt / không đạt / khi bỏ từng tiêu chí và khi thêm tiêu chí đề xuất, tách hai nửa giai đoạn;
-    kèm sức dự báo của điểm số, theo bối cảnh thị trường và **so với VN-Index**.
+    kèm sức dự báo của điểm số, theo bối cảnh thị trường và **so với VN-Index**, và mục *Mẫu hình 2 đáy tuần có hiệu quả không?*
+    (mọi lần xác nhận 2 đáy tuần, so với VN-Index và với một phiên vượt đỉnh bất kỳ, theo từng tiêu chí chất lượng).
 
 Các ngưỡng nằm trong `cau_hinh.json` (mục `co_hoi`, `danh_muc`). Ngưỡng `null` = tiêu chí đang tắt.
 
@@ -150,6 +153,42 @@ khoảng 1%/20 phiên trong 3 năm qua). Mua cả nhóm, giữ 20 phiên, 37 k�
 - Hai tuần đầu ngoài mẫu (07/10 → 21/10) IC −0,27: nhóm trụ giảm, mã bị bán mạnh hồi lên (điểm cũ cũng âm). Chưa đủ
   để kết luận; nhật ký bảng điểm sẽ cho câu trả lời sau vài tháng. Không chỉnh tiêu chí trên cùng dữ liệu 3 năm này nữa.
 
+## Mẫu hình 2 đáy tuần (rà soát 23/10/2026)
+
+Câu hỏi: nhiều mã tăng mạnh cuối tháng 10/2026 có chung đặc điểm tạo 2 đáy trên nến tuần (đáy cuối tháng 7 và đầu/giữa tháng 10,
+cùng nhịp với VN-Index: 1.651 cuối tháng 7, ~1.680 ngày 20/10, đỉnh giữa ~1.874 tháng 9) – có nên thêm thành tiêu chí?
+Kiểm tra phiên 23/10: trong 21 mã đủ thanh khoản tăng ≥ 8%/5 phiên, 8 mã (38%) vừa xác nhận 2 đáy tuần trong 40 phiên,
+so với 19% ở các mã tăng dưới 10%/10 phiên – có liên hệ, nhưng phần lớn là trùng thời điểm: phiên xác nhận chính là phiên giá vượt lên.
+
+**Định nghĩa** (Bulkowski – *Encyclopedia of Chart Patterns*, phần double bottoms; `tim_hai_day` trong `loc_co_phieu.py`):
+có nhịp giảm dẫn vào mẫu hình; hai đáy nến tuần lệch nhau ≤ 6%, cách nhau 4–40 tuần; đỉnh giữa cao hơn đáy thấp hơn ≥ 10%;
+**xác nhận** khi giá đóng cửa vượt đỉnh giữa (Bulkowski: chưa xác nhận thì gần một nửa trường hợp giá giảm tiếp).
+Mục tiêu tham chiếu = đỉnh giữa + 65% chiều cao mẫu hình (quy tắc đo của Bulkowski).
+
+**Kiểm định** 06/2023–09/2026, mã đủ thanh khoản tại thời điểm đó, mua giá mở cửa phiên sau, giữ 20 phiên, trừ phí 0,4%,
+so với VN-Index (t theo cụm tháng vì nhiều mã xác nhận cùng lúc):
+
+| Nhóm | Số lần | Hơn VN-Index /20 phiên | Nửa đầu | Nửa sau | t |
+|---|---|---|---|---|---|
+| Mọi phiên tăng đóng cửa cao nhất 15 phiên (mốc) | 19.415 | −1,19% | −0,65% | −1,80% | −2,1 |
+| Xác nhận 2 đáy tuần | 585 | −1,19% | −1,17% | −1,21% | −1,7 |
+| 2 đáy tuần đạt ≥ 3/4 tiêu chí chất lượng | 215 | +0,79% | −0,30% | +2,20% | +1,0 |
+| 2 đáy tuần đạt cả 4 tiêu chí | 51 | +0,64% | +1,36% | −0,25% | +0,7 |
+
+- Bản thân mẫu hình **không tốt hơn một phiên vượt đỉnh bất kỳ** và kém VN-Index; giữ lâu hơn còn kém hơn (40 phiên −2,4%,
+  60 phiên −4,2%). Nới biên lệch đáy lên 10% (kiểu NKG, HDC, CII tháng 10/2026) cũng vậy (−1,2%). Mua sớm ở đáy 2 trước
+  khi xác nhận: −1,1%.
+- Tiêu chí chất lượng **tách được mẫu tốt/xấu ở cả hai nửa giai đoạn** (đạt / không đạt): KL tuần đáy 2 thấp hơn đáy 1
+  (Bulkowski: lực bán cạn) −0,49% / −2,07% · đáy 2 không thấp hơn đáy 1 −0,81% / −1,72% · ATR ≤ 3% −0,39% / −2,52% ·
+  điểm tổng ≥ 60 +0,21% / −1,81%. Bốn tiêu chí này hiện kèm mỗi mẫu hình trên trang.
+- Gợi ý trong sách **không có tác dụng** trên dữ liệu Việt Nam: KL bùng nổ ≥ 1,5 lần khi xác nhận (O'Neil), đáy 2 thủng
+  đáy 1 để "rũ bỏ" (O'Neil, thực tế kém hơn), RSI tuần phân kỳ dương (kém hơn), vị trí trong biên độ 52 tuần, độ rộng ≥ 7 tuần,
+  bối cảnh thị trường.
+- Kết luận: **chưa đưa thành điểm mua** của "Cơ hội hôm nay" (đạt ≥ 3/4 tiêu chí có dương nhưng chỉ ở nửa sau, t ≈ 1).
+  Mẫu hình hiện ở tab *2 đáy tuần* để theo dõi; nhật ký bảng điểm ghi thêm cột `hai_day` (2 = vừa xác nhận, 1 = đang hình
+  thành) từ cuối 10/2026, tab Kiểm định so nhóm vừa xác nhận với VN-Index ngoài mẫu. Kiểm định quá khứ chạy lại mỗi thứ Bảy.
+  Sau 2–3 tháng, nếu nhóm đạt ≥ 3/4 tiêu chí vẫn thắng VN-Index thì mới cân nhắc thêm làm điểm mua.
+
 **Đủ thanh khoản**: GTGD TB 20 phiên ≥ 5 tỷ (≥ 200 phiên dữ liệu) **hoặc** GTGD TB 5 phiên ≥ 10 tỷ (≥ 120 phiên),
 giá ≥ 5.000đ — để không bỏ sót mã vừa có dòng tiền vào.
 
@@ -165,6 +204,7 @@ giá ghi nhận; tab Danh mục báo "Cần cập nhật giá vốn" khi giá v�
 | `loc_top` | Điều kiện vào danh sách Top (điểm tối thiểu, yêu cầu xu hướng tăng) |
 | `dang_tang` | Ngưỡng tăng 5 phiên, GTGD tối thiểu, ngưỡng điểm "có nền tảng" / "đầu cơ" |
 | `co_hoi` | Tiêu chí tab Cơ hội hôm nay; cắt lỗ khẩn cấp và thời hạn giữ dùng chung cho cả tab Danh mục |
+| `hai_day_tuan` | Định nghĩa mẫu hình 2 đáy tuần (lệch đáy, khoảng cách tuần, chiều cao, số phiên còn hiện sau xác nhận) và ngưỡng ATR / điểm của tiêu chí chất lượng |
 | `danh_muc` | Ngưỡng các lưu ý trong tab Danh mục (dừng lãi ATR, chốt lời khi giá nóng, tỷ trọng tối đa) |
 
 ## Hạn chế cần biết

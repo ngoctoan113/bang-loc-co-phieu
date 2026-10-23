@@ -291,6 +291,120 @@ def technical(df: pd.DataFrame) -> dict:
 
 
 # ----------------------------------------------------------------------------
+# Mẫu hình 2 đáy trên nến tuần
+# ----------------------------------------------------------------------------
+# Định nghĩa theo Bulkowski (Encyclopedia of Chart Patterns, double bottoms): có nhịp giảm dẫn vào mẫu hình, hai đáy gần cùng
+# mức giá (lệch ≤ 6%), cách nhau vài tuần trở lên, đỉnh giữa cao hơn đáy ≥ 10%; mẫu hình chỉ được XÁC NHẬN khi giá đóng cửa
+# vượt đỉnh giữa (chưa xác nhận thì gần một nửa trường hợp giá giảm tiếp).
+# Kiểm định 10/2026 (06/2023–10/2026, mã đủ thanh khoản): xác nhận 2 đáy tuần nói chung không tốt hơn một phiên vượt đỉnh
+# bất kỳ (≈ −1,1% so với VN-Index sau 20 phiên, cả hai nửa giai đoạn). Tiêu chí tách mẫu tốt/xấu ổn định ở cả hai nửa:
+# KL tuần đáy 2 thấp hơn đáy 1, đáy 2 không thấp hơn đáy 1, ATR thấp, điểm tổng cao. Ngược với O'Neil, KL bùng nổ khi
+# xác nhận và đáy 2 thủng đáy 1 ("rũ bỏ") cho kết quả kém hơn. Vì vậy mẫu hình chỉ để theo dõi, chưa là điểm mua.
+def nen_tuan(df: pd.DataFrame) -> dict:
+    """Nến tuần: tuần của từng phiên, giá thấp/cao nhất tuần, KL trung bình phiên trong tuần, vị trí phiên đầu tuần."""
+    tuan, _ = pd.factorize(df.index.to_period("W-SUN"), sort=True)
+    g = df.groupby(tuan)
+    return {"tuan": tuan, "thap": g["low"].min().to_numpy(float), "cao": g["high"].max().to_numpy(float),
+            "kl": g["volume"].mean().to_numpy(float), "dau": np.r_[0, np.flatnonzero(np.diff(tuan)) + 1]}
+
+
+def tim_hai_day(t: int, C: np.ndarray, L: np.ndarray, W: dict, hd: dict, xac_nhan: bool = True) -> dict | None:
+    """Mẫu hình 2 đáy tuần tại phiên t, chỉ dùng dữ liệu đến phiên t. Đáy 1 (tuần i), đỉnh giữa P (tuần k), đáy 2 (tuần j):
+    P cao nhất giữa hai đáy và thấp hơn một đỉnh trước đó trong 52 tuần (có nhịp giảm dẫn vào); đáy 1 thấp nhất từ đỉnh
+    đó tới P; đáy 2 thấp nhất từ sau P tới nay. xac_nhan=True: t là phiên ĐẦU TIÊN đóng cửa trên P;
+    False: giá vẫn ≤ P (đang hình thành). Có nhiều mẫu hình thì lấy mẫu có đáy 2 gần nhất."""
+    tuan, WL, WH, dau = W["tuan"], W["thap"], W["cao"], W["dau"]
+    w, best = tuan[t], None
+    for k in range(w - 2, max(w - 1 - hd["cach_tuan_toi_da"], 0), -1):
+        P = WH[k]
+        if xac_nhan:
+            if C[t] <= P or (t > dau[k + 1] and C[dau[k + 1]:t].max() > P):
+                continue
+        elif C[t] > P:
+            continue
+        j = k + 1 + int(np.argmin(WL[k + 1:w]))
+        if L[dau[w]:t + 1].min() < WL[j] or (j > k + 1 and WH[k + 1:j].max() > P):
+            continue
+        lo = max(0, k - 52)
+        cao_hon = np.flatnonzero(WH[lo:k] > P)
+        if not len(cao_hon) or lo + cao_hon[-1] + 1 >= k:
+            continue
+        i = lo + int(cao_hon[-1]) + 1
+        i += int(np.argmin(WL[i:k]))
+        d1, d2 = WL[i], WL[j]
+        if (hd["cach_tuan_toi_thieu"] <= j - i <= hd["cach_tuan_toi_da"] and abs(d2 / d1 - 1) <= hd["lech_day_toi_da"]
+                and P / min(d1, d2) - 1 >= hd["cao_toi_thieu"] and (best is None or (j, P) > (best["j"], best["P"]))):
+            best = {"i": i, "k": k, "j": j, "P": float(P), "d1": float(d1), "d2": float(d2)}
+    return best
+
+
+def mo_ta_hai_day(m: dict, W: dict, df: pd.DataFrame) -> dict:
+    """Các đặc điểm của mẫu hình dùng cho tiêu chí chất lượng và hiển thị."""
+    L, H, dau = df["low"].to_numpy(float), df["high"].to_numpy(float), W["dau"]
+    tuan_ = lambda w: slice(dau[w], dau[w + 1] if w + 1 < len(dau) else len(df))
+    ngay = lambda w, a, f: df.index[tuan_(w).start + int(f(a[tuan_(w)]))].strftime("%Y-%m-%d")
+    thap = min(m["d1"], m["d2"])
+    return {"day1": m["d1"], "day2": m["d2"], "dinh_giua": m["P"],
+            "ngay_day1": ngay(m["i"], L, np.argmin), "ngay_day2": ngay(m["j"], L, np.argmin),
+            "ngay_dinh_giua": ngay(m["k"], H, np.argmax),
+            "lech_day": m["d2"] / m["d1"] - 1, "cao": m["P"] / thap - 1, "cach_tuan": int(m["j"] - m["i"]),
+            "kl_day2_day1": float(W["kl"][m["j"]] / W["kl"][m["i"]]) if W["kl"][m["i"]] > 0 else np.nan,
+            # Quy tắc đo của Bulkowski: đỉnh giữa + 65% chiều cao mẫu hình
+            "muc_tieu": m["P"] + 0.65 * (m["P"] - thap)}
+
+
+def hai_day_su_kien(df: pd.DataFrame, hd: dict) -> list[dict]:
+    """Mọi phiên xác nhận 2 đáy tuần trong lịch sử giá (cho kiểm định quá khứ)."""
+    C, L = df["close"].to_numpy(float), df["low"].to_numpy(float)
+    W = nen_tuan(df)
+    # Điều kiện cần (lọc nhanh): phiên tăng và đóng cửa cao nhất 15 phiên – đỉnh giữa ≥ mọi giá đóng cửa từ sau đáy 1
+    cao15 = pd.Series(C).shift().rolling(15).max().to_numpy()
+    out = []
+    for t in np.flatnonzero((C > cao15) & (C > np.r_[np.inf, C[:-1]])):
+        m = tim_hai_day(int(t), C, L, W, hd)
+        if m is not None:
+            out.append({"ngay": df.index[t], **mo_ta_hai_day(m, W, df)})
+    return out
+
+
+def hai_day_tuan(df: pd.DataFrame, hd: dict) -> dict | None:
+    """Trạng thái mẫu hình ở phiên cuối cho bảng lọc hằng ngày: "xac_nhan" – đóng cửa vượt đỉnh giữa trong
+    `so_phien_sau_xac_nhan` phiên gần nhất và chưa đóng cửa dưới đáy 2; "hinh_thanh" – đã có hai đáy (giá đã đóng cửa
+    trên giá cao nhất của tuần đáy 2) nhưng chưa vượt đỉnh giữa."""
+    C, L = df["close"].to_numpy(float), df["low"].to_numpy(float)
+    if len(C) < 60:
+        return None
+    W = nen_tuan(df)
+    n = len(C)
+    for t in range(n - 1, max(n - 1 - hd["so_phien_sau_xac_nhan"], 0), -1):
+        m = tim_hai_day(t, C, L, W, hd)
+        if m is not None:
+            if C[t:].min() < m["d2"]:
+                return None
+            return {"trang_thai": "xac_nhan", "phien_tu_xac_nhan": n - 1 - t, "cach_dinh_giua": C[-1] / m["P"] - 1,
+                    **mo_ta_hai_day(m, W, df)}
+    m = tim_hai_day(n - 1, C, L, W, hd, xac_nhan=False)
+    if m is None or C[W["dau"][m["j"] + 1]:].max() <= W["cao"][m["j"]]:
+        return None
+    return {"trang_thai": "hinh_thanh", "cach_dinh_giua": C[-1] / m["P"] - 1, **mo_ta_hai_day(m, W, df)}
+
+
+def tieu_chi_hai_day(x: dict, r: dict, hd: dict) -> list:
+    """Tiêu chí chất lượng của mẫu hình (các tiêu chí tách được mẫu tốt/xấu ổn định trong kiểm định),
+    dạng [tên, đạt?, giá trị, tên ngắn khi không đạt] như tab Cơ hội."""
+    f = lambda v, p: p.format(v) if nz(v) else "–"
+    return [
+        ["KL tuần đáy 2 thấp hơn tuần đáy 1 (lực bán cạn)", bool(nz(x.get("kl_day2_day1")) and x["kl_day2_day1"] < 1),
+         f(x.get("kl_day2_day1"), "{:.2f} lần"), "KL đáy 2/đáy 1"],
+        ["Đáy 2 không thấp hơn đáy 1", bool(x["lech_day"] >= 0), f(x["lech_day"], "{:+.1%}"), "Đáy 2 thấp hơn"],
+        [f"Biến động thấp: ATR ≤ {hd['atr_toi_da']:.0%} giá", bool(nz(r.get("atr_pct")) and r["atr_pct"] <= hd["atr_toi_da"]),
+         f(r.get("atr_pct"), "{:.1%}"), "ATR"],
+        [f"Điểm tổng ≥ {hd['diem_toi_thieu']}", bool(nz(r.get("diem_tong")) and r["diem_tong"] >= hd["diem_toi_thieu"]),
+         f(r.get("diem_tong"), "{:.0f}"), "Điểm"],
+    ]
+
+
+# ----------------------------------------------------------------------------
 # Chỉ số cơ bản
 # ----------------------------------------------------------------------------
 def _prev_q(y, q, k):
@@ -846,8 +960,14 @@ def ghi_nhat_ky_diem(df: pd.DataFrame, top: pd.DataFrame, ngay_du_lieu: str) -> 
     d = df[df["du_thanh_khoan"]]
     moi = pd.DataFrame({"ngay": ngay_du_lieu, "ma": d["ma"], "san": d["san"], "gia": d["gia"].round().astype(int),
                         "diem_tong": d["diem_tong"].round(1), **{c: d[c].round().astype(int) for c in DIEM_COT},
-                        "xu_huong_tang": d["xu_huong_tang"].astype(int), "top": d["ma"].isin(top["ma"]).astype(int)})
+                        "xu_huong_tang": d["xu_huong_tang"].astype(int), "top": d["ma"].isin(top["ma"]).astype(int),
+                        "hai_day": d["hai_day"]})  # 2 = vừa xác nhận 2 đáy tuần, 1 = đang hình thành (có từ cuối 10/2026)
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists() and list(pd.read_csv(path, nrows=0).columns) != list(moi.columns):
+        # File của tháng được tạo trước khi thêm cột mới: ghi lại cả file, các phiên cũ để trống cột đó
+        moi = pd.concat([pd.read_csv(path, dtype={"ngay": str, "ma": str}), moi], ignore_index=True)
+        moi.to_csv(path, index=False, encoding="utf-8")
+        return len(d)
     moi.to_csv(path, mode="a", header=not path.exists(), index=False, encoding="utf-8")
     return len(moi)
 
@@ -880,9 +1000,10 @@ def danh_gia_diem(frames: dict, vni_df: pd.DataFrame | None, ky=(5, 10, 20)) -> 
             ic = lambda c: float(x[c].rank().corr(r.rank()))
             vni = float(vc.iat[i0 + h] / vc.iat[i0] - 1)
             hon_vni = lambda m: float(r[m].mean()) - vni if m.any() else np.nan
+            hai_day = x["hai_day"] if "hai_day" in x else pd.Series(np.nan, index=x.index)
             hang.append({"ngay": ngay, "h": h, "i0": i0, "ic": ic("diem_tong"), **{"ic_" + c: ic(c) for c in DIEM_COT},
                          "a": hon_vni(x["diem_tong"] >= 70), "d": hon_vni(x["diem_tong"] < 45), "top": hon_vni(x["top"] == 1),
-                         "tb": hon_vni(pd.Series(True, index=x.index)), "vni": vni})
+                         "hdt": hon_vni(hai_day == 2), "tb": hon_vni(pd.Series(True, index=x.index)), "vni": vni})
     if not hang:
         return {"tu": bang["ngay"].min(), "den": bang["ngay"].max(), "so_bang": int(bang["ngay"].nunique()), "ky": []}
     H = pd.DataFrame(hang)
@@ -894,7 +1015,8 @@ def danh_gia_diem(frames: dict, vni_df: pd.DataFrame | None, ky=(5, 10, 20)) -> 
                 doc_lap, cuoi = doc_lap + 1, i0
         out.append({"h": int(h), "so_ky": len(g), "so_ky_doc_lap": doc_lap, "ic": float(g["ic"].mean()),
                     "ic_duong": float((g["ic"] > 0).mean()), "nhom": {c: float(g["ic_" + c].mean()) for c in DIEM_COT},
-                    **{k: float(g[k].mean()) if g[k].notna().any() else None for k in ("a", "d", "top", "tb", "vni")}})
+                    **{k: float(g[k].mean()) if g[k].notna().any() else None for k in ("a", "d", "top", "hdt", "tb", "vni")},
+                    "so_ky_hdt": int(g["hdt"].notna().sum())})
     return {"tu": bang["ngay"].min(), "den": bang["ngay"].max(), "so_bang": int(bang["ngay"].nunique()), "ky": out}
 
 
@@ -1025,6 +1147,21 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
         r["diem_manh"], r["luu_y"] = "; ".join(tot), "; ".join(xau)
         out.append(r)
     df_all = pd.DataFrame(out).sort_values("diem_tong", ascending=False).reset_index(drop=True)
+
+    # Mẫu hình 2 đáy tuần: danh sách theo dõi kèm tiêu chí chất lượng (chưa là điểm mua, xem tim_hai_day)
+    hd_cfg = cfg["hai_day_tuan"]
+    hai_day = []
+    for r in df_all.to_dict("records"):
+        x = hai_day_tuan(frames[r["ma"]], hd_cfg)
+        if x:
+            tc = tieu_chi_hai_day(x, r, hd_cfg)
+            hai_day.append({**{k: r[k] for k in ("ma", "ten", "san", "nganh", "gia", "thay_doi", "r1w", "diem_tong",
+                                                  "xep_loai", "du_thanh_khoan")},
+                            **x, "tieu_chi": tc, "so_dat": sum(c[1] for c in tc)})
+    hai_day.sort(key=lambda x: (x["trang_thai"] == "xac_nhan", x["so_dat"], x["diem_tong"]), reverse=True)
+    df_all["hai_day"] = df_all["ma"].map({x["ma"]: 2 if x["trang_thai"] == "xac_nhan" else 1 for x in hai_day}).fillna(0).astype(int)
+    print(f"   2 đáy tuần: {sum(x['trang_thai'] == 'xac_nhan' for x in hai_day)} mã vừa xác nhận, "
+          f"{sum(x['trang_thai'] == 'hinh_thanh' for x in hai_day)} mã đang hình thành")
     df = df_all[df_all["du_thanh_khoan"] | df_all["ma"].isin(lien_quan)].reset_index(drop=True)
 
     top_cfg = cfg["loc_top"]
@@ -1092,7 +1229,7 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
         "gia_200": closes,
         "so_ma_xet": len(tickers), "so_ma_thanh_khoan": len(L_), "so_ma_top": len(top), "dang_tang": dang_tang,
         "cfg": cfg,
-        "thi_truong": tt, "the_gioi": world, "co_hoi": dat, "gan_dat": gan_dat, "tat_ca": tat_ca,
+        "thi_truong": tt, "the_gioi": world, "co_hoi": dat, "gan_dat": gan_dat, "tat_ca": tat_ca, "hai_day": hai_day,
         "nhat_ky": nhat_ky, "diem_ngoai_mau": diem_ngoai_mau,
         "df_all": df_all,  # gồm cả mã đang tăng mạnh chưa đủ thanh khoản (cho trang web)
     }
@@ -1145,6 +1282,10 @@ GIAI_THICH = [
                        "gồm HOSE, HNX, UPCOM."),
     ("ĐANG TĂNG MẠNH", "Tăng ≥ 8% trong 5 phiên, GTGD TB 5 phiên ≥ 1 tỷ. Có nền tảng: điểm ≥ 60 (trong nghiên cứu tiếp tục vượt TB "
                        "+2,2%/20 phiên); đầu cơ: điểm < 45 (thường kém TB −2,3%/20 phiên)."),
+    ("2 ĐÁY TUẦN (theo dõi)", "Nến tuần: hai đáy lệch ≤ 6%, cách nhau 4–40 tuần, đỉnh giữa cao hơn đáy ≥ 10%, có nhịp giảm dẫn vào "
+                              "(Bulkowski); xác nhận khi đóng cửa vượt đỉnh giữa. Kiểm định 2023–2026: nói chung không tốt hơn một phiên "
+                              "vượt đỉnh bất kỳ (≈ −1,1% so với VN-Index/20 phiên) nên chưa là điểm mua. Tiêu chí chất lượng giữ lại: "
+                              "KL tuần đáy 2 < đáy 1, đáy 2 không thấp hơn đáy 1, ATR ≤ 3%, điểm tổng ≥ 60."),
     ("", ""),
     ("LƯU Ý", "Kết quả là bộ lọc định lượng dựa trên dữ liệu công khai, có thể chậm hoặc sai sót. "
               "Đây không phải khuyến nghị mua/bán. Hãy tự kiểm tra BCTC, tin tức, quản trị doanh nghiệp và quản lý rủi ro trước khi đầu tư."),
@@ -1246,6 +1387,7 @@ def web_data(df: pd.DataFrame, top: pd.DataFrame, ctx: dict) -> dict:
         "thi_truong": clean(ctx["thi_truong"]), "the_gioi": clean(ctx["the_gioi"]), "vnindex_dai": ctx["vnindex_dai"],
         "co_hoi": clean(ctx["co_hoi"]), "gan_dat": clean(ctx["gan_dat"]), "tat_ca": clean(ctx["tat_ca"]),
         "cfg_co_hoi": cfg["co_hoi"], "cfg_danh_muc": cfg["danh_muc"],
+        "hai_day_tuan": clean(ctx["hai_day"]), "cfg_hai_day": cfg["hai_day_tuan"],
         "nhat_ky": clean(ctx["nhat_ky"]), "diem_ngoai_mau": clean(ctx["diem_ngoai_mau"]),
         # Kết quả kiểm định quá khứ do kiem_dinh.py tạo (chạy hằng tuần)
         "kiem_dinh": json.loads(KIEM_DINH.read_text(encoding="utf-8")) if KIEM_DINH.exists() else None,
@@ -1292,7 +1434,7 @@ def print_table(d: pd.DataFrame, n=30):
               f"{f(r.r1w, '{:+.1%}'):>6}  {r.diem_manh[:70]}")
 
 
-def print_detail(r: dict):
+def print_detail(r: dict, hd: dict | None = None):
     p = lambda x, fmt="{:.1%}": fmt.format(x) if nz(x) else "-"
     print(f"\n=== {r['ma']} – {r['ten']} ({r['san']}, {r['nganh']}) | Kỳ BCTC: {r.get('ky_bctc')} ===")
     print(f"Giá {r['gia']:,.0f} | Điểm tổng {r['diem_tong']} (hạng {r['xep_loai']}) | "
@@ -1304,6 +1446,11 @@ def print_detail(r: dict):
           f"| RS {r['rs']:.0f} | Cách đỉnh 52T {p(r['cach_dinh_52t'])} | HS 3T {p(r['r3t'])} | ATR {p(r['atr_pct'])}")
     print(f"Điểm mạnh: {r['diem_manh'] or '-'}")
     print(f"Lưu ý:     {r['luu_y'] or '-'}")
+    if hd:
+        print(f"2 đáy tuần ({'vừa xác nhận' if hd['trang_thai'] == 'xac_nhan' else 'đang hình thành'}): đáy 1 {hd['day1']:,.0f} "
+              f"({hd['ngay_day1']}) · đỉnh giữa {hd['dinh_giua']:,.0f} ({hd['ngay_dinh_giua']}) · đáy 2 {hd['day2']:,.0f} "
+              f"({hd['ngay_day2']}) · mục tiêu tham chiếu {hd['muc_tieu']:,.0f} · {hd['so_dat']}/4 tiêu chí chất lượng: "
+              + ", ".join(f"{'✓' if ok else '✗'} {ten} ({v})" for ten, ok, v, _ in hd["tieu_chi"]))
 
 
 def main():
@@ -1328,8 +1475,9 @@ def main():
 
     df, top, ctx = run(cfg, symbols, a.lam_moi, a.ghi_nhat_ky)
     if symbols:
+        hai_day = {x["ma"]: x for x in ctx["hai_day"]}
         for r in df[df["ma"].isin(symbols)].to_dict("records"):
-            print_detail(r)
+            print_detail(r, hai_day.get(r["ma"]))
         return
     print(f"\n===== TOP {len(top)} MÃ THOẢ ĐIỀU KIỆN (PTCB + PTKT) =====")
     print_table(top, len(top))
