@@ -19,6 +19,7 @@ import json
 import math
 import sys
 import shutil
+import threading
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -46,7 +47,7 @@ VCI_HEADERS = {
 }
 VCI_IQ = "https://iq.vietcap.com.vn/api/iq-insight-service"
 VCI_CHART = "https://trading.vietcap.com.vn/api/chart/OHLCChart/gap-chart"
-DNSE_CHART = "https://services.entrade.com.vn/chart-api/v2/ohlcs/stock"
+DNSE_CHART = "https://services.entrade.com.vn/chart-api/v2/ohlcs"  # + /stock (cổ phiếu) hoặc /index (chỉ số)
 VND_RATIOS = "https://api-finfo.vndirect.com.vn/v4/ratios/latest"
 
 # Chỉ tiêu doanh thu khác nhau theo loại hình doanh nghiệp
@@ -65,21 +66,42 @@ _session.headers.update(VCI_HEADERS)
 # Tải dữ liệu + cache
 # ----------------------------------------------------------------------------
 LOI_NGUON: Counter = Counter()  # (máy chủ, mã lỗi) -> số lần, để in vào nhật ký
+# Ngắt mạch theo máy chủ: NGAT_SAU lần liên tiếp quá thời gian chờ / lỗi kết nối (không lần nào thành công xen giữa) thì bỏ
+# qua máy chủ đó đến hết lần chạy, chuyển ngay sang nguồn dự phòng. 23/10/2026 Vietcap treo cả buổi tối: mỗi lệnh gọi chờ
+# 4 × 30 giây rồi mới sang DNSE, 1.500 mã mất hàng giờ và lượt chạy trên GitHub bị huỷ ở mốc 40 phút.
+NGAT_SAU = 3
+CHO_GIA = 10  # giây chờ API giá (phản hồi nhỏ, bình thường < 1 giây); các API khác chờ 30 giây
+DA_NGAT: dict[str, str] = {}  # máy chủ -> lỗi khiến ngắt mạch
+_loi_lien_tiep: Counter = Counter()
+_da_bao_ngat: set[str] = set()
+_khoa_ngat = threading.Lock()
 
 
-def http(method: str, url: str, retries: int = 4, **kw):
-    host, err = urlparse(url).netloc, "?"
+def http(method: str, url: str, retries: int = 4, timeout: float = 30, **kw):
+    host, err = urlparse(url).netloc, "bỏ qua (đã ngắt)"
     for i in range(retries):
+        if host in DA_NGAT:
+            break
         try:
-            r = _session.request(method, url, timeout=30, **kw)
+            r = _session.request(method, url, timeout=timeout, **kw)
             if r.status_code == 200:
-                return r.json()
+                d = r.json()
+                with _khoa_ngat:
+                    _loi_lien_tiep[host] = 0
+                return d
             err = f"HTTP {r.status_code}"
             if r.status_code not in (429, 500, 502, 503, 504):
                 break
+        except (requests.Timeout, requests.ConnectionError) as e:
+            err = type(e).__name__
+            with _khoa_ngat:
+                _loi_lien_tiep[host] += 1
+                if _loi_lien_tiep[host] >= NGAT_SAU:
+                    DA_NGAT.setdefault(host, err)
         except (requests.RequestException, ValueError) as e:
             err = type(e).__name__
-        time.sleep(1.5 * (i + 1))
+        if i < retries - 1 and host not in DA_NGAT:
+            time.sleep(1.5 * (i + 1))
     LOI_NGUON[(host, err)] += 1
     return None
 
@@ -88,6 +110,11 @@ def bao_loi_nguon(buoc: str):
     if LOI_NGUON:
         print(f"   ! Lỗi nguồn dữ liệu ({buoc}): " + ", ".join(f"{h} {e} ×{n}" for (h, e), n in LOI_NGUON.most_common()))
         LOI_NGUON.clear()
+    for h, e in list(DA_NGAT.items()):
+        if h not in _da_bao_ngat:
+            _da_bao_ngat.add(h)
+            print(f"   ! Ngắt mạch {h} sau {NGAT_SAU} lần {e} liên tiếp: bỏ qua máy chủ này đến hết lần chạy, "
+                  "dùng nguồn dự phòng / dữ liệu đã lưu")
 
 
 def cached(key: str, ttl_hours: float, fetch, refresh: bool = False):
@@ -129,24 +156,28 @@ def fetch_universe():
 
 
 def fetch_ohlc(sym: str, bars: int = 400):
-    d = http("POST", VCI_CHART, json={"timeFrame": "ONE_DAY", "symbols": [sym],
-                                      "to": int(time.time()), "countBack": bars})
+    d = http("POST", VCI_CHART, timeout=CHO_GIA, json={"timeFrame": "ONE_DAY", "symbols": [sym],
+                                                       "to": int(time.time()), "countBack": bars})
     if d and d[0].get("c"):
         x = d[0]
         return {"t": [int(v) for v in x["t"]], "o": x["o"], "h": x["h"], "l": x["l"], "c": x["c"], "v": x["v"]}
-    # Dự phòng: DNSE (giá theo nghìn đồng)
+    # Dự phòng: DNSE (giá cổ phiếu theo nghìn đồng; chỉ số như VNINDEX ở /index). Nến ngày DNSE đánh dấu 9:00 giờ VN
+    # (02:00 UTC): đưa về 00:00 UTC như Vietcap để giá hai nguồn khớp ngày khi ghép theo trục VN-Index, giữ `bars` phiên
     now = int(time.time())
-    d = http("GET", f"{DNSE_CHART}?from={now - int(bars * 1.6) * 86400}&to={now}&symbol={sym}&resolution=1D")
+    loai = "index" if sym.endswith("INDEX") else "stock"
+    d = http("GET", f"{DNSE_CHART}/{loai}?from={now - int(bars * 1.6) * 86400}&to={now}&symbol={sym}&resolution=1D",
+             timeout=CHO_GIA)
     if d and d.get("c"):
-        k = 1000 if np.median(d["c"]) < 1000 else 1
-        return {"t": d["t"], "o": [v * k for v in d["o"]], "h": [v * k for v in d["h"]],
-                "l": [v * k for v in d["l"]], "c": [v * k for v in d["c"]], "v": d["v"]}
+        k = 1000 if loai == "stock" and np.median(d["c"]) < 1000 else 1
+        return {"t": [(t + 7 * 3600) // 86400 * 86400 for t in d["t"][-bars:]],
+                **{c: [v * k for v in d[c][-bars:]] for c in "ohlc"}, "v": d["v"][-bars:]}
     return None
 
 
 def fetch_fundamental(sym: str):
     stats = http("GET", f"{VCI_IQ}/v1/company/{sym}/statistics-financial")
-    inc = http("GET", f"{VCI_IQ}/v1/company/{sym}/financial-statement?section=INCOME_STATEMENT")
+    # Lần gọi đầu lỗi thì không gọi tiếp: trả None ngay để cached() dùng lại bản đã lưu
+    inc = stats and http("GET", f"{VCI_IQ}/v1/company/{sym}/financial-statement?section=INCOME_STATEMENT")
     if not stats or not inc:
         return None
     rows = sorted(stats.get("data") or [], key=lambda r: (r.get("yearReport") or 0, r.get("quarter") or 0))
