@@ -682,6 +682,32 @@ def thi_truong(vni_df: pd.DataFrame | None, tech_all: dict, world: list[dict]) -
     return out
 
 
+def thanh_khoan_von_hoa(frames: dict, ma: list[str], vnd: dict, truc: pd.DatetimeIndex) -> dict | None:
+    """Giá trị giao dịch bình quân 20 phiên / tổng vốn hoá các mã (HOSE): đo độ nóng/lạnh của thị trường.
+    Vốn hoá quá khứ = giá đã điều chỉnh × số cổ phiếu hiện tại (vốn hoá VNDirect / giá hiện tại).
+    Chỉ để tham khảo, không tính vào điểm bối cảnh: kiểm tra 12/2022–10/2026 cho thấy thanh khoản rất cao đi trước giai đoạn
+    đi ngang 2023–2024 nhưng lại đi cùng nhịp tăng mạnh 2025 (chiều dự báo đổi ngược); thanh khoản rất thấp thường đi kèm
+    VN-Index gần như đi ngang 20 phiên sau đó."""
+    gia_cuoi = {s: frames[s]["close"].iat[-1] for s in ma}
+    cp = pd.Series({s: vnd[s]["MARKETCAP"] / gia_cuoi[s] for s in ma
+                    if (vnd.get(s) or {}).get("MARKETCAP") and gia_cuoi[s] > 0})
+    if len(cp) < 0.9 * len(ma):  # thiếu vốn hoá nhiều mã thì tỷ lệ bị lệch, không hiển thị
+        return None
+    C = pd.DataFrame({s: frames[s]["close"] for s in ma}).reindex(truc)
+    V = pd.DataFrame({s: frames[s]["volume"] for s in ma}).reindex(truc)
+    gtgd = (C * V).sum(axis=1).rolling(20).mean()
+    von_hoa = (C[cp.index].ffill() * cp).sum(axis=1)
+    tl = (gtgd / von_hoa).dropna()
+    if len(tl) < 120:
+        return None
+    nam = tl.iloc[-250:] * 100  # đơn vị % mỗi phiên (0,14 = 0,14%/phiên) để không mất độ chính xác khi làm tròn 4 chữ số
+    return {"ty_le_pct": round(float(nam.iat[-1]), 3), "gtgd_tb20": float(gtgd.iat[-1]), "von_hoa": float(von_hoa.iat[-1]),
+            "so_ma": len(cp), "phan_vi_1n": float((nam < nam.iat[-1]).mean()),
+            "thap_1n_pct": round(float(nam.min()), 3), "cao_1n_pct": round(float(nam.max()), 3),
+            "so_1t": float(tl.iat[-1] / tl.iat[-21] - 1) if len(tl) > 21 else None,
+            "chuoi_pct": [round(float(x), 4) for x in nam]}
+
+
 # ----------------------------------------------------------------------------
 # Cơ hội trong ngày: tiêu chí chất lượng + điểm mua kỹ thuật
 # ----------------------------------------------------------------------------
@@ -1104,9 +1130,12 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
     print("3) Tải dữ liệu tài chính...")
     fund_raw = parallel(lambda s: cached(f"co_ban_v3/{s}", ttl["co_ban"], lambda: fetch_fundamental(s), refresh),
                         names, workers, "BCTC")
-    key = hashlib.md5(",".join(names).encode()).hexdigest()[:10]
-    vnd = cached(f"vnd/{today}_{key}", ttl["gia"], lambda: fetch_vnd_ratios(names), refresh) or {}
-    print(f"   {sum(1 for v in fund_raw.values() if v)}/{len(names)} mã có BCTC, {len(vnd)} mã có định giá VNDirect")
+    # Lấy thêm vốn hoá của mọi mã HOSE để tính tỷ lệ thanh khoản / vốn hoá sàn (tab Thị trường)
+    hose = sorted(s for s in frames if info.at[s, "san"] == "HOSE")
+    ds_vnd = sorted(set(names) | set(hose))
+    key = hashlib.md5(",".join(ds_vnd).encode()).hexdigest()[:10]
+    vnd = cached(f"vnd/{today}_{key}", ttl["gia"], lambda: fetch_vnd_ratios(ds_vnd), refresh) or {}
+    print(f"   {sum(1 for v in fund_raw.values() if v)}/{len(names)} mã có BCTC, {sum(s in vnd for s in names)} mã có định giá VNDirect")
     bao_loi_nguon("tài chính")
 
     rows = []
@@ -1189,6 +1218,10 @@ def run(cfg: dict, symbols: list[str] | None, refresh: bool, ghi_nk: bool = Fals
     # Độ rộng thị trường chỉ tính trên các sàn được lọc (HOSE, HNX) để khớp với VN-Index
     tt = thi_truong(to_frame(vnindex) if vnindex else None,
                     {s: t for s, t in tech_all.items() if info.at[s, "san"] in ("HOSE", "HNX") and t["so_phien"] >= 60}, world)
+    # Chỉ hiển thị để tham khảo, không cộng vào điểm bối cảnh (xem thanh_khoan_von_hoa)
+    tt["thanh_khoan_von_hoa"] = tk_vh = thanh_khoan_von_hoa(frames, hose, vnd, vni.index) if vni is not None else None
+    if tk_vh:
+        print(f"   Thanh khoản / vốn hoá HOSE: {tk_vh['ty_le_pct']:.3f}%/phiên, cao hơn {tk_vh['phan_vi_1n']:.0%} số phiên trong 1 năm")
     dat, gan_dat = co_hoi(df, tt, cfg)
     print(f"   Thị trường: {tt['nhan']} ({tt['diem']}/100). Cơ hội đạt đủ tiêu chí: "
           f"{', '.join(x['ma'] for x in dat) or 'không có'}")

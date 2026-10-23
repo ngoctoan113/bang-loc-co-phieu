@@ -43,6 +43,11 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
   dùng nút "Tạo link" để mở cùng danh mục trên máy khác (dữ liệu nằm trong link, không gửi lên máy chủ).
 - **Thị trường**: điểm bối cảnh 0–100 từ xu hướng VN-Index (MA20/50/200), độ rộng thị trường, ngày phân phối,
   và thế giới (S&P 500, Nasdaq, Shanghai, EEM, DXY, USD/VND, lợi suất TPCP Mỹ 10 năm, dầu Brent, vàng – nguồn Yahoo Finance).
+  Kèm ô **Thanh khoản / vốn hóa HOSE** (giá trị giao dịch bình quân 20 phiên chia tổng vốn hóa, mỗi phiên; vị trí so với
+  1 năm qua) – **chỉ để tham khảo, không tính vào điểm bối cảnh**: kiểm tra 12/2022–10/2026, thanh khoản rất cao đi trước
+  giai đoạn đi ngang 2023–2024 nhưng lại đi cùng nhịp tăng mạnh 2025 (chiều dự báo đổi ngược); thanh khoản rất thấp thường
+  đi kèm 20 phiên sau VN-Index gần như đi ngang (+0,3% đến +0,5%). Vốn hóa quá khứ ước tính bằng giá đã điều chỉnh × số
+  cổ phiếu hiện tại (VNDirect).
 
 - **Kiểm định**: các cách kiểm tra công cụ có thực sự hiệu quả không.
   - *Nhật ký tín hiệu thực tế* (`nhat_ky/tin_hieu.csv`): mã đạt đủ tiêu chí ở "Cơ hội hôm nay" **khi phiên đã đóng cửa**
