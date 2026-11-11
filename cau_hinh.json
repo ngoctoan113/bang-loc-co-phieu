@@ -25,7 +25,7 @@
   },
 
   "co_hoi": {
-    "_ghi_chu": "Ngưỡng = null là tiêu chí đã bỏ sau kiểm định quá khứ (xem tab Kiểm định). Đặt lại số để bật.",
+    "_ghi_chu": "Ngưỡng = null là tiêu chí đã bỏ sau kiểm định quá khứ (xem tab Kiểm định). Đặt lại số để bật. Từ 11/2026: ATR ≤ 2,5% và bỏ điểm mua 'về MA20' (bo_diem_mua_ma20) theo kiểm định – tổ hợp +3,02%/GD so với +1,95% của quy tắc cũ, tốt hơn ở cả hai nửa giai đoạn.",
     "diem_tong": 60,
     "roe": null,
     "roe_min_4q": 0.12,
@@ -36,8 +36,9 @@
     "von_hoa_ty": 1000,
     "rsi_min": 50,
     "rsi_max": null,
-    "atr_pct_toi_da": 0.03,
+    "atr_pct_toi_da": 0.025,
     "cach_ma20_toi_da": 0.15,
+    "bo_diem_mua_ma20": true,
     "cat_lo_pct": 0.10,
     "so_phien_giu": 20,
     "so_ma_toi_da": { "thuan_loi": 5, "trung_tinh": 3, "rui_ro": 1 }

@@ -27,7 +27,7 @@ Chỉ cần Python 3.10+ với `pandas`, `numpy`, `requests`, `openpyxl`.
 
 - **Cơ hội hôm nay**: tối đa 5 mã qua **toàn bộ** tiêu chí chất lượng (ROE cao và ổn định, lợi nhuận tăng đều,
   dòng tiền dương, nợ thấp, thanh khoản tốt) **và** đang có điểm mua kỹ thuật (vượt đỉnh 20 phiên kèm khối lượng /
-  điều chỉnh về MA20 / nền giá chặt), chưa tăng quá xa. Kèm vùng mua, cắt lỗ, mục tiêu tham chiếu tính theo quy tắc.
+  nền giá chặt — điểm mua "điều chỉnh về MA20" đã bỏ sau kiểm định 11/2026), chưa tăng quá xa. Kèm vùng mua, cắt lỗ, mục tiêu tham chiếu tính theo quy tắc.
   Số mã tối đa phụ thuộc bối cảnh thị trường (Thuận lợi 5 · Trung tính 3 · Rủi ro cao 1).
   Bên dưới là danh sách theo dõi các mã chỉ thiếu 1–2 tiêu chí.
 - **Bảng xếp hạng**: mọi mã HOSE/HNX/UPCOM đủ thanh khoản, chấm điểm theo 5 nhóm yếu tố (xem "Cách chấm điểm").
@@ -80,6 +80,23 @@ Giai đoạn 10/2023–10/2026, 50.838 điểm mua kỹ thuật của 300 mã:
   (cắt lỗ chặt làm bị "rũ" khỏi mã tốt). Từ 22/10/2026 tab Danh mục cũng dùng quy tắc này.
 - Các tiêu chí đã bỏ vẫn được kiểm định hằng tuần trong nhóm "đề xuất" để xem có nên đưa lại.
 - Giới hạn: chỉ có mã còn niêm yết (thiên lệch sống sót), mẫu ~140 GD nên kết quả còn dao động; nhật ký thực tế là phép thử quyết định.
+
+### Rà soát 11/2026: siết hai tiêu chí theo kiểm định
+Kiểm định 11/11/2026 (11/2023–11/2026, 56.424 điểm mua của 374 mã; quy tắc cũ +1,95%/GD, thắng 55%, n=163):
+
+| Thay đổi thử | Số GD | Thắng | LN TB/GD | Hai nửa giai đoạn |
+|---|---|---|---|---|
+| ATR ≤ 2,5% (siết từ 3%) | 112 | 59% | +2,80% | Tốt hơn ở cả hai |
+| Bỏ điểm mua "về MA20" | 136 | 58% | +2,57% | Tốt hơn ở cả hai |
+| **Cả hai (đã áp dụng)** | **100** | **59%** | **+3,02%** | **Tốt hơn ở cả hai** |
+
+- Đã áp dụng: `atr_pct_toi_da` 3% → 2,5%; thêm `bo_diem_mua_ma20` — chỉ nhận điểm mua vượt đỉnh / nền chặt
+  (mã "về MA20" vẫn hiện ở danh sách theo dõi vì chỉ thiếu tiêu chí này).
+- Ứng viên mới cũng cho kết quả tốt ở cả hai nửa nhưng **trùng lắp nhiều với ATR thấp** nên chỉ theo dõi, chưa thêm chồng:
+  Điểm Ổn định giá ≥ 60 (+2,43%), nền giá chặt biên độ 10 phiên ≤ 8% (+2,51%), KL phiên tín hiệu ≥ 2 lần TB20 (+2,53%, n=81).
+  Theo dõi thêm: ATR ≤ 2%, Điểm tổng ≥ 65, chưa tăng nóng 5 phiên ≤ +10%.
+- Lưu ý: vẫn là tinh chỉnh trên cùng 3 năm dữ liệu (rủi ro quá khớp); mẫu còn ~100 GD. Nhật ký tín hiệu thực tế
+  (ghi từ 10/2026) là phép thử quyết định — nếu vài tháng tới nhóm tín hiệu theo quy tắc mới không hơn VN-Index thì xem lại.
 
 ## Bản trực tuyến tự cập nhật (GitHub Pages)
 

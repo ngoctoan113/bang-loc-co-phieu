@@ -808,6 +808,10 @@ def kiem_tra_co_hoi(r: dict, ch: dict) -> tuple[list, list, str | None]:
         ["Chưa tăng kịch trần hôm nay", r["thay_doi"] < lim - 0.002, f(r.get("thay_doi"), "{:+.1%}")],
         ["Có điểm mua: vượt đỉnh / về MA20 / nền chặt", loai_mua is not None, loai_mua or "Chưa có"],
     ]
+    if ch.get("bo_diem_mua_ma20"):
+        # Kiểm định 11/2026: điểm mua "về MA20" kém hơn ở cả hai nửa giai đoạn → chỉ nhận vượt đỉnh / nền chặt
+        kt.append(["Điểm mua là vượt đỉnh hoặc nền chặt (bỏ 'về MA20')",
+                   bool(r["breakout_20p"] or r["nen_chat"]), loai_mua or "Chưa có"])
     return cl, kt, loai_mua
 
 

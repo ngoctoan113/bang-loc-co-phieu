@@ -220,8 +220,15 @@ TIEU_CHI_THEM = {
     "Thị trường không ở mức Rủi ro cao (≥ 45 điểm)": lambda r: r["thi_truong"] >= 45,
     "KL 20 phiên > KL 50 phiên": lambda r: L.nz(r.get("vol20_vs_vol50")) and r["vol20_vs_vol50"] > 1,
     "Chỉ lấy điểm mua vượt đỉnh 20 phiên": lambda r: r["breakout_20p"],
-    "Bỏ điểm mua về MA20": lambda r: r["breakout_20p"] or r["nen_chat"],
-    "Biến động rất thấp: ATR ≤ 2,5%": lambda r: r["atr_pct"] <= 0.025,
+    # Ứng viên bổ sung 11/2026. ATR ≤ 2,5% + bỏ điểm mua "về MA20" đã thành quy tắc (kiểm định 11/11/2026:
+    # +3,02%/GD so với +1,95%, tốt hơn ở cả hai nửa); các ứng viên dưới đây trùng lắp nhiều với ATR thấp
+    # nên chỉ theo dõi, chưa thêm chồng lên
+    "Biến động cực thấp: ATR ≤ 2%": lambda r: r["atr_pct"] <= 0.02,
+    "Điểm tổng ≥ 65 (chặt hơn)": lambda r: r["diem_tong"] >= 65,
+    "Điểm Ổn định giá ≥ 60": lambda r: L.nz(r.get("d_on_dinh")) and r["d_on_dinh"] >= 60,
+    "Chưa tăng nóng: 5 phiên ≤ +10%": lambda r: L.nz(r.get("r1w")) and r["r1w"] <= 0.10,
+    "Nền giá chặt: biên độ 10 phiên ≤ 8%": lambda r: L.nz(r.get("bien_do_10p")) and r["bien_do_10p"] <= 0.08,
+    "KL phiên tín hiệu ≥ 2 lần TB20": lambda r: L.nz(r.get("vol_hom_nay")) and r["vol_hom_nay"] >= 2,
 }
 
 
@@ -504,6 +511,9 @@ def nghien_cuu_hai_day(Q: dict, frames: dict, cfg: dict) -> dict:
         f"Điểm tổng ≥ {hd['diem_toi_thieu']}": E["diem"] >= hd["diem_toi_thieu"],
         "Tham khảo – KL phiên xác nhận ≥ 1,5 lần TB20 (O'Neil)": E["kl_phien"] >= 1.5,
         "Tham khảo – thị trường không ở mức Rủi ro cao": E["tt"] >= 45,
+        "Tham khảo – đáy 2 cao hơn đáy 1 ≥ 2%": E["lech"] >= 0.02,
+        "Tham khảo – điểm tổng ≥ 70 (Hạng A)": E["diem"] >= 70,
+        "Tham khảo – KL đáy 2 ≤ 0,8 lần đáy 1 (lực bán cạn rõ)": E["kl"] <= 0.8,
     }
     so_dat = sum(m.astype(int) for m in list(tc_.values())[:4])
     tieu_chi = []

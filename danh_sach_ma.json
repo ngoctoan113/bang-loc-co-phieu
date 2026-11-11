@@ -1,27 +1,19 @@
 [
 {
-"ma": "STK",
-"ten": "Sợi Thế Kỷ",
+"ma": "PNJ",
+"ten": "Vàng Phú Nhuận",
 "san": "HOSE",
 "loai": "CT",
 "nganh": "Hàng cá nhân & Gia dụng",
 "nganh_chi_tiet": "Hàng cá nhân"
 },
 {
-"ma": "KDH",
-"ten": "Nhà Khang Điền",
+"ma": "STK",
+"ten": "Sợi Thế Kỷ",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "HDC",
-"ten": "Phát triển Nhà Bà Rịa Vũng Tàu",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
+"nganh": "Hàng cá nhân & Gia dụng",
+"nganh_chi_tiet": "Hàng cá nhân"
 },
 {
 "ma": "F88",
@@ -40,36 +32,20 @@
 "nganh_chi_tiet": "Bán lẻ"
 },
 {
-"ma": "HDG",
-"ten": "Tập đoàn Hà Đô",
+"ma": "GEX",
+"ten": "Tập đoàn Gelex",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Điện, nước & xăng dầu khí đốt",
-"nganh_chi_tiet": "Sản xuất & Phân phối Điện"
+"nganh": "Hàng & Dịch vụ Công nghiệp",
+"nganh_chi_tiet": "Điện tử & Thiết bị điện"
 },
 {
-"ma": "DPG",
-"ten": "Tập đoàn Đạt Phương",
+"ma": "KDH",
+"ten": "Nhà Khang Điền",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
-},
-{
-"ma": "PNJ",
-"ten": "Vàng Phú Nhuận",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hàng cá nhân & Gia dụng",
-"nganh_chi_tiet": "Hàng cá nhân"
-},
-{
-"ma": "HVN",
-"ten": "Vietnam Airlines",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Du lịch và Giải trí",
-"nganh_chi_tiet": "Du lịch & Giải trí"
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
 },
 {
 "ma": "PTB",
@@ -80,124 +56,12 @@
 "nganh_chi_tiet": "Lâm nghiệp và Giấy"
 },
 {
-"ma": "GEX",
-"ten": "Tập đoàn Gelex",
+"ma": "MSN",
+"ten": "Tập đoàn Masan",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Điện tử & Thiết bị điện"
-},
-{
-"ma": "PLC",
-"ten": "Hóa dầu Petrolimex",
-"san": "HNX",
-"loai": "CT",
-"nganh": "Hóa chất",
-"nganh_chi_tiet": "Hóa chất"
-},
-{
-"ma": "DMX",
-"ten": "Đầu tư Điện Máy Xanh",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bán lẻ",
-"nganh_chi_tiet": "Bán lẻ"
-},
-{
-"ma": "BMI",
-"ten": "Bảo hiểm Bảo Minh",
-"san": "HOSE",
-"loai": "BH",
-"nganh": "Bảo hiểm",
-"nganh_chi_tiet": "Bảo hiểm phi nhân thọ"
-},
-{
-"ma": "NLG",
-"ten": "BĐS Nam Long",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "CTG",
-"ten": "VietinBank",
-"san": "HOSE",
-"loai": "NH",
-"nganh": "Ngân hàng",
-"nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "HPG",
-"ten": "Hòa Phát",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Tài nguyên Cơ bản",
-"nganh_chi_tiet": "Kim loại"
-},
-{
-"ma": "NVL",
-"ten": "Novaland",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "MBB",
-"ten": "MBBank",
-"san": "HOSE",
-"loai": "NH",
-"nganh": "Ngân hàng",
-"nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "ACG",
-"ten": "Gỗ An Cường",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Tài nguyên Cơ bản",
-"nganh_chi_tiet": "Lâm nghiệp và Giấy"
-},
-{
-"ma": "VGC",
-"ten": "Tổng Công ty Viglacera",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
-},
-{
-"ma": "IDC",
-"ten": "IDICO",
-"san": "HNX",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "VRE",
-"ten": "Vincom Retail",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "SZC",
-"ten": "Sonadezi Châu Đức",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "DGC",
-"ten": "Hóa chất Đức Giang",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hóa chất",
-"nganh_chi_tiet": "Hóa chất"
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Sản xuất thực phẩm"
 },
 {
 "ma": "PVS",
@@ -208,44 +72,60 @@
 "nganh_chi_tiet": "Thiết bị, Dịch vụ và Phân phối Dầu khí"
 },
 {
-"ma": "DXG",
-"ten": "Bluemarq Group",
+"ma": "DMX",
+"ten": "Đầu tư Điện Máy Xanh",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
+"nganh": "Bán lẻ",
+"nganh_chi_tiet": "Bán lẻ"
 },
 {
-"ma": "FPT",
-"ten": "FPT Corp",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Công nghệ Thông tin",
-"nganh_chi_tiet": "Phần mềm & Dịch vụ Máy tính"
-},
-{
-"ma": "MSN",
-"ten": "Tập đoàn Masan",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Sản xuất thực phẩm"
-},
-{
-"ma": "POW",
-"ten": "Điện lực Dầu khí Việt Nam",
+"ma": "HDG",
+"ten": "Tập đoàn Hà Đô",
 "san": "HOSE",
 "loai": "CT",
 "nganh": "Điện, nước & xăng dầu khí đốt",
 "nganh_chi_tiet": "Sản xuất & Phân phối Điện"
 },
 {
-"ma": "SAB",
-"ten": "SABECO",
+"ma": "VGC",
+"ten": "Tổng Công ty Viglacera",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Bia và đồ uống"
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
+"ma": "HDC",
+"ten": "Phát triển Nhà Bà Rịa Vũng Tàu",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
+},
+{
+"ma": "HVN",
+"ten": "Vietnam Airlines",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Du lịch và Giải trí",
+"nganh_chi_tiet": "Du lịch & Giải trí"
+},
+{
+"ma": "PLC",
+"ten": "Hóa dầu Petrolimex",
+"san": "HNX",
+"loai": "CT",
+"nganh": "Hóa chất",
+"nganh_chi_tiet": "Hóa chất"
+},
+{
+"ma": "NLG",
+"ten": "BĐS Nam Long",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
 },
 {
 "ma": "VTP",
@@ -264,36 +144,84 @@
 "nganh_chi_tiet": "Hóa chất"
 },
 {
-"ma": "KBC",
-"ten": "TCT Đô thị Kinh Bắc",
+"ma": "HPG",
+"ten": "Hòa Phát",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
+"nganh": "Tài nguyên Cơ bản",
+"nganh_chi_tiet": "Kim loại"
 },
 {
-"ma": "CTR",
-"ten": "Công trình Viettel",
+"ma": "ACG",
+"ten": "Gỗ An Cường",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Tài nguyên Cơ bản",
+"nganh_chi_tiet": "Lâm nghiệp và Giấy"
+},
+{
+"ma": "CTG",
+"ten": "VietinBank",
+"san": "HOSE",
+"loai": "NH",
+"nganh": "Ngân hàng",
+"nganh_chi_tiet": "Ngân hàng"
+},
+{
+"ma": "FPT",
+"ten": "FPT Corp",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Công nghệ Thông tin",
+"nganh_chi_tiet": "Phần mềm & Dịch vụ Máy tính"
+},
+{
+"ma": "MBB",
+"ten": "MBBank",
+"san": "HOSE",
+"loai": "NH",
+"nganh": "Ngân hàng",
+"nganh_chi_tiet": "Ngân hàng"
+},
+{
+"ma": "DPG",
+"ten": "Tập đoàn Đạt Phương",
 "san": "HOSE",
 "loai": "CT",
 "nganh": "Xây dựng và Vật liệu",
 "nganh_chi_tiet": "Xây dựng và Vật liệu"
 },
 {
-"ma": "DXS",
-"ten": "Dịch vụ BĐS Đất Xanh",
+"ma": "PC1",
+"ten": "Tập đoàn PC1",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
+"ma": "VRE",
+"ten": "Vincom Retail",
 "san": "HOSE",
 "loai": "CT",
 "nganh": "Bất động sản",
 "nganh_chi_tiet": "Bất động sản"
 },
 {
-"ma": "QTP",
-"ten": "Nhiệt điện Quảng Ninh",
-"san": "UPCOM",
+"ma": "POW",
+"ten": "Điện lực Dầu khí Việt Nam",
+"san": "HOSE",
 "loai": "CT",
 "nganh": "Điện, nước & xăng dầu khí đốt",
 "nganh_chi_tiet": "Sản xuất & Phân phối Điện"
+},
+{
+"ma": "IDC",
+"ten": "IDICO",
+"san": "HNX",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
 },
 {
 "ma": "VCB",
@@ -304,24 +232,48 @@
 "nganh_chi_tiet": "Ngân hàng"
 },
 {
-"ma": "AST",
-"ten": "Dịch vụ Hàng không Taseco",
+"ma": "GAS",
+"ten": "PV Gas",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Bán lẻ",
-"nganh_chi_tiet": "Bán lẻ"
+"nganh": "Điện, nước & xăng dầu khí đốt",
+"nganh_chi_tiet": "Nước & Khí đốt"
+},
+{
+"ma": "DGC",
+"ten": "Hóa chất Đức Giang",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hóa chất",
+"nganh_chi_tiet": "Hóa chất"
+},
+{
+"ma": "BSR",
+"ten": "Lọc Hoá dầu Việt Nam",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Dầu khí",
+"nganh_chi_tiet": "Sản xuất Dầu khí"
+},
+{
+"ma": "QTP",
+"ten": "Nhiệt điện Quảng Ninh",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Điện, nước & xăng dầu khí đốt",
+"nganh_chi_tiet": "Sản xuất & Phân phối Điện"
+},
+{
+"ma": "PVT",
+"ten": "Vận tải Dầu khí PVTrans",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hàng & Dịch vụ Công nghiệp",
+"nganh_chi_tiet": "Vận tải"
 },
 {
 "ma": "ACB",
 "ten": "ACB",
-"san": "HOSE",
-"loai": "NH",
-"nganh": "Ngân hàng",
-"nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "TCB",
-"ten": "Techcombank",
 "san": "HOSE",
 "loai": "NH",
 "nganh": "Ngân hàng",
@@ -336,52 +288,12 @@
 "nganh_chi_tiet": "Ngân hàng"
 },
 {
-"ma": "SSI",
-"ten": "Chứng khoán SSI",
-"san": "HOSE",
-"loai": "CK",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Dịch vụ tài chính"
-},
-{
-"ma": "TV2",
-"ten": "Tư vấn XD Điện 2",
+"ma": "DCM",
+"ten": "Đạm Cà Mau",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Tư vấn & Hỗ trợ Kinh doanh"
-},
-{
-"ma": "NT2",
-"ten": "Điện lực Nhơn Trạch 2",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Điện, nước & xăng dầu khí đốt",
-"nganh_chi_tiet": "Sản xuất & Phân phối Điện"
-},
-{
-"ma": "NKG",
-"ten": "Thép Nam Kim",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Tài nguyên Cơ bản",
-"nganh_chi_tiet": "Kim loại"
-},
-{
-"ma": "PC1",
-"ten": "Tập đoàn PC1",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
-},
-{
-"ma": "REE",
-"ten": "Cơ Điện Lạnh REE",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Điện, nước & xăng dầu khí đốt",
-"nganh_chi_tiet": "Sản xuất & Phân phối Điện"
+"nganh": "Hóa chất",
+"nganh_chi_tiet": "Hóa chất"
 },
 {
 "ma": "PPC",
@@ -392,116 +304,12 @@
 "nganh_chi_tiet": "Sản xuất & Phân phối Điện"
 },
 {
-"ma": "TPB",
-"ten": "TPBank",
-"san": "HOSE",
-"loai": "NH",
-"nganh": "Ngân hàng",
-"nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "FRT",
-"ten": "Bán lẻ FPT",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bán lẻ",
-"nganh_chi_tiet": "Bán lẻ"
-},
-{
-"ma": "GMD",
-"ten": "Tập đoàn Gemadept",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Vận tải"
-},
-{
-"ma": "VNM",
-"ten": "VINAMILK",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Sản xuất thực phẩm"
-},
-{
 "ma": "BID",
 "ten": "BIDV",
 "san": "HOSE",
 "loai": "NH",
 "nganh": "Ngân hàng",
 "nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "PVD",
-"ten": "Khoan Dầu khí PVDrilling",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Dầu khí",
-"nganh_chi_tiet": "Thiết bị, Dịch vụ và Phân phối Dầu khí"
-},
-{
-"ma": "BWE",
-"ten": "Nước - Môi trường Bình Dương",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Điện, nước & xăng dầu khí đốt",
-"nganh_chi_tiet": "Nước & Khí đốt"
-},
-{
-"ma": "SIP",
-"ten": "Đầu tư Sài Gòn VRG",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "BSR",
-"ten": "Lọc Hoá dầu Việt Nam",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Dầu khí",
-"nganh_chi_tiet": "Sản xuất Dầu khí"
-},
-{
-"ma": "DHC",
-"ten": "Đông Hải Bến Tre",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Tài nguyên Cơ bản",
-"nganh_chi_tiet": "Lâm nghiệp và Giấy"
-},
-{
-"ma": "MCH",
-"ten": "Hàng Tiêu Dùng MaSan",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Sản xuất thực phẩm"
-},
-{
-"ma": "HDB",
-"ten": "HDBank",
-"san": "HOSE",
-"loai": "NH",
-"nganh": "Ngân hàng",
-"nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "BMP",
-"ten": "Nhựa Bình Minh",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
-},
-{
-"ma": "VHC",
-"ten": "Thủy sản Vĩnh Hoàn",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Sản xuất thực phẩm"
 },
 {
 "ma": "PLX",
@@ -512,20 +320,12 @@
 "nganh_chi_tiet": "Sản xuất Dầu khí"
 },
 {
-"ma": "GAS",
-"ten": "PV Gas",
+"ma": "DXS",
+"ten": "Dịch vụ BĐS Đất Xanh",
 "san": "HOSE",
 "loai": "CT",
-"nganh": "Điện, nước & xăng dầu khí đốt",
-"nganh_chi_tiet": "Nước & Khí đốt"
-},
-{
-"ma": "ACV",
-"ten": "Cảng Hàng không VN",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Vận tải"
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
 },
 {
 "ma": "BVH",
@@ -536,112 +336,16 @@
 "nganh_chi_tiet": "Bảo hiểm nhân thọ"
 },
 {
-"ma": "VIB",
-"ten": "VIBBank",
-"san": "HOSE",
-"loai": "NH",
-"nganh": "Ngân hàng",
-"nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "DPM",
-"ten": "Tổng Công ty Phân bón và Hóa chất Dầu khí",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hóa chất",
-"nganh_chi_tiet": "Hóa chất"
-},
-{
-"ma": "DCM",
-"ten": "Đạm Cà Mau",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hóa chất",
-"nganh_chi_tiet": "Hóa chất"
-},
-{
-"ma": "VHM",
-"ten": "Vinhomes",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bất động sản",
-"nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "STB",
-"ten": "NH Sài Gòn Tài Lộc (SACOMBANK)",
-"san": "HOSE",
-"loai": "NH",
-"nganh": "Ngân hàng",
-"nganh_chi_tiet": "Ngân hàng"
-},
-{
-"ma": "PVT",
-"ten": "Vận tải Dầu khí PVTrans",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Vận tải"
-},
-{
-"ma": "HSG",
-"ten": "Tập đoàn Hoa Sen",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Tài nguyên Cơ bản",
-"nganh_chi_tiet": "Kim loại"
-},
-{
-"ma": "TLG",
-"ten": "Tập đoàn Thiên Long",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hàng cá nhân & Gia dụng",
-"nganh_chi_tiet": "Hàng gia dụng"
-},
-{
-"ma": "QNS",
-"ten": "Đường Quảng Ngãi",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Sản xuất thực phẩm"
-},
-{
-"ma": "SCS",
-"ten": "DV Hàng hóa Sài Gòn",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Du lịch và Giải trí",
-"nganh_chi_tiet": "Du lịch & Giải trí"
-},
-{
-"ma": "DGW",
-"ten": "Thế Giới Số",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Bán lẻ",
-"nganh_chi_tiet": "Bán lẻ"
-},
-{
-"ma": "TDM",
-"ten": "Nước Thủ Dầu Một",
+"ma": "REE",
+"ten": "Cơ Điện Lạnh REE",
 "san": "HOSE",
 "loai": "CT",
 "nganh": "Điện, nước & xăng dầu khí đốt",
-"nganh_chi_tiet": "Nước & Khí đốt"
+"nganh_chi_tiet": "Sản xuất & Phân phối Điện"
 },
 {
-"ma": "GVR",
-"ten": "Tập đoàn CN Cao su VN",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hóa chất",
-"nganh_chi_tiet": "Hóa chất"
-},
-{
-"ma": "LPB",
-"ten": "LPBank",
+"ma": "TCB",
+"ten": "Techcombank",
 "san": "HOSE",
 "loai": "NH",
 "nganh": "Ngân hàng",
@@ -654,6 +358,294 @@
 "loai": "CT",
 "nganh": "Dầu khí",
 "nganh_chi_tiet": "Sản xuất Dầu khí"
+},
+{
+"ma": "DXG",
+"ten": "Bluemarq Group",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
+},
+{
+"ma": "MCH",
+"ten": "Hàng Tiêu Dùng MaSan",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Sản xuất thực phẩm"
+},
+{
+"ma": "NT2",
+"ten": "Điện lực Nhơn Trạch 2",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Điện, nước & xăng dầu khí đốt",
+"nganh_chi_tiet": "Sản xuất & Phân phối Điện"
+},
+{
+"ma": "VNM",
+"ten": "VINAMILK",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Sản xuất thực phẩm"
+},
+{
+"ma": "SAB",
+"ten": "SABECO",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Bia và đồ uống"
+},
+{
+"ma": "DHC",
+"ten": "Đông Hải Bến Tre",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Tài nguyên Cơ bản",
+"nganh_chi_tiet": "Lâm nghiệp và Giấy"
+},
+{
+"ma": "DPM",
+"ten": "Tổng Công ty Phân bón và Hóa chất Dầu khí",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hóa chất",
+"nganh_chi_tiet": "Hóa chất"
+},
+{
+"ma": "AST",
+"ten": "Dịch vụ Hàng không Taseco",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bán lẻ",
+"nganh_chi_tiet": "Bán lẻ"
+},
+{
+"ma": "PVD",
+"ten": "Khoan Dầu khí PVDrilling",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Dầu khí",
+"nganh_chi_tiet": "Thiết bị, Dịch vụ và Phân phối Dầu khí"
+},
+{
+"ma": "SSI",
+"ten": "Chứng khoán SSI",
+"san": "HOSE",
+"loai": "CK",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Dịch vụ tài chính"
+},
+{
+"ma": "BMP",
+"ten": "Nhựa Bình Minh",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
+"ma": "FRT",
+"ten": "Bán lẻ FPT",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bán lẻ",
+"nganh_chi_tiet": "Bán lẻ"
+},
+{
+"ma": "CTR",
+"ten": "Công trình Viettel",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
+"ma": "SZC",
+"ten": "Sonadezi Châu Đức",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
+},
+{
+"ma": "TV2",
+"ten": "Tư vấn XD Điện 2",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hàng & Dịch vụ Công nghiệp",
+"nganh_chi_tiet": "Tư vấn & Hỗ trợ Kinh doanh"
+},
+{
+"ma": "GMD",
+"ten": "Tập đoàn Gemadept",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hàng & Dịch vụ Công nghiệp",
+"nganh_chi_tiet": "Vận tải"
+},
+{
+"ma": "VHM",
+"ten": "Vinhomes",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
+},
+{
+"ma": "DGW",
+"ten": "Thế Giới Số",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bán lẻ",
+"nganh_chi_tiet": "Bán lẻ"
+},
+{
+"ma": "SIP",
+"ten": "Đầu tư Sài Gòn VRG",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
+},
+{
+"ma": "VHC",
+"ten": "Thủy sản Vĩnh Hoàn",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Sản xuất thực phẩm"
+},
+{
+"ma": "NVL",
+"ten": "Novaland",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
+},
+{
+"ma": "TPB",
+"ten": "TPBank",
+"san": "HOSE",
+"loai": "NH",
+"nganh": "Ngân hàng",
+"nganh_chi_tiet": "Ngân hàng"
+},
+{
+"ma": "KBC",
+"ten": "TCT Đô thị Kinh Bắc",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
+},
+{
+"ma": "BWE",
+"ten": "Nước - Môi trường Bình Dương",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Điện, nước & xăng dầu khí đốt",
+"nganh_chi_tiet": "Nước & Khí đốt"
+},
+{
+"ma": "HDB",
+"ten": "HDBank",
+"san": "HOSE",
+"loai": "NH",
+"nganh": "Ngân hàng",
+"nganh_chi_tiet": "Ngân hàng"
+},
+{
+"ma": "ACV",
+"ten": "Cảng Hàng không VN",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Hàng & Dịch vụ Công nghiệp",
+"nganh_chi_tiet": "Vận tải"
+},
+{
+"ma": "QNS",
+"ten": "Đường Quảng Ngãi",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Sản xuất thực phẩm"
+},
+{
+"ma": "LPB",
+"ten": "LPBank",
+"san": "HOSE",
+"loai": "NH",
+"nganh": "Ngân hàng",
+"nganh_chi_tiet": "Ngân hàng"
+},
+{
+"ma": "GVR",
+"ten": "Tập đoàn CN Cao su VN",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hóa chất",
+"nganh_chi_tiet": "Hóa chất"
+},
+{
+"ma": "SCS",
+"ten": "DV Hàng hóa Sài Gòn",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Du lịch và Giải trí",
+"nganh_chi_tiet": "Du lịch & Giải trí"
+},
+{
+"ma": "STB",
+"ten": "NH Sài Gòn Tài Lộc (SACOMBANK)",
+"san": "HOSE",
+"loai": "NH",
+"nganh": "Ngân hàng",
+"nganh_chi_tiet": "Ngân hàng"
+},
+{
+"ma": "VIB",
+"ten": "VIBBank",
+"san": "HOSE",
+"loai": "NH",
+"nganh": "Ngân hàng",
+"nganh_chi_tiet": "Ngân hàng"
+},
+{
+"ma": "TLG",
+"ten": "Tập đoàn Thiên Long",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hàng cá nhân & Gia dụng",
+"nganh_chi_tiet": "Hàng gia dụng"
+},
+{
+"ma": "HSG",
+"ten": "Tập đoàn Hoa Sen",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Tài nguyên Cơ bản",
+"nganh_chi_tiet": "Kim loại"
+},
+{
+"ma": "NKG",
+"ten": "Thép Nam Kim",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Tài nguyên Cơ bản",
+"nganh_chi_tiet": "Kim loại"
+},
+{
+"ma": "TDM",
+"ten": "Nước Thủ Dầu Một",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Điện, nước & xăng dầu khí đốt",
+"nganh_chi_tiet": "Nước & Khí đốt"
 },
 {
 "ma": "VJC",
@@ -678,70 +670,6 @@
 "loai": "CT",
 "nganh": "Bất động sản",
 "nganh_chi_tiet": "Bất động sản"
-},
-{
-"ma": "GH3",
-"ten": "Công trình giao thông Hà Nội",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
-},
-{
-"ma": "NO1",
-"ten": "Tập đoàn 911",
-"san": "HOSE",
-"loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Công nghiệp nặng"
-},
-{
-"ma": "HWI",
-"ten": "Đầu tư XD hạ tầng nước sạch Hà Nội",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
-},
-{
-"ma": "CAF",
-"ten": "Xuất nhập khẩu Nông Sản Thực Phẩm Cà Mau",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Sản xuất thực phẩm"
-},
-{
-"ma": "BCH",
-"ten": "Dược Bảo Châu",
-"san": "HNX",
-"loai": "CT",
-"nganh": "Y tế",
-"nganh_chi_tiet": "Dược phẩm"
-},
-{
-"ma": "HT9",
-"ten": "Phát triển hạ tầng 319",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
-},
-{
-"ma": "HTS",
-"ten": "Thép Hương Thịnh",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Tài nguyên Cơ bản",
-"nganh_chi_tiet": "Kim loại"
-},
-{
-"ma": "DMH",
-"ten": "Dược Minh Hải",
-"san": "UPCOM",
-"loai": "CT",
-"nganh": "Y tế",
-"nganh_chi_tiet": "Dược phẩm"
 },
 {
 "ma": "SZG",
@@ -818,7 +746,7 @@
 {
 "ma": "GDA",
 "ten": "Tôn Đông Á",
-"san": "UPCOM",
+"san": "HOSE",
 "loai": "CT",
 "nganh": "Tài nguyên Cơ bản",
 "nganh_chi_tiet": "Kim loại"
@@ -1162,7 +1090,7 @@
 {
 "ma": "HIO",
 "ten": "Helio Energy",
-"san": "UPCOM",
+"san": "HOSE",
 "loai": "CT",
 "nganh": "Điện, nước & xăng dầu khí đốt",
 "nganh_chi_tiet": "Sản xuất & Phân phối Điện"
@@ -1608,6 +1536,14 @@
 "nganh_chi_tiet": "Xây dựng và Vật liệu"
 },
 {
+"ma": "AMY",
+"ten": "Công nghiệp Á Mỹ",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
 "ma": "BRM",
 "ten": "Quản lý cầu đường Đà Nẵng",
 "san": "OTC",
@@ -1824,6 +1760,22 @@
 "nganh_chi_tiet": "Xây dựng và Vật liệu"
 },
 {
+"ma": "FUEVCDIV",
+"ten": "Quỹ ETF VCAM GROWTH VNDIVIDEND",
+"san": "HOSE",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "DVV",
+"ten": "DatVietVAC",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Truyền thông",
+"nganh_chi_tiet": "Truyền thông"
+},
+{
 "ma": "VNW",
 "ten": "Điện Cơ Thống Nhất",
 "san": "OTC",
@@ -1874,14 +1826,14 @@
 {
 "ma": "VTT",
 "ten": "Vita Corp",
-"san": "OTC",
+"san": "UPCOM",
 "loai": "CT",
 "nganh": "Viễn thông",
 "nganh_chi_tiet": "Viễn thông cố định"
 },
 {
 "ma": "VUG",
-"ten": "Thủy Sản Việt Úc",
+"ten": "Thủy sản Việt Úc",
 "san": "UPCOM",
 "loai": "CT",
 "nganh": "Thực phẩm và đồ uống",
@@ -1898,7 +1850,7 @@
 {
 "ma": "DSH",
 "ten": "Đông Sơn Holdings",
-"san": "UPCOM",
+"san": "HOSE",
 "loai": "CT",
 "nganh": "Xây dựng và Vật liệu",
 "nganh_chi_tiet": "Xây dựng và Vật liệu"
@@ -2062,6 +2014,30 @@
 "loai": "CT",
 "nganh": "Hàng & Dịch vụ Công nghiệp",
 "nganh_chi_tiet": "Vận tải"
+},
+{
+"ma": "PHY",
+"ten": "Phytopharma Vn",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Y tế",
+"nganh_chi_tiet": "Dược phẩm"
+},
+{
+"ma": "HGI",
+"ten": "Đầu tư Quốc tế Hoàng Anh Gia Lai",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Sản xuất thực phẩm"
+},
+{
+"ma": "OFG",
+"ten": "Khoáng nóng Thanh Thủy",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
 },
 {
 "ma": "VCK",
@@ -2747,6 +2723,14 @@
 "ma": "VNR",
 "ten": "Tái bảo hiểm Quốc gia",
 "san": "HNX",
+"loai": "BH",
+"nganh": "Bảo hiểm",
+"nganh_chi_tiet": "Bảo hiểm phi nhân thọ"
+},
+{
+"ma": "BMI",
+"ten": "Bảo hiểm Bảo Minh",
+"san": "HOSE",
 "loai": "BH",
 "nganh": "Bảo hiểm",
 "nganh_chi_tiet": "Bảo hiểm phi nhân thọ"
@@ -3898,7 +3882,7 @@
 {
 "ma": "HTP",
 "ten": "In SGK Hòa Phát",
-"san": "UPCOM",
+"san": "OTC",
 "loai": "CT",
 "nganh": "Truyền thông",
 "nganh_chi_tiet": "Truyền thông"
@@ -4826,7 +4810,7 @@
 {
 "ma": "TMW",
 "ten": "Gỗ Tân Mai",
-"san": "UPCOM",
+"san": "OTC",
 "loai": "CT",
 "nganh": "Tài nguyên Cơ bản",
 "nganh_chi_tiet": "Lâm nghiệp và Giấy"
@@ -5068,8 +5052,8 @@
 "ten": "LILAMA 69-1",
 "san": "UPCOM",
 "loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Công nghiệp nặng"
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
 },
 {
 "ma": "SBD",
@@ -5402,7 +5386,7 @@
 {
 "ma": "NDF",
 "ten": "Nông sản XK Nam Định",
-"san": "UPCOM",
+"san": "OTC",
 "loai": "CT",
 "nganh": "Thực phẩm và đồ uống",
 "nganh_chi_tiet": "Sản xuất thực phẩm"
@@ -5452,8 +5436,8 @@
 "ten": "Biến thế và Vật liệu Điện Hà Nội",
 "san": "UPCOM",
 "loai": "CT",
-"nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Điện tử & Thiết bị điện"
+"nganh": "Bất động sản",
+"nganh_chi_tiet": "Bất động sản"
 },
 {
 "ma": "MIC",
@@ -5554,7 +5538,7 @@
 {
 "ma": "NGC",
 "ten": "Thủy sản Ngô Quyền",
-"san": "UPCOM",
+"san": "OTC",
 "loai": "CT",
 "nganh": "Thực phẩm và đồ uống",
 "nganh_chi_tiet": "Sản xuất thực phẩm"
@@ -6258,7 +6242,7 @@
 {
 "ma": "BMJ",
 "ten": "Khoáng sản Miền Đông AHP",
-"san": "UPCOM",
+"san": "HOSE",
 "loai": "CT",
 "nganh": "Tài nguyên Cơ bản",
 "nganh_chi_tiet": "Khai khoáng"
@@ -6889,7 +6873,7 @@
 },
 {
 "ma": "LIX",
-"ten": "Bột Giặt LIX",
+"ten": "LIX JSC",
 "san": "HOSE",
 "loai": "CT",
 "nganh": "Hàng cá nhân & Gia dụng",
@@ -6989,7 +6973,7 @@
 "san": "HNX",
 "loai": "CT",
 "nganh": "Hàng & Dịch vụ Công nghiệp",
-"nganh_chi_tiet": "Công nghiệp nặng"
+"nganh_chi_tiet": "Vận tải"
 },
 {
 "ma": "PGT",
@@ -7873,7 +7857,7 @@
 },
 {
 "ma": "SMT",
-"ten": "SAMETEL",
+"ten": "ONESPHERE",
 "san": "HNX",
 "loai": "CT",
 "nganh": "Công nghệ Thông tin",
@@ -10444,8 +10428,8 @@
 "ten": "Đầu tư HVA",
 "san": "UPCOM",
 "loai": "CT",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Dịch vụ tài chính"
+"nganh": "Công nghệ Thông tin",
+"nganh_chi_tiet": "Phần mềm & Dịch vụ Máy tính"
 },
 {
 "ma": "ACM",
@@ -12076,8 +12060,8 @@
 "ten": "Cà phê PETEC",
 "san": "UPCOM",
 "loai": "CT",
-"nganh": "Thực phẩm và đồ uống",
-"nganh_chi_tiet": "Bia và đồ uống"
+"nganh": "Điện, nước & xăng dầu khí đốt",
+"nganh_chi_tiet": "Nước & Khí đốt"
 },
 {
 "ma": "HFB",
@@ -12756,8 +12740,8 @@
 "ten": "Phát triển Điện Tây Bắc",
 "san": "UPCOM",
 "loai": "CT",
-"nganh": "Xây dựng và Vật liệu",
-"nganh_chi_tiet": "Xây dựng và Vật liệu"
+"nganh": "Điện, nước & xăng dầu khí đốt",
+"nganh_chi_tiet": "Sản xuất & Phân phối Điện"
 },
 {
 "ma": "SKH",
@@ -14234,7 +14218,7 @@
 {
 "ma": "PSH",
 "ten": "TMại ĐT Dầu khí Nam Sông Hậu",
-"san": "UPCOM",
+"san": "OTC",
 "loai": "CT",
 "nganh": "Điện, nước & xăng dầu khí đốt",
 "nganh_chi_tiet": "Nước & Khí đốt"
@@ -14873,7 +14857,7 @@
 },
 {
 "ma": "GEE",
-"ten": "Điện lực Gelex",
+"ten": "Công nghiệp Gelex",
 "san": "HOSE",
 "loai": "CT",
 "nganh": "Hàng & Dịch vụ Công nghiệp",
@@ -15192,6 +15176,70 @@
 "nganh_chi_tiet": "Bán lẻ"
 },
 {
+"ma": "GH3",
+"ten": "Công trình giao thông Hà Nội",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
+"ma": "NO1",
+"ten": "Tập đoàn 911",
+"san": "HOSE",
+"loai": "CT",
+"nganh": "Hàng & Dịch vụ Công nghiệp",
+"nganh_chi_tiet": "Công nghiệp nặng"
+},
+{
+"ma": "HWI",
+"ten": "Đầu tư XD hạ tầng nước sạch Hà Nội",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
+"ma": "CAF",
+"ten": "Xuất nhập khẩu Nông Sản Thực Phẩm Cà Mau",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Thực phẩm và đồ uống",
+"nganh_chi_tiet": "Sản xuất thực phẩm"
+},
+{
+"ma": "BCH",
+"ten": "Dược Bảo Châu",
+"san": "HNX",
+"loai": "CT",
+"nganh": "Y tế",
+"nganh_chi_tiet": "Dược phẩm"
+},
+{
+"ma": "HT9",
+"ten": "Phát triển hạ tầng 319",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Xây dựng và Vật liệu",
+"nganh_chi_tiet": "Xây dựng và Vật liệu"
+},
+{
+"ma": "HTS",
+"ten": "Thép Hương Thịnh",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Tài nguyên Cơ bản",
+"nganh_chi_tiet": "Kim loại"
+},
+{
+"ma": "DMH",
+"ten": "Dược Minh Hải",
+"san": "UPCOM",
+"loai": "CT",
+"nganh": "Y tế",
+"nganh_chi_tiet": "Dược phẩm"
+},
+{
 "ma": "TAL",
 "ten": "Đầu Tư Bất Động Sản Taseco",
 "san": "HOSE",
@@ -15496,6 +15544,670 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
+"ma": "DFVN-FIX",
+"ten": "Quỹ Đầu tư TP DFVN",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ABIF",
+"ten": "Quỹ Đầu tư Cân bằng Amber",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VINACAPITAL-VIBF",
+"ten": "Quỹ Đầu tư Cân bằng Gắn kết VinaCapital",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ASP-VIET-A",
+"ten": "Asset Plus Vietnam Growth Super Savings Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "KDEF",
+"ten": "Quỹ Đầu tư Cổ phiếu Cổ tức Tăng trưởng KIM",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VVIF2020",
+"ten": "Quỹ Đầu tư Giá trị Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "TCSME",
+"ten": "Quỹ Đầu tư CP Doanh Nghiệp Vừa Và Nhỏ Techcom",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "BVIMVIF",
+"ten": "Quỹ Đầu Tư Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Dịch vụ tài chính"
+},
+{
+"ma": "VCAMDF",
+"ten": "Quỹ Đầu tư Bản Việt Discovery",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "SSIEF",
+"ten": "Quỹ ĐT Kiến tạo Tương lai SSI",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VCBF-AIF",
+"ten": "Quỹ Đầu tư Thu nhập Chủ Động VCBF",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "TCGF",
+"ten": "Quỹ Đầu Tư Tăng Trưởng Thành Công",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ANE",
+"ten": "Quỹ Đầu tư Năng Lượng Mới AFM",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "LHCDF",
+"ten": "Quỹ Đầu tư Năng động Lighthouse",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ACBC-BOND",
+"ten": "Quỹ Đầu tư TP ACBC",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ACBC-SFUND",
+"ten": "Quỹ Đầu tư TP Thông minh ACBC",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ETF FM",
+"ten": "iShares MSCI Frontier and Select EM ETF",
+"san": "OTHER",
+"loai": "QU",
+"nganh": null,
+"nganh_chi_tiet": null
+},
+{
+"ma": "HPPF",
+"ten": "Quỹ Đầu tư HPP",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "A+ Fund",
+"ten": "Quỹ Đầu tư A+",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "MOBIUS",
+"ten": "Mobius Emerging Markets Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": null,
+"nganh_chi_tiet": null
+},
+{
+"ma": "MAFBAL",
+"ten": "Quỹ Đầu tư Cân bằng Manulife",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "MBThinhVuong",
+"ten": "Quỹ Hưu trí Bổ sung Tự nguyện MB Thịnh Vượng",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Dịch vụ tài chính"
+},
+{
+"ma": "DCIP",
+"ten": "Quỹ Đầu tư TP gia tăng thu nhập cố định DC",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "DCBF",
+"ten": "Quỹ Đầu tư TP DC",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "MBAnKhang",
+"ten": "Quỹ hưu trí Bổ sung Tự nguyện MB An Khang",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Dịch vụ tài chính"
+},
+{
+"ma": "BVIF",
+"ten": "Quỹ Đầu tư Giá trị Bảo Việt",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VINACAPITAL-VESAF",
+"ten": "Quỹ Đầu tư CP Tăng trưởng Chiến lược VinaCapital",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "DCDE",
+"ten": "Quỹ Đầu tư CP Tập trung Cổ tức DC",
+"san": "OTC",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "Luminous Growth",
+"ten": "Luminous Vietnam and Indochina Growth Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "DCDS",
+"ten": "Quỹ Đầu tư Chứng Khoán Năng động DC",
+"san": "OTC",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "SGC IMF",
+"ten": "Quỹ Đầu tư Thành viên SGC",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "RVIF",
+"ten": "Quỹ Đầu tư Rồng Việt",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "IPAMF",
+"ten": "Quỹ Đầu tư Thành viên IPA",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "NTPGF",
+"ten": "Quỹ Đầu tư Tăng trưởng NTP",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ASP-VIETEQ-AI",
+"ten": "Asset Plus Vietnam Focus Equity Fund Not for Retail Investors",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "LHBF",
+"ten": "Quỹ Đầu tư TP Lighthouse",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "HDBOND",
+"ten": "Quỹ Đầu tư TP lợi tức cao HD",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "CBPF",
+"ten": "Quỹ Đầu tư TP Mở Rộng Chubb",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "FVEF",
+"ten": "Quỹ Đầu tư CP Giá trị Fides VN",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ABBF",
+"ten": "Quỹ Đầu tư TP An Bình",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VVDIF",
+"ten": "Quỹ ĐT Khám Phá Giá trị Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "USIF",
+"ten": "Quỹ Đầu tư Trái phiếu United Thu nhập ổn định",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VLBF",
+"ten": "Quỹ Đầu tư TP Thanh Khoản VinaCapital",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VINACAPITAL-VEOF",
+"ten": "Quỹ Đầu tư CP DN hàng đầu VinaCapital",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "UVEEF",
+"ten": "Quỹ Đầu tư CP United ESG Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "PHVSF",
+"ten": "Quỹ Đầu tư Chọn lọc Phú Hưng Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VINHAN",
+"ten": "Quỹ Hưu Trí Bổ Sung Tự Nguyện Vĩnh An",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "PIF",
+"ten": "Quỹ Đầu Tư Hạ Tầng PVI",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VINACAPITAL-VMEEF",
+"ten": "Quỹ Đầu tư CP Kinh tế hiện đại VinaCapital",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VINACAPITAL-VVF",
+"ten": "Forum One - VinaCapital Vietnam Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "B-VIETNAMRMF",
+"ten": "Bualuang Vietnam Equity RMF",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "R2F",
+"ten": "Quỹ Đầu tư CP Tăng trưởng",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "NTPVF",
+"ten": "Quỹ Đầu tư Giá trị NTP",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VNM-ETF",
+"ten": "VanEck Vietnam ETF",
+"san": "OTHER",
+"loai": "QU",
+"nganh": null,
+"nganh_chi_tiet": null
+},
+{
+"ma": "POIF",
+"ten": "Quỹ Đầu tư Cơ hội PAVO",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "China Trust VN",
+"ten": "China Trust Vietnam Opportunity Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": null,
+"nganh_chi_tiet": null
+},
+{
+"ma": "Jih Sun VN",
+"ten": "Jih Sun Vietnam Opportunity Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": null,
+"nganh_chi_tiet": null
+},
+{
+"ma": "K-VIETNAM",
+"ten": "K Vietnam Equity Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "MAFF",
+"ten": "Quỹ Đầu tư TP Linh hoạt Mirae Asset Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "PRINCIPAL VNEQ-A",
+"ten": "Principal Vietnam Equity Fund A",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "B-VIETNAMSSF",
+"ten": "Bualuang Vietnam Equity Super Savings Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "B-VIETNAM",
+"ten": "Bualuang Vietnam Equity Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ASP-VIET-A",
+"ten": "Asset Plus Vietnam Growth Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ASP-VIETRMF",
+"ten": "Asset Plus Vietnam Growth RMF Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "UVO",
+"ten": "United Vietnam Opportunity Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "FBF",
+"ten": "Quỹ Đầu tư TP Fides VN",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VNEFUND",
+"ten": "Vietnam Equity (UCITS) Fund",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "ENF",
+"ten": "Quỹ ĐT Năng động Eastspring Investments Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VLGF",
+"ten": "Quỹ Đầu tư Tăng trưởng Dài Hạn Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "TCBF",
+"ten": "Quỹ Đầu tư TP Techcom",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "",
+"ten": "Quỹ Đầu tư Công nghệ Thế hệ mới SSI",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "PHUCAN",
+"ten": "Quỹ Hưu Trí Bổ Sung Tự Nguyện Phúc An",
+"san": "OTHER",
+"loai": "QU",
+"nganh": null,
+"nganh_chi_tiet": null
+},
+{
+"ma": "TCFIN",
+"ten": "Quỹ Đầu tư CP Ngân Hàng Và Tài Chính Techcom (TCFIN)",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "UVEF",
+"ten": "Quỹ Đầu tư Cổ phiếu United Việt Nam",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "DOCLAP PENSION",
+"ten": "Quỹ Hưu Trí Độc Lập",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "TCRES",
+"ten": "Quỹ Đầu tư CP Bất Động Sản Techcom",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "THINHAN",
+"ten": "Quỹ Hưu Trí Thịnh An",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "LHFCF",
+"ten": "Quỹ Đầu tư Trái phiếu Dòng tiền Linh hoạt Lighthouse",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VCBF-MGF",
+"ten": "Quỹ Đầu tư CP Tăng trưởng VCBF",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "KSIF",
+"ten": "Quỹ đầu tư Trái phiếu Chiến lược KIM",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "VVAF",
+"ten": "VinaCapital Vietnam Access Fund Limited",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "TCIF",
+"ten": "Quỹ Đầu tư Thành Công",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
+"ma": "",
+"ten": "Quỹ Đầu tư Cổ phiếu Hiệu suất Thị trường Nâng cao VinaCapital",
+"san": "OTHER",
+"loai": "QU",
+"nganh": "Dịch vụ tài chính",
+"nganh_chi_tiet": "Quỹ đầu tư"
+},
+{
 "ma": "VEIL",
 "ten": "Vietnam Enterprise Investments Ltd.",
 "san": "OTHER",
@@ -15544,14 +16256,6 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "DFVN-FIX",
-"ten": "Quỹ Đầu tư TP DFVN",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "MBVF",
 "ten": "Quỹ Đầu tư Giá trị MB Capital",
 "san": "OTHER",
@@ -15560,8 +16264,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "VINACAPITAL-VIBF",
-"ten": "Quỹ Đầu tư Cân bằng Gắn kết VinaCapital",
+"ma": "VCBF-CB",
+"ten": "Quỹ Hưu trí Cân bằng VCBF",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -15602,14 +16306,6 @@
 {
 "ma": "KITMC_BF",
 "ten": "KITMC Worldwide Vietnam RSP Balanced Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "ASP-VIET-A",
-"ten": "Asset Plus Vietnam Growth Super Savings Fund",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -15664,48 +16360,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "KDEF",
-"ten": "Quỹ Đầu tư Cổ phiếu Cổ tức Tăng trưởng KIM",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VVIF2020",
-"ten": "Quỹ Đầu tư Giá trị Việt Nam",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "TCSME",
-"ten": "Quỹ Đầu tư CP Doanh Nghiệp Vừa Và Nhỏ Techcom",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "SSI-SCA",
 "ten": "Quỹ Đầu tư Lợi Thế Cạnh Tranh Bền Vững SSI",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "BVIMVIF",
-"ten": "Quỹ Đầu Tư Việt Nam",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Dịch vụ tài chính"
-},
-{
-"ma": "VCAMDF",
-"ten": "Quỹ Đầu tư Bản Việt Discovery",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -15728,14 +16384,6 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "SSIEF",
-"ten": "Quỹ ĐT Kiến tạo Tương lai SSI",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "VDHF",
 "ten": "Quỹ Đầu tư Công nghệ số và Y tế Việt Nam",
 "san": "OTHER",
@@ -15744,40 +16392,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "VCBF-AIF",
-"ten": "Quỹ Đầu tư Thu nhập Chủ Động VCBF",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "TCGF",
-"ten": "Quỹ Đầu Tư Tăng Trưởng Thành Công",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "VVDIF",
-"ten": "Quỹ Đầu tư Khám Phá Giá trị Vietinbank",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "ANE",
-"ten": "Quỹ Đầu tư Năng Lượng Mới AFM",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "LHCDF",
-"ten": "Quỹ Đầu tư Năng động Lighthouse",
+"ten": "Quỹ ĐT Khám Phá Giá trị Vietinbank",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -15888,38 +16504,6 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "ETF FM",
-"ten": "iShares MSCI Frontier and Select EM ETF",
-"san": "OTHER",
-"loai": "QU",
-"nganh": null,
-"nganh_chi_tiet": null
-},
-{
-"ma": "HPPF",
-"ten": "Quỹ Đầu tư HPP",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "A+ Fund",
-"ten": "Quỹ Đầu tư A+",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "MOBIUS",
-"ten": "Mobius Emerging Markets Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": null,
-"nganh_chi_tiet": null
-},
-{
 "ma": "BVFED",
 "ten": "Quỹ Đầu tư CP Năng động Bảo Việt",
 "san": "OTHER",
@@ -15992,56 +16576,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "MAFBAL",
-"ten": "Quỹ Đầu tư Cân bằng Manulife",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "MBThinhVuong",
-"ten": "Quỹ Hưu trí Bổ sung Tự nguyện MB Thịnh Vượng",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Dịch vụ tài chính"
-},
-{
 "ma": "VINACAPITAL-VFF",
 "ten": "Quỹ Đầu tư TP Nâng cao VinaCapital",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "DCIP",
-"ten": "Quỹ Đầu tư TP gia tăng thu nhập cố định DC",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "DCBF",
-"ten": "Quỹ Đầu tư TP DC",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "MBAnKhang",
-"ten": "Quỹ hưu trí Bổ sung Tự nguyện MB An Khang",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Dịch vụ tài chính"
-},
-{
-"ma": "BVIF",
-"ten": "Quỹ Đầu tư Giá trị Bảo Việt",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16054,14 +16590,6 @@
 "loai": "QU",
 "nganh": null,
 "nganh_chi_tiet": null
-},
-{
-"ma": "VINACAPITAL-VESAF",
-"ten": "Quỹ Đầu tư CP Tăng trưởng Chiến lược VinaCapital",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
 "ma": "TCEF",
@@ -16080,33 +16608,9 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "DCDE",
-"ten": "Quỹ Đầu tư CP Tập trung Cổ tức DC",
-"san": "OTC",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "VNDCF",
 "ten": "Quỹ Đầu tư TP Linh hoạt VND",
 "san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "Luminous Growth",
-"ten": "Luminous Vietnam and Indochina Growth Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "DCDS",
-"ten": "Quỹ Đầu tư Chứng Khoán Năng động DC",
-"san": "OTC",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
 "nganh_chi_tiet": "Quỹ đầu tư"
@@ -16120,32 +16624,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "SGC IMF",
-"ten": "Quỹ Đầu tư Thành viên SGC",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "RVIF",
-"ten": "Quỹ Đầu tư Rồng Việt",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "PBIF",
-"ten": "Quỹ Đầu tư Cân bằng PVcom",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "IPAMF",
-"ten": "Quỹ Đầu tư Thành viên IPA",
+"ten": "Quỹ Đầu tư Tăng trưởng Linh hoạt PVCOM",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16160,8 +16640,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "NTPGF",
-"ten": "Quỹ Đầu tư Tăng trưởng NTP",
+"ma": "STPF",
+"ten": "Quỹ Hưu trí Sung Túc",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16170,102 +16650,6 @@
 {
 "ma": "BVBF",
 "ten": "Quỹ Đầu tư TP Bảo Việt",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "ASP-VIETEQ-AI",
-"ten": "Asset Plus Vietnam Focus Equity Fund Not for Retail Investors",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "LHBF",
-"ten": "Quỹ Đầu tư TP Lighthouse",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "HDBOND",
-"ten": "Quỹ Đầu tư TP lợi tức cao HD",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "CBPF",
-"ten": "Quỹ Đầu tư TP Mở Rộng Chubb",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "FVEF",
-"ten": "Quỹ Đầu tư CP Giá trị Fides VN",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "ABBF",
-"ten": "Quỹ Đầu tư TP An Bình",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VVDIF",
-"ten": "Quỹ Đầu tư Khám Phá Giá trị Việt Nam",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "USIF",
-"ten": "Quỹ Đầu tư Trái phiếu United Thu nhập ổn định",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VLBF",
-"ten": "Quỹ Đầu tư TP Thanh Khoản VinaCapital",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VINACAPITAL-VEOF",
-"ten": "Quỹ Đầu tư CP DN hàng đầu VinaCapital",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "UVEEF",
-"ten": "Quỹ Đầu tư CP United ESG Việt Nam",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "PHVSF",
-"ten": "Quỹ Đầu tư Chọn lọc Phú Hưng Việt Nam",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16282,30 +16666,6 @@
 {
 "ma": "VNH",
 "ten": "Vietnam Holding Ltd",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VINHAN",
-"ten": "Quỹ Hưu Trí Bổ Sung Tự Nguyện Vĩnh An",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "PIF",
-"ten": "Quỹ Đầu Tư Hạ Tầng PVI",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VINACAPITAL-VMEEF",
-"ten": "Quỹ Đầu tư CP Kinh tế hiện đại VinaCapital",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16344,48 +16704,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "VINACAPITAL-VVF",
-"ten": "Forum One - VinaCapital Vietnam Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "R2F",
-"ten": "Quỹ Đầu tư CP Tăng trưởng",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "NTPVF",
-"ten": "Quỹ Đầu tư Giá trị NTP",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VNM-ETF",
-"ten": "VanEck Vietnam ETF",
-"san": "OTHER",
-"loai": "QU",
-"nganh": null,
-"nganh_chi_tiet": null
-},
-{
 "ma": "VTBF",
 "ten": "Quỹ Đầu tư TP Vietinbank",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "POIF",
-"ten": "Quỹ Đầu tư Cơ hội PAVO",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16408,80 +16728,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "China Trust VN",
-"ten": "China Trust Vietnam Opportunity Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": null,
-"nganh_chi_tiet": null
-},
-{
-"ma": "Jih Sun VN",
-"ten": "Jih Sun Vietnam Opportunity Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": null,
-"nganh_chi_tiet": null
-},
-{
-"ma": "K-VIETNAM",
-"ten": "K Vietnam Equity Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "MAFF",
-"ten": "Quỹ Đầu tư TP Linh hoạt Mirae Asset Việt Nam",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "PRINCIPAL VNEQ-A",
-"ten": "Principal Vietnam Equity Fund A",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "VCBF-BCF",
 "ten": "Quỹ Đầu tư CP Hàng Đầu VCBF",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "B-VIETNAM",
-"ten": "Bualuang Vietnam Equity Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "ASP-VIET-A",
-"ten": "Asset Plus Vietnam Growth Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "ASP-VIETRMF",
-"ten": "Asset Plus Vietnam Growth RMF Fund",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "UVO",
-"ten": "United Vietnam Opportunity Fund",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16496,24 +16744,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "FBF",
-"ten": "Quỹ Đầu tư TP Fides VN",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "ATF",
 "ten": "Quỹ Đầu tư Công nghệ Amber",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VNEFUND",
-"ten": "Vietnam Equity (UCITS) Fund",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16530,14 +16762,6 @@
 {
 "ma": "VNDT",
 "ten": "Quỹ Đầu tư Phát triển Việt Tín",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "ENF",
-"ten": "Quỹ ĐT Năng động Eastspring Investments Việt Nam",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
@@ -16576,22 +16800,6 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "VLGF",
-"ten": "Quỹ Đầu tư Tăng trưởng Dài Hạn Việt Nam",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "TCBF",
-"ten": "Quỹ Đầu tư TP Techcom",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "DFVN-CAF",
 "ten": "Quỹ Đầu tư Tăng trưởng DFVN",
 "san": "OTHER",
@@ -16624,38 +16832,6 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "PHUCAN",
-"ten": "Quỹ Hưu Trí Bổ Sung Tự Nguyện Phúc An",
-"san": "OTHER",
-"loai": "QU",
-"nganh": null,
-"nganh_chi_tiet": null
-},
-{
-"ma": "TCFIN",
-"ten": "Quỹ Đầu tư CP Ngân Hàng Và Tài Chính Techcom (TCFIN)",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "UVEF",
-"ten": "Quỹ Đầu tư Cổ phiếu United Việt Nam",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "DOCLAP PENSION",
-"ten": "Quỹ Hưu Trí Độc Lập",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "VCAMFI",
 "ten": "Quỹ Đầu tư TP Bản Việt",
 "san": "OTHER",
@@ -16664,64 +16840,8 @@
 "nganh_chi_tiet": "Quỹ đầu tư"
 },
 {
-"ma": "TCRES",
-"ten": "Quỹ Đầu tư CP Bất Động Sản Techcom",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "THINHAN",
-"ten": "Quỹ Hưu Trí Thịnh An",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "LHFCF",
-"ten": "Quỹ Đầu tư Trái phiếu Dòng tiền Linh hoạt Lighthouse",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VCBF-MGF",
-"ten": "Quỹ Đầu tư CP Tăng trưởng VCBF",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
 "ma": "RVCF",
 "ten": "Quỹ Đầu tư Rhodium Venture Capital",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "KSIF",
-"ten": "Quỹ đầu tư Trái phiếu Chiến lược KIM",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "VVAF",
-"ten": "VinaCapital Vietnam Access Fund Limited",
-"san": "OTHER",
-"loai": "QU",
-"nganh": "Dịch vụ tài chính",
-"nganh_chi_tiet": "Quỹ đầu tư"
-},
-{
-"ma": "TCIF",
-"ten": "Quỹ Đầu tư Thành Công",
 "san": "OTHER",
 "loai": "QU",
 "nganh": "Dịch vụ tài chính",
